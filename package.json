@@ -8,11 +8,11 @@
     "npm": "8.x"
   },
   "scripts": {
-    "start": "vite preview",
+    "start": "vite preview --host",
     "build": "npm ci --legacy-peer-deps && npx vite build && node sitemap-generator.cjs",
     "dev": "vite",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
+    "preview": "vite preview --host",
     "typeorm": "typeorm",
     "sitemap": "(node sitemap-builder.cjs)"
   },
