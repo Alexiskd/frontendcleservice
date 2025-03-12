@@ -1,5 +1,7 @@
+// index.js ou App.jsx (avant le rendu React)
 import $ from 'jquery';
-window.$ = $;
+window.$ = window.jQuery = $;
+
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
