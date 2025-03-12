@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Redirection spécifique pour l'URL donnée
+RewriteRule ^produit/ABUS/Cl%C3%A9-Abus-XP-2$ https://www.cleservice.com/2-15-cle-ABUS-xp-2-reproduction-cle.html [R=301,L]
+
+# Redirection générale : si le fichier demandé n'existe pas, redirige vers index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [QSA,L]

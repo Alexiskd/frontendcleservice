@@ -1,0 +1,3 @@
+Subject: Test Email
+
+Ceci est un email de test envoyé via curl.
