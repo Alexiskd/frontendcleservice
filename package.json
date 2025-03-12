@@ -56,6 +56,7 @@
     "@babel/preset-env": "^7.26.8",
     "@babel/preset-react": "^7.26.3",
     "@babel/register": "^7.25.9",
+    "@rollup/plugin-inject": "^5.0.5",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
