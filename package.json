@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "vite preview",
-    "build": "npm ci && npx vite build && node sitemap-generator.cjs",
+    "build": "npm ci --legacy-peer-deps && npx vite build && node sitemap-generator.cjs",
     "dev": "vite",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
