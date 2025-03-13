@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/Header.jsx
+import React, { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -14,34 +15,29 @@ import {
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
-import Cart from './UserPA/cart.jsx';
 
 const primaryColor = '#4E342E';
-
 const gradientText = {
   background: 'linear-gradient(90deg, #15720a, #000)',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
 };
 
+const navItems = [
+  { label: 'Accueil', to: '/' },
+  { label: 'Qui sommes-nous ?', to: '/qui.php' },
+  { label: 'Catalogue', to: '/trouvez.php' },
+  { label: 'Coffre Fort', to: '/catalogue-cles-coffre.php' },
+  { label: 'Badges', to: '/badges.php' },
+  { label: 'Contact', to: '/contact.php' },
+];
+
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const toggleDrawer = (openState) => {
-    setDrawerOpen(openState);
-  };
-
-  const navItems = [
-    { label: 'Accueil', to: '/' },
-    { label: 'Qui sommes-nous ?', to: '/qui.php' },
-    { label: 'Catalogue', to: '/trouvez.php' },
-    { label: 'Coffre Fort', to: '/catalogue-cles-coffre.php' },
-    { label: 'Badges', to: '/badges.php' },
-    { label: 'Contact', to: '/contact.php' },
-  ];
+  const toggleDrawer = (openState) => setDrawerOpen(openState);
 
   return (
-    <div>
+    <>
       <AppBar
         position="fixed"
         sx={{
@@ -50,62 +46,97 @@ const Header = () => {
           top: 0,
           left: 0,
           right: 0,
-          zIndex: (theme) => theme.zIndex.drawer + 1, // S'assurer que le header est au-dessus
+          minHeight: { xs: '120px', md: '150px' },
+          padding: 0,
+          zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
         <Toolbar
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
+            flexDirection: 'column',
             alignItems: 'center',
-            px: { xs: 2, md: 4 },
+            justifyContent: 'center',
+            px: { xs: 1, md: 4 },
             py: { xs: 1, md: 2 },
           }}
         >
-          {/* Logo et titre */}
+          {/* Section Bandeau (logo, titre, numéro de téléphone) */}
           <Box
-            component={Link}
-            to="/"
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              textDecoration: 'none',
+              width: '100%',
+              textAlign: 'center',
+              mb: { xs: 1, md: 2 },
             }}
           >
             <Box
-              component="img"
-              src={logo}
-              alt="Logo"
-              sx={{ height: { xs: '35px', md: '45px' }, mr: 1 }}
-            />
-            <Typography
-              variant="h6"
+              component={Link}
+              to="/"
               sx={{
-                fontWeight: 600,
-                fontSize: { xs: '1.2rem', md: '1.75rem' },
-                letterSpacing: '0.5px',
-                ...gradientText,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textDecoration: 'none',
               }}
             >
-              Cleservice.com
+              <Box
+                component="img"
+                src={logo}
+                alt="Logo"
+                sx={{ height: { xs: '40px', md: '50px' }, mr: 1 }}
+              />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: { xs: '1.2rem', md: '1.8rem' },
+                  letterSpacing: '0.5px',
+                  ...gradientText,
+                }}
+              >
+                Cleservice.com
+              </Typography>
+            </Box>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                mt: 0.5,
+                color: '#fff',
+                fontWeight: '700',
+                fontSize: { xs: '1rem', md: '1.2rem' },
+              }}
+            >
+              Appelez le&nbsp;
+              <Box
+                component="a"
+                href="tel:0142674861"
+                sx={{
+                  color: '#ff5252',
+                  position: 'relative',
+                  display: 'inline-block',
+                  textDecoration: 'none',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent)',
+                    animation: 'laser 2s linear infinite',
+                  },
+                }}
+              >
+                01 42 67 48 61
+              </Box>
             </Typography>
           </Box>
 
-          {/* Bouton menu pour mobile */}
-          <IconButton
-            color="inherit"
-            aria-label="menu"
-            onClick={() => toggleDrawer(true)}
-            sx={{ display: { xs: 'block', md: 'none' }, color: '#000' }}
-          >
-            <MenuIcon sx={{ fontSize: { xs: '1.5rem', md: '1.8rem' } }} />
-          </IconButton>
-
-          {/* Liens de navigation et composant panier (affichés en horizontal pour md et plus) */}
+          {/* Liens de navigation pour écrans md et plus */}
           <Box
             sx={{
+              width: '100%',
               display: { xs: 'none', md: 'flex' },
-              alignItems: 'center',
+              justifyContent: 'center',
               gap: '20px',
             }}
           >
@@ -127,9 +158,17 @@ const Header = () => {
                 {item.label}
               </Button>
             ))}
-
-            
           </Box>
+
+          {/* Bouton menu pour mobile */}
+          <IconButton
+            color="inherit"
+            aria-label="menu"
+            onClick={() => toggleDrawer(true)}
+            sx={{ display: { xs: 'block', md: 'none' }, position: 'absolute', top: 8, right: 8 }}
+          >
+            <MenuIcon sx={{ fontSize: { xs: '1.8rem', md: '2rem' } }} />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -147,10 +186,7 @@ const Header = () => {
         }}
       >
         <Box
-          sx={{
-            width: 250,
-            p: 2,
-          }}
+          sx={{ width: 250, p: 2 }}
           role="presentation"
           onClick={() => toggleDrawer(false)}
           onKeyDown={() => toggleDrawer(false)}
@@ -173,18 +209,25 @@ const Header = () => {
                 }}
               >
                 <ListItemText
-                  primary={
-                    <Typography variant="body1" sx={{ color: '#fff' }}>
-                      {item.label}
-                    </Typography>
-                  }
+                  primary={<Typography variant="body1" sx={{ color: '#fff' }}>{item.label}</Typography>}
                 />
               </ListItem>
             ))}
           </List>
         </Box>
       </Drawer>
-    </div>
+
+      {/* Animation CSS intégrée pour l'effet laser sur le numéro */}
+      <style>
+        {`
+          @keyframes laser {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+          }
+        `}
+      </style>
+    </>
   );
 };
 

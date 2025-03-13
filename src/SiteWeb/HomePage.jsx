@@ -1,3 +1,4 @@
+// src/Login.jsx
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { styled } from '@mui/material/styles';
@@ -17,7 +18,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
-import KeySearch from './PagePrincipale/keyshearch.jsx'; // Vérifiez le nom de votre fichier (par exemple "keysearch.jsx" si c'est le cas)
+import KeySearch from './PagePrincipale/keyshearch.jsx'; // Vérifiez le nom du fichier
 
 // Variables de couleurs et typographie
 const primaryColor = '#2E7D32';
@@ -55,7 +56,6 @@ const CustomButton = styled('button')(({ theme }) => ({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  // Réduction de la taille et du padding sur mobile
   [theme.breakpoints.down('sm')]: {
     padding: '10px 20px',
     fontSize: '0.9rem'
@@ -63,10 +63,10 @@ const CustomButton = styled('button')(({ theme }) => ({
   '&:hover': {
     backgroundColor: primaryDark,
     boxShadow: '0px 6px 16px rgba(0, 0, 0, 0.3)',
-    transform: 'translateY(-2px)',
+    transform: 'translateY(-2px)'
   },
   '&:active': {
-    transform: 'translateY(0)',
+    transform: 'translateY(0)'
   },
 }));
 
@@ -84,9 +84,12 @@ const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
   );
 });
 
+// Le composant Login est enveloppé dans l'ErrorBoundary pour mieux capter les erreurs
+import ErrorBoundary from './ErrorBoundary';
+
 const Login = () => {
   return (
-    <>
+    <ErrorBoundary>
       <Helmet>
         <title>CléService - Double de clé en ligne, Facile et Rapide</title>
         <meta
@@ -165,18 +168,8 @@ const Login = () => {
 
         {/* HEADER - Bandeaux et Hero Section */}
         <header>
-          <Box
-            sx={{
-              height: { xs: '56px', md: '0px' },
-              backgroundColor: "#01591f",
-            }}
-          />
-          <Box
-            sx={{
-              height: { xs: '100px', md: '120px' },
-              backgroundColor: "#01591f",
-            }}
-          />
+          <Box sx={{ height: { xs: '56px', md: '0px' }, backgroundColor: "#01591f" }} />
+          <Box sx={{ height: { xs: '100px', md: '120px' }, backgroundColor: "#01591f" }} />
 
           <Box
             component="section"
@@ -190,40 +183,14 @@ const Login = () => {
               overflow: 'hidden'
             }}
           >
-            <Container 
+            <Container
               maxWidth="lg"
-              sx={{ 
-                position: 'relative', 
-                zIndex: 1, 
-                pt: { xs: 8, md: 10 },
-                textAlign: 'center'
-              }}
+              sx={{ position: 'relative', zIndex: 1, pt: { xs: 8, md: 10 }, textAlign: 'center' }}
             >
-              <Typography
-                component="h1"
-                variant="h3"
-                gutterBottom
-                sx={{ 
-                  fontWeight: '700',
-                  mb: 2,
-                  fontSize: { xs: '1.75rem', md: '2.5rem' }
-                }}
-              >
+              <Typography component="h1" variant="h3" gutterBottom sx={{ fontWeight: '700', mb: 2, fontSize: { xs: '1.75rem', md: '2.5rem' } }}>
                 Un double de clé, une copie ? Facile et rapide !
               </Typography>
-              <Typography 
-                component="h2"
-                variant="h4" 
-                gutterBottom 
-                sx={{
-                  fontWeight: '700',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: { xs: '1.25rem', md: '1.75rem' }
-                }}
-              >
+              <Typography component="h2" variant="h4" gutterBottom sx={{ fontWeight: '700', mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: { xs: '1.25rem', md: '1.75rem' } }}>
                 Appelez le&nbsp;
                 <Box
                   component="a"
@@ -259,27 +226,11 @@ const Login = () => {
 
         {/* SECTION - Boutons d'action et recherche */}
         <section>
-          <Container 
-            maxWidth="lg"
-            sx={{ 
-              position: 'relative', 
-              zIndex: 1, 
-              py: 2,
-              mx: 'auto'
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 2,
-                flexWrap: 'wrap'
-              }}
-            >
+          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, py: 2, mx: 'auto' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
               <MyCustomButton as={Link} to="/trouvez.php">
                 Commander un double de clé
               </MyCustomButton>
-              
               <MyCustomButton as={Link} to="/contact.php">
                 Demande de devis
               </MyCustomButton>
@@ -315,13 +266,7 @@ const Login = () => {
               Du lundi au samedi, de 8h30 à 12h30<br />
               et de 14h à 18h.
             </Typography>
-            <Box
-              sx={{
-                boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
-                borderRadius: '8px',
-                overflow: 'hidden'
-              }}
-            >
+            <Box sx={{ boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
               <iframe
                 src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+Lévis,+Paris,+France"
                 width="100%"
@@ -363,11 +308,7 @@ const Login = () => {
             <Grid container spacing={4} justifyContent="center">
               <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Box sx={cardStyle}>
-                  <KeyIcon
-                    sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }}
-                    role="img"
-                    aria-label="Livraison de clé"
-                  />
+                  <KeyIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }} role="img" aria-label="Livraison de clé" />
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
                     Faites-vous livrer votre clé
                   </Typography>
@@ -379,11 +320,7 @@ const Login = () => {
               </Grid>
               <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Box sx={cardStyle}>
-                  <FactoryIcon
-                    sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }}
-                    role="img"
-                    aria-label="Clé au numéro"
-                  />
+                  <FactoryIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }} role="img" aria-label="Clé au numéro" />
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
                     Clé au numéro
                   </Typography>
@@ -395,21 +332,9 @@ const Login = () => {
               <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Box sx={cardStyle}>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                    <KeyIcon
-                      sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }}
-                      role="img"
-                      aria-label="Copie de clé"
-                    />
-                    <KeyIcon
-                      sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }}
-                      role="img"
-                      aria-label="Copie de clé"
-                    />
-                    <KeyIcon
-                      sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }}
-                      role="img"
-                      aria-label="Copie de clé"
-                    />
+                    <KeyIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }} role="img" aria-label="Copie de clé" />
+                    <KeyIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }} role="img" aria-label="Copie de clé" />
+                    <KeyIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }} role="img" aria-label="Copie de clé" />
                   </Box>
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
                     Demande de devis
@@ -451,11 +376,7 @@ const Login = () => {
             <Grid container spacing={4} justifyContent="center">
               <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Box sx={cardStyle}>
-                  <BuildIcon
-                    sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }}
-                    role="img"
-                    aria-label="Expertise reconnue"
-                  />
+                  <BuildIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }} role="img" aria-label="Expertise reconnue" />
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
                     Expertise reconnue
                   </Typography>
@@ -466,11 +387,7 @@ const Login = () => {
               </Grid>
               <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Box sx={cardStyle}>
-                  <AccessTimeIcon
-                    sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }}
-                    role="img"
-                    aria-label="Service rapide et sécurisé"
-                  />
+                  <AccessTimeIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }} role="img" aria-label="Service rapide et sécurisé" />
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
                     Service rapide et sécurisé
                   </Typography>
@@ -635,7 +552,7 @@ const Login = () => {
           </Container>
         </section>
       </Box>
-    </>
+    </ErrorBoundary>
   );
 };
 
