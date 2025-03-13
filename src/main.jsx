@@ -1,15 +1,14 @@
 // src/main.jsx
 
+// Si vous souhaitez accéder à jQuery en local, vous pouvez décommenter la ligne suivante :
+// const $ = window.$;
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@emotion/react';
 import App from './SiteWeb/App';
 import { theme } from './theme';
-
-// jQuery est déjà chargé globalement par index.html, vous pouvez y accéder via window.$ si besoin
-// Optionnellement, vous pouvez définir une variable locale si vous en avez besoin dans ce module :
-// const $ = window.$;
 
 const rootElement = document.getElementById('root');
 const root = ReactDOM.createRoot(rootElement);
