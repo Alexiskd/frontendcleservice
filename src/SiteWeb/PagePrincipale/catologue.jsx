@@ -193,7 +193,7 @@ const Catalogue = () => {
         <link rel="canonical" href="https://cl-back.onrender.com/catalogue" />
       </Helmet>
 
-      <PhoneNumber />
+      
 
       {/* Section Hero */}
       <Box

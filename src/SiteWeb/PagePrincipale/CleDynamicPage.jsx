@@ -345,7 +345,7 @@ const CleDynamicPage = () => {
         </script>
       </Helmet>
       <Box sx={styles.page}>
-        <PhoneNumber />
+        
         <Container sx={styles.searchContainer}>
           <TextField
             label="Tapez le numéro de votre clé"
