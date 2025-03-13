@@ -1,4 +1,3 @@
-// src/Header.jsx
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -15,6 +14,7 @@ import {
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
+import PhoneNumber from './PhoneNumber'; // Assurez-vous que le chemin est correct
 
 const primaryColor = '#4E342E';
 const gradientText = {
@@ -60,7 +60,7 @@ const Header = () => {
             py: { xs: 1, md: 2 },
           }}
         >
-          {/* Section Bandeau (logo, titre, numéro de téléphone) */}
+          {/* Bandeau supérieur : Logo, titre et numéro de téléphone */}
           <Box
             sx={{
               width: '100%',
@@ -131,7 +131,7 @@ const Header = () => {
             </Typography>
           </Box>
 
-          {/* Liens de navigation pour écrans md et plus */}
+          {/* Liens de navigation (affichés en horizontal sur md et plus) */}
           <Box
             sx={{
               width: '100%',
@@ -165,12 +165,22 @@ const Header = () => {
             color="inherit"
             aria-label="menu"
             onClick={() => toggleDrawer(true)}
-            sx={{ display: { xs: 'block', md: 'none' }, position: 'absolute', top: 8, right: 8 }}
+            sx={{
+              display: { xs: 'block', md: 'none' },
+              position: 'absolute',
+              top: 8,
+              right: 8,
+            }}
           >
             <MenuIcon sx={{ fontSize: { xs: '1.8rem', md: '2rem' } }} />
           </IconButton>
         </Toolbar>
       </AppBar>
+
+      {/* Le composant PhoneNumber est importé et affiché en dehors de l'AppBar pour qu'il reste visible sur tous les écrans */}
+      <Box sx={{ pt: { xs: '120px', md: '150px' } }}>
+        <PhoneNumber />
+      </Box>
 
       {/* Drawer pour mobile */}
       <Drawer
@@ -217,7 +227,7 @@ const Header = () => {
         </Box>
       </Drawer>
 
-      {/* Animation CSS intégrée pour l'effet laser sur le numéro */}
+      {/* Animation CSS pour l'effet laser sur le numéro */}
       <style>
         {`
           @keyframes laser {

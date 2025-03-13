@@ -4,24 +4,28 @@ import React from 'react';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, errorMessage: '' };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
-    // Met à jour l'état pour afficher l'UI de secours
-    return { hasError: true, errorMessage: error.message };
+    return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Vous pouvez enregistrer l'erreur dans un service de log ici
-    console.error("Erreur capturée par ErrorBoundary :", error, errorInfo);
+    console.error("ErrorBoundary a capturé une erreur :", error, errorInfo);
+    this.setState({ error, errorInfo });
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '20px', color: 'red' }}>
-          Une erreur est survenue dans l'application : {this.state.errorMessage}
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <h1>Quelque chose s'est mal passé.</h1>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo && this.state.errorInfo.componentStack}
+          </details>
         </div>
       );
     }
