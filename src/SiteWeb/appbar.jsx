@@ -1,3 +1,4 @@
+// src/SiteWeb/appbar.jsx
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -14,7 +15,8 @@ import {
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
-import PhoneNumber from './PagePrincipale/'; // Assurez-vous que le chemin est correct
+import PhoneNumber from '../PagePrincipale/PhoneNumber.jsx';
+
 
 const primaryColor = '#4E342E';
 const gradientText = {
@@ -121,7 +123,8 @@ const Header = () => {
                     left: '-100%',
                     width: '100%',
                     height: '100%',
-                    background: 'linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent)',
+                    background:
+                      'linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent)',
                     animation: 'laser 2s linear infinite',
                   },
                 }}
@@ -177,7 +180,7 @@ const Header = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Le composant PhoneNumber est importé et affiché en dehors de l'AppBar pour qu'il reste visible sur tous les écrans */}
+      {/* Affichage du composant PhoneNumber sous l'AppBar */}
       <Box sx={{ pt: { xs: '120px', md: '150px' } }}>
         <PhoneNumber />
       </Box>
