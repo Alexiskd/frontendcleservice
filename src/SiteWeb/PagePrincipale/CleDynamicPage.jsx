@@ -24,7 +24,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 import PhoneNumber from './PhoneNumber';
 
-// Utilisation de jQuery via la variable globale
+// Utilisation de jQuery via la variable globale (vérifiez que jQuery est chargé globalement via index.html)
 const $ = window.$; 
 
 // Hook de debounce pour la saisie utilisateur
@@ -79,37 +79,6 @@ const CleDynamicPage = () => {
   const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
   const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
-  // Génération des données structurées Schema.org (ItemList)
-  const jsonLdData = useMemo(() => {
-    return {
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      "name": `${adjustedBrandName} – Catalogue de clés`,
-      "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
-      "itemListElement": keys.map((item, index) => ({
-        "@type": "ListItem",
-        "position": index + 1,
-        "item": {
-          "@type": "Product",
-          "name": item.nom,
-          "description": item.descriptionNumero || "Clé de reproduction",
-          "image": getImageSrc(item.imageUrl),
-          "brand": {
-            "@type": "Brand",
-            "name": item.marque
-          },
-          "offers": {
-            "@type": "Offer",
-            "price": item.prix,
-            "priceCurrency": "EUR",
-            "availability": "https://schema.org/InStock",
-            "url": window.location.href
-          }
-        }
-      }))
-    };
-  }, [adjustedBrandName, keys]);
-
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
@@ -117,6 +86,35 @@ const CleDynamicPage = () => {
     if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
     return imageUrl;
   }, []);
+
+  // Génération des données structurées Schema.org (ItemList)
+  const jsonLdData = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": `${adjustedBrandName} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
+    "itemListElement": keys.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Product",
+        "name": item.nom,
+        "description": item.descriptionNumero || "Clé de reproduction",
+        "image": getImageSrc(item.imageUrl),
+        "brand": {
+          "@type": "Brand",
+          "name": item.marque
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": item.prix,
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": window.location.href
+        }
+      }
+    }))
+  }), [adjustedBrandName, keys, getImageSrc]);
 
   // Récupération du logo pour la marque
   useEffect(() => {
@@ -154,9 +152,7 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
     preloadKeysData(adjustedBrandName)
-      .then((data) => {
-        setKeys(data);
-      })
+      .then((data) => setKeys(data))
       .catch((err) => {
         console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
@@ -180,54 +176,38 @@ const CleDynamicPage = () => {
   }, []);
 
   // Filtrage des clés selon la recherche et inversion de l'ordre pour afficher les derniers en premier
-  const filteredKeys = useMemo(() => {
-    return keys
-      .filter((item) =>
-        item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      )
-      .slice()
-      .reverse();
-  }, [keys, debouncedSearchTerm]);
+  const filteredKeys = useMemo(() => (
+    keys.filter((item) =>
+      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    ).slice().reverse()
+  ), [keys, debouncedSearchTerm]);
 
   // Redirection vers la page de commande
-  const handleOrderNow = useCallback(
-    (item, mode) => {
-      try {
-        const formattedName = item.nom.trim().replace(/\s+/g, '-');
-        navigate(
-          `/commander/${adjustedBrandName.replace(/\s+/g, '-')}/cle/${item.referenceEbauche}/${encodeURIComponent(
-            formattedName
-          )}?mode=${mode}`
-        );
-      } catch (error) {
-        console.error('Erreur lors de la navigation vers la commande:', error);
-        setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      }
-    },
-    [adjustedBrandName, navigate]
-  );
+  const handleOrderNow = useCallback((item, mode) => {
+    try {
+      const formattedName = item.nom.trim().replace(/\s+/g, '-');
+      navigate(`/commander/${adjustedBrandName.replace(/\s+/g, '-')}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`);
+    } catch (error) {
+      console.error('Erreur lors de la navigation vers la commande:', error);
+      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }, [adjustedBrandName, navigate]);
 
   // Redirection vers la page produit
-  const handleViewProduct = useCallback(
-    (item) => {
-      const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-      navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
-    },
-    [navigate]
-  );
+  const handleViewProduct = useCallback((item) => {
+    const formattedName = item.nom.trim().replace(/\s+/g, '-');
+    const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
+    navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
+  }, [navigate]);
 
   // Ouvre le popup d'agrandissement de l'image et réinitialise le zoom
-  const openImageModal = useCallback(
-    (item) => {
-      setModalImageSrc(getImageSrc(item.imageUrl));
-      setScale(1);
-      setModalOpen(true);
-    },
-    [getImageSrc]
-  );
+  const openImageModal = useCallback((item) => {
+    setModalImageSrc(getImageSrc(item.imageUrl));
+    setScale(1);
+    setModalOpen(true);
+  }, [getImageSrc]);
 
   const handleCloseSnackbar = useCallback((event, reason) => {
     if (reason === 'clickaway') return;
@@ -244,101 +224,98 @@ const CleDynamicPage = () => {
     });
   }, []);
 
-  const styles = useMemo(
-    () => ({
-      page: {
-        backgroundColor: '#fafafa',
-        minHeight: '100vh',
-        paddingBottom: '24px',
-      },
-      searchContainer: {
-        marginTop: { xs: '20px', sm: '40px' },
-        marginBottom: '24px',
-      },
-      gridContainer: {
-        padding: '16px 0',
-      },
-      card: {
-        backgroundColor: '#fff',
-        borderRadius: '12px',
-        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        minHeight: '400px',
-        width: '100%',
-        flex: 1,
-      },
-      cardMedia: {
-        height: 180,
-        objectFit: 'contain',
-        backgroundColor: '#fff',
-        borderTopLeftRadius: '12px',
-        borderTopRightRadius: '12px',
-      },
-      cardContent: {
-        flexGrow: 1,
-        padding: { xs: '8px', sm: '16px' },
-        fontFamily: 'Montserrat, sans-serif',
-        textAlign: 'left',
-      },
-      productName: {
-        fontSize: '1.2rem',
-        fontWeight: 700,
-        marginBottom: 0,
-        color: '#333',
-        cursor: 'pointer',
-      },
-      brandName: {
-        fontSize: '0.9rem',
-        color: '#777',
-        marginBottom: '8px',
-      },
-      pricesContainer: {
-        display: 'flex',
-        gap: '8px',
-        marginTop: '12px',
-      },
-      priceBadge: {
-        backgroundColor: '#e8f5e9',
-        padding: '6px 12px',
-        borderRadius: '8px',
-        textAlign: 'center',
-        color: '#1B5E20',
-      },
-      buttonSecondary: {
-        borderRadius: '50px',
-        padding: '8px 16px',
-        fontFamily: 'Montserrat, sans-serif',
-        textTransform: 'none',
-        fontWeight: 600,
-        fontSize: '0.75rem',
-        boxShadow: 'none',
-        marginTop: '8px',
-      },
-      buttonContainer: {
-        padding: { xs: '8px', sm: '16px' },
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        mt: 'auto',
-      },
-      brandLogoContainer: {
-        position: 'absolute',
-        top: 8,
-        left: 8,
-        width: 32,
-        height: 32,
-        borderRadius: '50%',
-        overflow: 'hidden',
-        backgroundColor: '#fff',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-        zIndex: 2,
-      },
-    }),
-    []
-  );
+  const styles = useMemo(() => ({
+    page: {
+      backgroundColor: '#fafafa',
+      minHeight: '100vh',
+      paddingBottom: '24px',
+    },
+    searchContainer: {
+      marginTop: { xs: '20px', sm: '40px' },
+      marginBottom: '24px',
+    },
+    gridContainer: {
+      padding: '16px 0',
+    },
+    card: {
+      backgroundColor: '#fff',
+      borderRadius: '12px',
+      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+      transition: 'transform 0.2s, box-shadow 0.2s',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      minHeight: '400px',
+      width: '100%',
+      flex: 1,
+    },
+    cardMedia: {
+      height: 180,
+      objectFit: 'contain',
+      backgroundColor: '#fff',
+      borderTopLeftRadius: '12px',
+      borderTopRightRadius: '12px',
+    },
+    cardContent: {
+      flexGrow: 1,
+      padding: { xs: '8px', sm: '16px' },
+      fontFamily: 'Montserrat, sans-serif',
+      textAlign: 'left',
+    },
+    productName: {
+      fontSize: '1.2rem',
+      fontWeight: 700,
+      marginBottom: 0,
+      color: '#333',
+      cursor: 'pointer',
+    },
+    brandName: {
+      fontSize: '0.9rem',
+      color: '#777',
+      marginBottom: '8px',
+    },
+    pricesContainer: {
+      display: 'flex',
+      gap: '8px',
+      marginTop: '12px',
+    },
+    priceBadge: {
+      backgroundColor: '#e8f5e9',
+      padding: '6px 12px',
+      borderRadius: '8px',
+      textAlign: 'center',
+      color: '#1B5E20',
+    },
+    buttonSecondary: {
+      borderRadius: '50px',
+      padding: '8px 16px',
+      fontFamily: 'Montserrat, sans-serif',
+      textTransform: 'none',
+      fontWeight: 600,
+      fontSize: '0.75rem',
+      boxShadow: 'none',
+      marginTop: '8px',
+    },
+    buttonContainer: {
+      padding: { xs: '8px', sm: '16px' },
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      mt: 'auto',
+    },
+    brandLogoContainer: {
+      position: 'absolute',
+      top: 8,
+      left: 8,
+      width: 32,
+      height: 32,
+      borderRadius: '50%',
+      overflow: 'hidden',
+      backgroundColor: '#fff',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      zIndex: 2,
+    },
+  }), []);
 
   return (
     <HelmetProvider>
@@ -378,13 +355,7 @@ const CleDynamicPage = () => {
               {error}
             </Typography>
           ) : filteredKeys.length > 0 ? (
-            <Grid
-              container
-              spacing={2}
-              alignItems="stretch"
-              justifyContent="center"
-              sx={styles.gridContainer}
-            >
+            <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
               {filteredKeys.map((item, index) => {
                 const numeroPrice = Number(item.prix);
                 const postalPrice = Number(item.prixSansCartePropriete);
@@ -398,9 +369,7 @@ const CleDynamicPage = () => {
                               src={brandLogo}
                               alt={item.marque}
                               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                              onError={(e) =>
-                                console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)
-                              }
+                              onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
                             />
                           </Box>
                         )}
@@ -409,9 +378,7 @@ const CleDynamicPage = () => {
                           image={getImageSrc(item.imageUrl)}
                           alt={item.nom}
                           sx={styles.cardMedia}
-                          onError={(e) =>
-                            console.error("Erreur lors du chargement de l'image du produit:", e)
-                          }
+                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
                         />
                         <Skeleton
                           variant="rectangular"
