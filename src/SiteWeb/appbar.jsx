@@ -14,7 +14,7 @@ import {
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
-import PhoneNumber from './PhoneNumber'; // Assurez-vous que le chemin est correct
+import PhoneNumber from './PagePrincipale/'; // Assurez-vous que le chemin est correct
 
 const primaryColor = '#4E342E';
 const gradientText = {
