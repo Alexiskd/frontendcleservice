@@ -1,3 +1,4 @@
+// main.jsx
 import $ from 'jquery';
 window.$ = $;
 

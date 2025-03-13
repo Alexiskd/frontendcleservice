@@ -1,3 +1,6 @@
+import $ from 'jquery';
+window.$ = $;
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
@@ -244,14 +247,14 @@ const CleDynamicPage = () => {
       page: {
         backgroundColor: '#fafafa',
         minHeight: '100vh',
-        paddingBottom: '24px',
+        paddingBottom: '24px'
       },
       searchContainer: {
         marginTop: { xs: '20px', sm: '40px' },
-        marginBottom: '24px',
+        marginBottom: '24px'
       },
       gridContainer: {
-        padding: '16px 0',
+        padding: '16px 0'
       },
       card: {
         backgroundColor: '#fff',
@@ -263,44 +266,44 @@ const CleDynamicPage = () => {
         height: '100%',
         minHeight: '400px',
         width: '100%',
-        flex: 1,
+        flex: 1
       },
       cardMedia: {
         height: 180,
         objectFit: 'contain',
         backgroundColor: '#fff',
         borderTopLeftRadius: '12px',
-        borderTopRightRadius: '12px',
+        borderTopRightRadius: '12px'
       },
       cardContent: {
         flexGrow: 1,
         padding: { xs: '8px', sm: '16px' },
         fontFamily: 'Montserrat, sans-serif',
-        textAlign: 'left',
+        textAlign: 'left'
       },
       productName: {
         fontSize: '1.2rem',
         fontWeight: 700,
         marginBottom: 0,
         color: '#333',
-        cursor: 'pointer',
+        cursor: 'pointer'
       },
       brandName: {
         fontSize: '0.9rem',
         color: '#777',
-        marginBottom: '8px',
+        marginBottom: '8px'
       },
       pricesContainer: {
         display: 'flex',
         gap: '8px',
-        marginTop: '12px',
+        marginTop: '12px'
       },
       priceBadge: {
         backgroundColor: '#e8f5e9',
         padding: '6px 12px',
         borderRadius: '8px',
         textAlign: 'center',
-        color: '#1B5E20',
+        color: '#1B5E20'
       },
       buttonSecondary: {
         borderRadius: '50px',
@@ -310,14 +313,14 @@ const CleDynamicPage = () => {
         fontWeight: 600,
         fontSize: '0.75rem',
         boxShadow: 'none',
-        marginTop: '8px',
+        marginTop: '8px'
       },
       buttonContainer: {
         padding: { xs: '8px', sm: '16px' },
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
-        mt: 'auto',
+        mt: 'auto'
       },
       brandLogoContainer: {
         position: 'absolute',
@@ -329,8 +332,8 @@ const CleDynamicPage = () => {
         overflow: 'hidden',
         backgroundColor: '#fff',
         boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-        zIndex: 2,
-      },
+        zIndex: 2
+      }
     }),
     []
   );
@@ -340,7 +343,10 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
+        <meta
+          name="keywords"
+          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
+        />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -357,7 +363,7 @@ const CleDynamicPage = () => {
             variant="outlined"
             fullWidth
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
           />
         </Container>
         <Container maxWidth="xl">
@@ -404,7 +410,7 @@ const CleDynamicPage = () => {
                             width: '100%',
                             height: 180,
                             borderTopLeftRadius: '12px',
-                            borderTopRightRadius: '12px',
+                            borderTopRightRadius: '12px'
                           }}
                         />
                       </Box>
@@ -444,8 +450,8 @@ const CleDynamicPage = () => {
                               color: '#1B5E20',
                               '&:hover': {
                                 backgroundColor: '#1B5E20',
-                                color: '#fff',
-                              },
+                                color: '#fff'
+                              }
                             }}
                           >
                             Commander par numéro <br />(chez le fabricant)
@@ -462,8 +468,8 @@ const CleDynamicPage = () => {
                               color: '#1B5E20',
                               '&:hover': {
                                 backgroundColor: '#1B5E20',
-                                color: '#fff',
-                              },
+                                color: '#fff'
+                              }
                             }}
                           >
                             Commander reproduction dans nos ateliers
@@ -503,7 +509,7 @@ const CleDynamicPage = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 overflow: 'hidden',
-                maxHeight: '80vh',
+                maxHeight: '80vh'
               }}
             >
               <img
@@ -513,7 +519,7 @@ const CleDynamicPage = () => {
                   transform: `scale(${scale})`,
                   transition: 'transform 0.2s',
                   width: '100%',
-                  height: 'auto',
+                  height: 'auto'
                 }}
               />
             </Box>
