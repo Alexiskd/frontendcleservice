@@ -1,5 +1,10 @@
-import React, { useEffect } from 'react';
 import $ from 'jquery';
+// Ensuite, vos autres imports
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+// etc.
+
+
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@emotion/react';
