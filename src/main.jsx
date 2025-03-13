@@ -1,5 +1,6 @@
 // index.js ou App.jsx (avant le rendu React)
-import $ from 'jquery';
+import $ from "https://code.jquery.com/jquery-3.6.0.min.js";
+
 window.$ = window.jQuery = $;
 
 
