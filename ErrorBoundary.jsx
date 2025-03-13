@@ -1,35 +1,28 @@
-// src/ErrorBoundary.jsx
-import React from 'react';
+// src/components/ErrorBoundary.jsx
+import React, { Component } from 'react';
 
-class ErrorBoundary extends React.Component {
+class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false };
   }
-
+  
   static getDerivedStateFromError(error) {
+    // Met à jour l'état pour afficher l'UI de secours
     return { hasError: true };
   }
-
+  
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary a capturé une erreur :", error, errorInfo);
-    this.setState({ error, errorInfo });
+    // Vous pouvez aussi enregistrer l'erreur dans un service de reporting
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
-
+  
   render() {
     if (this.state.hasError) {
-      return (
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <h1>Quelque chose s'est mal passé.</h1>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            {this.state.error && this.state.error.toString()}
-            <br />
-            {this.state.errorInfo && this.state.errorInfo.componentStack}
-          </details>
-        </div>
-      );
+      // Vous pouvez personnaliser l'affichage en cas d'erreur
+      return <h1>Quelque chose s'est mal passé.</h1>;
     }
-    return this.props.children;
+    return this.props.children; 
   }
 }
 

@@ -5,10 +5,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@emotion/react';
 import App from './SiteWeb/App';
 import { theme } from './theme';
-import ErrorBoundary from './ErrorBoundary.jsx'; // Chemin relatif vérifié
+import ErrorBoundary from '../ErrorBoundary.jsx'; // Chemin corrigé
 
-// jQuery est chargé globalement via index.html (accessible via window.$)
-// Si besoin : const $ = window.$;
+// jQuery est chargé globalement via index.html ; vous pouvez l'utiliser via window.$
 
 const rootElement = document.getElementById('root');
 const root = ReactDOM.createRoot(rootElement);
