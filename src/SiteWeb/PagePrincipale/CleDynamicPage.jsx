@@ -1,5 +1,4 @@
-import $ from 'jquery';
-window.$ = $;
+// src/SiteWeb/PagePrincipale/CleDynamicPage.jsx
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
@@ -24,6 +23,9 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 import PhoneNumber from './PhoneNumber';
+
+// Utilisation de jQuery via la variable globale
+const $ = window.$; 
 
 // Hook de debounce pour la saisie utilisateur
 function useDebounce(value, delay) {
@@ -247,14 +249,14 @@ const CleDynamicPage = () => {
       page: {
         backgroundColor: '#fafafa',
         minHeight: '100vh',
-        paddingBottom: '24px'
+        paddingBottom: '24px',
       },
       searchContainer: {
         marginTop: { xs: '20px', sm: '40px' },
-        marginBottom: '24px'
+        marginBottom: '24px',
       },
       gridContainer: {
-        padding: '16px 0'
+        padding: '16px 0',
       },
       card: {
         backgroundColor: '#fff',
@@ -266,44 +268,44 @@ const CleDynamicPage = () => {
         height: '100%',
         minHeight: '400px',
         width: '100%',
-        flex: 1
+        flex: 1,
       },
       cardMedia: {
         height: 180,
         objectFit: 'contain',
         backgroundColor: '#fff',
         borderTopLeftRadius: '12px',
-        borderTopRightRadius: '12px'
+        borderTopRightRadius: '12px',
       },
       cardContent: {
         flexGrow: 1,
         padding: { xs: '8px', sm: '16px' },
         fontFamily: 'Montserrat, sans-serif',
-        textAlign: 'left'
+        textAlign: 'left',
       },
       productName: {
         fontSize: '1.2rem',
         fontWeight: 700,
         marginBottom: 0,
         color: '#333',
-        cursor: 'pointer'
+        cursor: 'pointer',
       },
       brandName: {
         fontSize: '0.9rem',
         color: '#777',
-        marginBottom: '8px'
+        marginBottom: '8px',
       },
       pricesContainer: {
         display: 'flex',
         gap: '8px',
-        marginTop: '12px'
+        marginTop: '12px',
       },
       priceBadge: {
         backgroundColor: '#e8f5e9',
         padding: '6px 12px',
         borderRadius: '8px',
         textAlign: 'center',
-        color: '#1B5E20'
+        color: '#1B5E20',
       },
       buttonSecondary: {
         borderRadius: '50px',
@@ -313,14 +315,14 @@ const CleDynamicPage = () => {
         fontWeight: 600,
         fontSize: '0.75rem',
         boxShadow: 'none',
-        marginTop: '8px'
+        marginTop: '8px',
       },
       buttonContainer: {
         padding: { xs: '8px', sm: '16px' },
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
-        mt: 'auto'
+        mt: 'auto',
       },
       brandLogoContainer: {
         position: 'absolute',
@@ -332,8 +334,8 @@ const CleDynamicPage = () => {
         overflow: 'hidden',
         backgroundColor: '#fff',
         boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-        zIndex: 2
-      }
+        zIndex: 2,
+      },
     }),
     []
   );
@@ -376,7 +378,13 @@ const CleDynamicPage = () => {
               {error}
             </Typography>
           ) : filteredKeys.length > 0 ? (
-            <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
+            <Grid
+              container
+              spacing={2}
+              alignItems="stretch"
+              justifyContent="center"
+              sx={styles.gridContainer}
+            >
               {filteredKeys.map((item, index) => {
                 const numeroPrice = Number(item.prix);
                 const postalPrice = Number(item.prixSansCartePropriete);
@@ -390,7 +398,9 @@ const CleDynamicPage = () => {
                               src={brandLogo}
                               alt={item.marque}
                               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                              onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
+                              onError={(e) =>
+                                console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)
+                              }
                             />
                           </Box>
                         )}
@@ -399,7 +409,9 @@ const CleDynamicPage = () => {
                           image={getImageSrc(item.imageUrl)}
                           alt={item.nom}
                           sx={styles.cardMedia}
-                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
+                          onError={(e) =>
+                            console.error("Erreur lors du chargement de l'image du produit:", e)
+                          }
                         />
                         <Skeleton
                           variant="rectangular"
@@ -410,7 +422,7 @@ const CleDynamicPage = () => {
                             width: '100%',
                             height: 180,
                             borderTopLeftRadius: '12px',
-                            borderTopRightRadius: '12px'
+                            borderTopRightRadius: '12px',
                           }}
                         />
                       </Box>
@@ -450,8 +462,8 @@ const CleDynamicPage = () => {
                               color: '#1B5E20',
                               '&:hover': {
                                 backgroundColor: '#1B5E20',
-                                color: '#fff'
-                              }
+                                color: '#fff',
+                              },
                             }}
                           >
                             Commander par numéro <br />(chez le fabricant)
@@ -468,8 +480,8 @@ const CleDynamicPage = () => {
                               color: '#1B5E20',
                               '&:hover': {
                                 backgroundColor: '#1B5E20',
-                                color: '#fff'
-                              }
+                                color: '#fff',
+                              },
                             }}
                           >
                             Commander reproduction dans nos ateliers
@@ -509,7 +521,7 @@ const CleDynamicPage = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 overflow: 'hidden',
-                maxHeight: '80vh'
+                maxHeight: '80vh',
               }}
             >
               <img
@@ -519,7 +531,7 @@ const CleDynamicPage = () => {
                   transform: `scale(${scale})`,
                   transition: 'transform 0.2s',
                   width: '100%',
-                  height: 'auto'
+                  height: 'auto',
                 }}
               />
             </Box>
