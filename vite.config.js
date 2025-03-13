@@ -1,9 +1,8 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite'
 
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      external: ['jquery']
-    }
+  // other configurations...
+  preview: {
+    allowedHosts: ['frontendcleservice.onrender.com']
   }
-});
+})
