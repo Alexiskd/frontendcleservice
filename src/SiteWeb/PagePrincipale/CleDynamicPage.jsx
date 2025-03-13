@@ -70,9 +70,13 @@ const CleDynamicPage = () => {
     : brandFull;
   const adjustedBrandName = actualBrandName.toUpperCase();
 
-  // Définition des balises SEO
-  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  // Définition de la fonction getImageSrc avant son utilisation
+  const getImageSrc = useCallback((imageUrl) => {
+    if (!imageUrl || imageUrl.trim() === '') return '';
+    if (imageUrl.startsWith('data:')) return imageUrl;
+    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
+    return imageUrl;
+  }, []);
 
   // Génération des données structurées Schema.org (ItemList)
   const jsonLdData = useMemo(() => {
@@ -103,15 +107,7 @@ const CleDynamicPage = () => {
         }
       }))
     };
-  }, [adjustedBrandName, keys]);
-
-  // Fonction pour obtenir l'URL d'une image
-  const getImageSrc = useCallback((imageUrl) => {
-    if (!imageUrl || imageUrl.trim() === '') return '';
-    if (imageUrl.startsWith('data:')) return imageUrl;
-    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
-    return imageUrl;
-  }, []);
+  }, [adjustedBrandName, keys, getImageSrc]);
 
   // Récupération du logo pour la marque
   useEffect(() => {
