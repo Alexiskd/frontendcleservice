@@ -24,8 +24,18 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 import PhoneNumber from './PhoneNumber';
 
-// Utilisation de jQuery via la variable globale (vérifiez que jQuery est chargé globalement via index.html)
-const $ = window.$; 
+// Tentative de récupérer jQuery depuis la variable globale
+let localJQuery;
+try {
+  localJQuery = window.$;
+  if (!localJQuery) {
+    throw new Error("jQuery n'est pas chargé globalement.");
+  }
+} catch (err) {
+  console.error("Erreur d'initialisation de jQuery :", err);
+  // Vous pouvez définir localJQuery sur une fonction vide ou gérer autrement
+  localJQuery = null;
+}
 
 // Hook de debounce pour la saisie utilisateur
 function useDebounce(value, delay) {
