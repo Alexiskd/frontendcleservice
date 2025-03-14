@@ -143,10 +143,7 @@ const Badgeuu = () => {
       </Helmet>
       <Box sx={styles.page}>
         {/* Bandeau supérieur */}
-        <Box sx={styles.header}>
-          <PhoneNumber />
-        </Box>
-
+        
         {/* Conteneur regroupant les deux sections côte à côte */}
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Box

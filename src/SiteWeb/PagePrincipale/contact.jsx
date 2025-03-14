@@ -102,13 +102,7 @@ const Contact = () => {
     >
     
       {/* Bandeau en haut - Hauteur réduite */}
-      <Box
-        sx={{
-          height: { xs: '60px', md: '120px' },
-          backgroundColor: '#01591f',
-        }}
-      />
-
+     
       {/* Header avec image de fond - Espacement vertical réduit */}
       <Box
         sx={{

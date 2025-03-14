@@ -194,7 +194,7 @@ const ProductPage = () => {
 
   return (
     <>
-      <PhoneNumber />
+      
       <Container sx={{ mt: 2, mb: 4 }}>
         <StyledCard>
           <Grid container spacing={2}>
