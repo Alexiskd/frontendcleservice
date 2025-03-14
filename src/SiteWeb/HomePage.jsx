@@ -168,8 +168,7 @@ const Login = () => {
 
         {/* HEADER - Bandeaux et Hero Section */}
         <header>
-          <Box sx={{ height: { xs: '56px', md: '0px' }, backgroundColor: "#01591f" }} />
-          <Box sx={{ height: { xs: '100px', md: '120px' }, backgroundColor: "#01591f" }} />
+          
 
           <Box
             component="section"
