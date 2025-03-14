@@ -199,7 +199,7 @@ const Coffrefort = () => {
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
-      <PhoneNumber />
+      
 
       {/* Section Hero */}
       <Box
