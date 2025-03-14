@@ -1,5 +1,5 @@
 // src/Login.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { styled } from '@mui/material/styles';
 import {
@@ -7,9 +7,12 @@ import {
   Typography,
   Container,
   Grid,
-  IconButton
+  IconButton,
+  Drawer,
+  Button,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
+import MenuIcon from '@mui/icons-material/Menu';
 import KeyIcon from '@mui/icons-material/VpnKey';
 import LockIcon from '@mui/icons-material/Lock';
 import BuildIcon from '@mui/icons-material/Build';
@@ -26,6 +29,16 @@ const primaryDark = '#1B5E20';
 const lightBackground = '#F1F8E9';
 const textPrimary = '#212121';
 const textSecondary = '#424242';
+
+// Tableau des items de navigation
+const navItems = [
+  { label: 'Accueil', to: '/' },
+  { label: 'Qui sommes-nous ?', to: '/qui.php' },
+  { label: 'Catalogue', to: '/trouvez.php' },
+  { label: 'Coffre Fort', to: '/catalogue-cles-coffre.php' },
+  { label: 'Badges', to: '/badges.php' },
+  { label: 'Contact', to: '/contact.php' },
+];
 
 // Style commun pour les cartes
 const cardStyle = {
@@ -85,6 +98,8 @@ const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
 });
 
 const Login = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <ErrorBoundary>
       <Helmet>
@@ -142,6 +157,56 @@ const Login = () => {
         </div>
       </noscript>
 
+      {/* Menu mobile pour téléphone - style bento moderne */}
+      <Drawer
+        anchor="right"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(90deg, #e0e0e0, #ffffff)',
+            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+            width: 280,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            width: 280,
+            p: 3,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 2,
+          }}
+          role="presentation"
+          onClick={() => setMobileMenuOpen(false)}
+          onKeyDown={() => setMobileMenuOpen(false)}
+        >
+          {navItems.map((item, index) => (
+            <Button
+              key={index}
+              component={Link}
+              to={item.to}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                backgroundColor: '#fff',
+                color: primaryColor,
+                borderRadius: 2,
+                padding: 1.5,
+                transition: 'background-color 0.3s, transform 0.3s',
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                  transform: 'scale(1.05)',
+                },
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </Box>
+      </Drawer>
+
       <Box
         component="main"
         sx={{
@@ -181,10 +246,27 @@ const Login = () => {
               maxWidth="lg"
               sx={{ position: 'relative', zIndex: 1, pt: { xs: 8, md: 10 }, textAlign: 'center' }}
             >
-              <Typography component="h1" variant="h3" gutterBottom sx={{ fontWeight: '700', mb: 2, fontSize: { xs: '1.75rem', md: '2.5rem' } }}>
+              <Typography
+                component="h1"
+                variant="h3"
+                gutterBottom
+                sx={{ fontWeight: '700', mb: 2, fontSize: { xs: '1.75rem', md: '2.5rem' } }}
+              >
                 Un double de clé, une copie ? Facile et rapide !
               </Typography>
-              <Typography component="h2" variant="h4" gutterBottom sx={{ fontWeight: '700', mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: { xs: '1.25rem', md: '1.75rem' } }}>
+              <Typography
+                component="h2"
+                variant="h4"
+                gutterBottom
+                sx={{
+                  fontWeight: '700',
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: { xs: '1.25rem', md: '1.75rem' }
+                }}
+              >
                 Appelez le&nbsp;
                 <Box
                   component="a"
@@ -215,6 +297,19 @@ const Login = () => {
                 {/* Sous-titre ou texte additionnel */}
               </Typography>
             </Container>
+
+            {/* Icône du menu mobile (visible uniquement sur mobile) */}
+            <IconButton
+              onClick={() => setMobileMenuOpen(true)}
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                display: { xs: 'block', md: 'none' }
+              }}
+            >
+              <MenuIcon sx={{ fontSize: 28, color: primaryColor }} />
+            </IconButton>
           </Box>
         </header>
 
@@ -262,16 +357,14 @@ const Login = () => {
             </Typography>
             <Box sx={{ boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
               <iframe
-                  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+Levis,+Paris,+France&zoom=18"
-                  width="100%"
-                  height="400"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  title="Localisation Boutique"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+Levis,+Paris,+France&zoom=18"
+                width="100%"
+                height="400"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                title="Localisation Boutique"
               ></iframe>
-
-
             </Box>
           </Container>
         </section>
@@ -553,3 +646,4 @@ const Login = () => {
 };
 
 export default Login;
+
