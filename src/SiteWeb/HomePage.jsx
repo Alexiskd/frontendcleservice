@@ -18,7 +18,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
-// Vérifiez le nom du fichier
+import ErrorBoundary from './ErrorBoundary.jsx';
 
 // Variables de couleurs et typographie
 const primaryColor = '#2E7D32';
@@ -83,9 +83,6 @@ const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
     </CustomButton>
   );
 });
-
-// Le composant Login est enveloppé dans l'ErrorBoundary pour mieux capter les erreurs
-import ErrorBoundary from './ErrorBoundary.jsx';
 
 const Login = () => {
   return (
@@ -168,8 +165,6 @@ const Login = () => {
 
         {/* HEADER - Bandeaux et Hero Section */}
         <header>
-          
-
           <Box
             component="section"
             sx={{
@@ -267,7 +262,7 @@ const Login = () => {
             </Typography>
             <Box sx={{ boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
               <iframe
-                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+Lévis,+Paris,+France"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+L%C3%A9vis,+Paris,+France"
                 width="100%"
                 height="400"
                 style={{ border: 0 }}
@@ -556,3 +551,4 @@ const Login = () => {
 };
 
 export default Login;
+
