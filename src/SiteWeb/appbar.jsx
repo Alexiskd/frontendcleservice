@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
 
+
 // Style pour le texte en dégradé
 const gradientText = {
   background: 'linear-gradient(90deg, #15720a, #000)',

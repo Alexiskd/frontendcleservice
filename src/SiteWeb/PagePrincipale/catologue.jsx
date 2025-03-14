@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
 import { preloadBrandsData } from '../brandsApi';
-import PhoneNumber from './PhoneNumber';
+
 
 // Hook personnalisé pour précharger une image
 function useImagePreloader(src) {
