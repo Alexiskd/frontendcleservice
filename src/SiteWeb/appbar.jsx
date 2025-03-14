@@ -14,7 +14,6 @@ import {
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
-import PhoneNumber from "./PagePrincipale/PhoneNumber";
 
 // Style pour le texte en dégradé
 const gradientText = {
@@ -170,8 +169,14 @@ const Header = () => {
         </Box>
       </Drawer>
 
-      {/* Bandeau juste en dessous du header affichant le PhoneNumber */}
-      <Box sx={{ mt: { xs: '64px', md: '80px' } }}>
+      
+       {/* Bandeau juste en dessous du header affichant le PhoneNumber */}
+       <Box sx={{
+          mt: { xs: '64px', md: '80px' }, // espace pour tenir compte du header fixe
+          background: 'linear-gradient(90deg, #1B5E20, #f4f4cc)',
+          py: 2,
+          textAlign: 'center',
+        }}>
         <PhoneNumber />
       </Box>
     </>
