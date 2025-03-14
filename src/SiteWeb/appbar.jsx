@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -132,6 +132,9 @@ const Header = () => {
             </Typography>
           </Box>
 
+          {/* Intégration directe du composant PhoneNumber dans le header */}
+          <PhoneNumber />
+
           {/* Liens de navigation (affichés en horizontal sur md et plus) */}
           <Box
             sx={{
@@ -177,11 +180,6 @@ const Header = () => {
           </IconButton>
         </Toolbar>
       </AppBar>
-
-      {/* Le composant PhoneNumber est affiché en dehors de l'AppBar pour rester visible */}
-      <Box sx={{ pt: { xs: '120px', md: '150px' } }}>
-        <PhoneNumber />
-      </Box>
 
       {/* Drawer pour mobile */}
       <Drawer
