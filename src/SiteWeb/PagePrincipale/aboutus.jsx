@@ -126,14 +126,6 @@ const AboutUs = () => {
           fontFamily: '"Roboto", sans-serif',
         }}
       >
-        {/* Bandeau en haut de la Hero Section */}
-        <Box
-          sx={{
-            height: { xs: '100px', md: '120px' },
-            backgroundColor: "#01591f",
-          }}
-        />
-
         {/* SECTION HERO */}
         <Box
           sx={{
@@ -455,7 +447,7 @@ const AboutUs = () => {
             <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
               <Avatar 
                 alt="Benjamin Bouvet - Gérant de CLE SERVICE"
-                
+                src={benjamin}
                 sx={{ width: { xs: 80, md: 100 }, height: { xs: 80, md: 100 }, mx: 'auto', mb: 2 }}
               />
               <Typography
@@ -475,7 +467,7 @@ const AboutUs = () => {
             <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
               <Avatar 
                 alt="Alexis Bouvet - Développeur chez CLE SERVICE"
-                
+                src={alexis}
                 sx={{
                   width: { xs: 80, md: 100 },
                   height: { xs: 80, md: 100 },
