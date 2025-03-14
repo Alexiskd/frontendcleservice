@@ -19,11 +19,6 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
 import KeySearch from './PagePrincipale/keyshearch.jsx'; // Vérifiez le nom du fichier
-import ErrorBoundary from './ErrorBoundary.jsx';
-
-
-
-
 
 // Variables de couleurs et typographie
 const primaryColor = '#2E7D32';
@@ -89,12 +84,9 @@ const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
   );
 });
 
-// Le composant Login est enveloppé dans l'ErrorBoundary pour mieux capter les erreurs
-import ErrorBoundary from './ErrorBoundary';
-
 const Login = () => {
   return (
-    <ErrorBoundary>
+    <>
       <Helmet>
         <title>CléService - Double de clé en ligne, Facile et Rapide</title>
         <meta
@@ -557,7 +549,7 @@ const Login = () => {
           </Container>
         </section>
       </Box>
-    </ErrorBoundary>
+    </>
   );
 };
 
