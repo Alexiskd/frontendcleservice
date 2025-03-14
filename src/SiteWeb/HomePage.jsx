@@ -85,7 +85,7 @@ const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
 });
 
 // Le composant Login est enveloppé dans l'ErrorBoundary pour mieux capter les erreurs
-import ErrorBoundary from './ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary.jsx';
 
 const Login = () => {
   return (
