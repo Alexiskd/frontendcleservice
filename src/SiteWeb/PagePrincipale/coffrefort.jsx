@@ -16,7 +16,7 @@ import {
 import { Link } from 'react-router-dom';
 import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
-import PhoneNumber from './PhoneNumber';
+
 
 // Liste des marques en dur
 const hardcodedBrands = [

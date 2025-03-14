@@ -22,7 +22,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
-import PhoneNumber from './PhoneNumber';
+
 
 // Tentative de récupérer jQuery depuis la variable globale
 let localJQuery;
