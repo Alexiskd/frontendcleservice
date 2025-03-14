@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import {
   AppBar,
   Toolbar,
@@ -16,8 +16,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
 import PhoneNumber from "./PagePrincipale/PhoneNumber";
 
- // Chemin corrigé pour l'import de PhoneNumber
-
+// Définition des couleurs et du style de texte en dégradé
 const primaryColor = '#4E342E';
 const gradientText = {
   background: 'linear-gradient(90deg, #15720a, #000)',
