@@ -15,6 +15,13 @@ import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
 
+// Style pour le texte en dégradé
+const gradientText = {
+  background: 'linear-gradient(90deg, #15720a, #000)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+};
+
 const navItems = [
   { label: 'Accueil', to: '/' },
   { label: 'Qui sommes-nous ?', to: '/qui.php' },
@@ -70,6 +77,7 @@ const Header = () => {
                 ml: 1,
                 fontWeight: 600,
                 fontSize: { xs: '1.2rem', md: '1.8rem' },
+                ...gradientText,
               }}
             >
               Cleservice.com
@@ -92,7 +100,7 @@ const Header = () => {
                   fontWeight: 600,
                   fontSize: { xs: '0.9rem', md: '1.1rem' },
                   textTransform: 'none',
-                  color: 'inherit',
+                  ...gradientText,
                 }}
               >
                 {item.label}
@@ -150,7 +158,7 @@ const Header = () => {
               >
                 <ListItemText
                   primary={
-                    <Typography variant="body1" sx={{ color: '#fff' }}>
+                    <Typography variant="body1" sx={{ ...gradientText }}>
                       {item.label}
                     </Typography>
                   }
@@ -170,10 +178,7 @@ const Header = () => {
           textAlign: 'center',
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{ fontWeight: 600, color: '#fff' }}
-        >
+        <Typography variant="h5" sx={{ fontWeight: 600, ...gradientText }}>
           Bienvenue sur Cleservice.com
         </Typography>
       </Box>
