@@ -14,15 +14,6 @@ import {
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
-import PhoneNumber from "./PagePrincipale/PhoneNumber";
-
-// Définition des couleurs et du style de texte en dégradé
-const primaryColor = '#4E342E';
-const gradientText = {
-  background: 'linear-gradient(90deg, #15720a, #000)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-};
 
 const navItems = [
   { label: 'Accueil', to: '/' },
@@ -39,108 +30,56 @@ const Header = () => {
 
   return (
     <>
+      {/* Header moderne */}
       <AppBar
         position="fixed"
         sx={{
-          background: 'linear-gradient(100deg, #f4f4cc, #1B5E20)',
+          background: 'linear-gradient(90deg, #f4f4cc, #1B5E20)',
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-          top: 0,
-          left: 0,
-          right: 0,
-          minHeight: { xs: '120px', md: '150px' },
-          padding: 0,
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          px: { xs: 1, md: 4 },
+          py: { xs: 1, md: 2 },
         }}
       >
         <Toolbar
           sx={{
-            flexDirection: 'column',
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            justifyContent: 'center',
-            px: { xs: 1, md: 4 },
-            py: { xs: 1, md: 2 },
           }}
         >
-          {/* Bandeau supérieur : Logo, titre et numéro de téléphone */}
+          {/* Logo et titre à gauche */}
           <Box
+            component={Link}
+            to="/"
             sx={{
-              width: '100%',
-              textAlign: 'center',
-              mb: { xs: 1, md: 2 },
+              display: 'flex',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: 'inherit',
             }}
           >
             <Box
-              component={Link}
-              to="/"
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textDecoration: 'none',
-              }}
-            >
-              <Box
-                component="img"
-                src={logo}
-                alt="Logo"
-                sx={{ height: { xs: '40px', md: '50px' }, mr: 1 }}
-              />
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 600,
-                  fontSize: { xs: '1.2rem', md: '1.8rem' },
-                  letterSpacing: '0.5px',
-                  ...gradientText,
-                }}
-              >
-                Cleservice.com
-              </Typography>
-            </Box>
+              component="img"
+              src={logo}
+              alt="Logo"
+              sx={{ height: { xs: '40px', md: '50px' } }}
+            />
             <Typography
-              variant="subtitle1"
+              variant="h6"
               sx={{
-                mt: 0.5,
-                color: '#fff',
-                fontWeight: '700',
-                fontSize: { xs: '1rem', md: '1.2rem' },
+                ml: 1,
+                fontWeight: 600,
+                fontSize: { xs: '1.2rem', md: '1.8rem' },
               }}
             >
-              Appelez le&nbsp;
-              <Box
-                component="a"
-                href="tel:0142674861"
-                sx={{
-                  color: '#ff5252',
-                  position: 'relative',
-                  display: 'inline-block',
-                  textDecoration: 'none',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: '-100%',
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent)',
-                    animation: 'laser 2s linear infinite',
-                  },
-                }}
-              >
-                01 42 67 48 61
-              </Box>
+              Cleservice.com
             </Typography>
           </Box>
 
-          {/* Intégration directe du composant PhoneNumber dans le header */}
-          <PhoneNumber />
-
-          {/* Liens de navigation (affichés en horizontal sur md et plus) */}
+          {/* Boutons de navigation à droite */}
           <Box
             sx={{
-              width: '100%',
               display: { xs: 'none', md: 'flex' },
-              justifyContent: 'center',
               gap: '20px',
             }}
           >
@@ -152,11 +91,8 @@ const Header = () => {
                 sx={{
                   fontWeight: 600,
                   fontSize: { xs: '0.9rem', md: '1.1rem' },
-                  padding: '8px 16px',
                   textTransform: 'none',
-                  transition: 'transform 0.7s ease-in-out',
-                  '&:hover': { transform: 'scale(1.05)' },
-                  ...gradientText,
+                  color: 'inherit',
                 }}
               >
                 {item.label}
@@ -169,12 +105,7 @@ const Header = () => {
             color="inherit"
             aria-label="menu"
             onClick={() => toggleDrawer(true)}
-            sx={{
-              display: { xs: 'block', md: 'none' },
-              position: 'absolute',
-              top: 8,
-              right: 8,
-            }}
+            sx={{ display: { xs: 'block', md: 'none' } }}
           >
             <MenuIcon sx={{ fontSize: { xs: '1.8rem', md: '2rem' } }} />
           </IconButton>
@@ -188,7 +119,7 @@ const Header = () => {
         onClose={() => toggleDrawer(false)}
         PaperProps={{
           sx: {
-            backgroundColor: primaryColor,
+            backgroundColor: '#4E342E',
             color: '#fff',
             width: 250,
           },
@@ -218,7 +149,11 @@ const Header = () => {
                 }}
               >
                 <ListItemText
-                  primary={<Typography variant="body1" sx={{ color: '#fff' }}>{item.label}</Typography>}
+                  primary={
+                    <Typography variant="body1" sx={{ color: '#fff' }}>
+                      {item.label}
+                    </Typography>
+                  }
                 />
               </ListItem>
             ))}
@@ -226,16 +161,22 @@ const Header = () => {
         </Box>
       </Drawer>
 
-      {/* Animation CSS pour l'effet laser sur le numéro */}
-      <style>
-        {`
-          @keyframes laser {
-            0% { left: -100%; }
-            50% { left: 100%; }
-            100% { left: 100%; }
-          }
-        `}
-      </style>
+      {/* Bandeau juste en dessous du header */}
+      <Box
+        sx={{
+          mt: { xs: '64px', md: '80px' }, // espace pour tenir compte du header fixe
+          background: 'linear-gradient(90deg, #1B5E20, #f4f4cc)',
+          py: 2,
+          textAlign: 'center',
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 600, color: '#fff' }}
+        >
+          Bienvenue sur Cleservice.com
+        </Typography>
+      </Box>
     </>
   );
 };
