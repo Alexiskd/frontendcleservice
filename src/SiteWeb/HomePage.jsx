@@ -190,13 +190,13 @@ const Login = () => {
               sx={{
                 textTransform: 'none',
                 fontWeight: 600,
-                backgroundColor: '#fff',
-                color: primaryColor,
+                backgroundColor: primaryColor,
+                color: '#fff', // Texte en blanc uniquement dans le menu mobile
                 borderRadius: 2,
                 padding: 1.5,
                 transition: 'background-color 0.3s, transform 0.3s',
                 '&:hover': {
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: primaryDark,
                   transform: 'scale(1.05)',
                 },
               }}
