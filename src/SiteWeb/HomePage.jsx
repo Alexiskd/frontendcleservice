@@ -19,6 +19,11 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
 import KeySearch from './PagePrincipale/keyshearch.jsx'; // Vérifiez le nom du fichier
+import ErrorBoundary from './ErrorBoundary.jsx';
+
+
+
+
 
 // Variables de couleurs et typographie
 const primaryColor = '#2E7D32';
