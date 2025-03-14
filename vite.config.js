@@ -9,4 +9,7 @@ export default defineConfig({
       '@PagePrincipale': path.resolve(__dirname, 'src/PagePrincipale'),
     },
   },
+  preview: {
+    allowedHosts: ['frontendcleservice.onrender.com']
+  }
 });
