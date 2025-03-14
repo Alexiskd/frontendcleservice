@@ -262,7 +262,7 @@ const Login = () => {
             </Typography>
             <Box sx={{ boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
               <iframe
-                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+Lévis,+Paris,+France"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+Levis,+Paris,+France&zoom=18"
                 width="100%"
                 height="400"
                 style={{ border: 0 }}
@@ -270,6 +270,7 @@ const Login = () => {
                 loading="lazy"
                 title="Localisation Boutique"
               ></iframe>
+
             </Box>
           </Container>
         </section>
