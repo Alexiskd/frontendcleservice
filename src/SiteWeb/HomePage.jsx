@@ -19,7 +19,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
 // Si vous comptez utiliser KeySearch, vérifiez que le fichier s'appelle bien KeySearch.jsx
-import KeySearch from './PagePrincipale/KeySearch.jsx';
+
 
 const primaryColor = '#2E7D32';
 const primaryDark = '#1B5E20';
