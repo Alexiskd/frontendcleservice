@@ -1,5 +1,5 @@
 // src/Login.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet';
 import { styled } from '@mui/material/styles';
 import {
@@ -7,12 +7,9 @@ import {
   Typography,
   Container,
   Grid,
-  IconButton,
-  Drawer,
-  Button,
+  IconButton
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import MenuIcon from '@mui/icons-material/Menu';
 import KeyIcon from '@mui/icons-material/VpnKey';
 import LockIcon from '@mui/icons-material/Lock';
 import BuildIcon from '@mui/icons-material/Build';
@@ -21,26 +18,15 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
-import ErrorBoundary from './ErrorBoundary.jsx';
+// Si vous comptez utiliser KeySearch, vérifiez que le fichier s'appelle bien KeySearch.jsx
+import KeySearch from './PagePrincipale/KeySearch.jsx';
 
-// Variables de couleurs et typographie
 const primaryColor = '#2E7D32';
 const primaryDark = '#1B5E20';
 const lightBackground = '#F1F8E9';
 const textPrimary = '#212121';
 const textSecondary = '#424242';
 
-// Tableau des items de navigation
-const navItems = [
-  { label: 'Accueil', to: '/' },
-  { label: 'Qui sommes-nous ?', to: '/qui.php' },
-  { label: 'Catalogue', to: '/trouvez.php' },
-  { label: 'Coffre Fort', to: '/catalogue-cles-coffre.php' },
-  { label: 'Badges', to: '/badges.php' },
-  { label: 'Contact', to: '/contact.php' },
-];
-
-// Style commun pour les cartes
 const cardStyle = {
   backgroundColor: '#FFFFFF',
   padding: { xs: 2, sm: 4 },
@@ -53,7 +39,6 @@ const cardStyle = {
   }
 };
 
-// Bouton personnalisé avec adaptation aux écrans mobiles
 const CustomButton = styled('button')(({ theme }) => ({
   backgroundColor: primaryColor,
   border: 'none',
@@ -87,7 +72,6 @@ const GradientText = styled('span')({
   color: '#fff',
 });
 
-// Composant bouton personnalisable (utilisable avec le prop "as")
 const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
   const { children, ...other } = props;
   return (
@@ -97,16 +81,16 @@ const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
   );
 });
 
-const Login = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+import ErrorBoundary from './ErrorBoundary';
 
+const Login = () => {
   return (
     <ErrorBoundary>
       <Helmet>
         <title>CléService - Double de clé en ligne, Facile et Rapide</title>
         <meta
           name="description"
-          content="Doublez vos clés en quelques clics avec CléService. Commandez votre copie de clé en ligne, livrée à domicile. Boutique à Paris 75017, forte de plus de 50 ans d'expérience."
+          content="Doublez vos clés en quelques clics avec CléService. Commandez votre copie de clé en ligne, livrée à domicile. Boutique à Paris 17ème, forte de plus de 50 ans d'expérience."
         />
         <link rel="canonical" href="https://www.cleservice.com/" />
 
@@ -134,7 +118,7 @@ const Login = () => {
             "telephone": "01 42 67 48 61",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "20 rue de Levis",
+              "streetAddress": "20 rue de levviss",
               "addressLocality": "Paris",
               "postalCode": "75017",
               "addressCountry": "FR"
@@ -145,67 +129,15 @@ const Login = () => {
           `}
         </script>
 
-        {/* Préconnexion aux ressources critiques */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
       </Helmet>
 
-      {/* Fallback pour les utilisateurs sans JavaScript */}
       <noscript>
         <div style={{ padding: '1rem', textAlign: 'center', background: '#f8d7da', color: '#721c24' }}>
           Cette application fonctionne mieux avec JavaScript activé.
         </div>
       </noscript>
-
-      {/* Menu mobile pour téléphone - style bento moderne */}
-      <Drawer
-        anchor="right"
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        PaperProps={{
-          sx: {
-            background: 'linear-gradient(90deg, #e0e0e0, #ffffff)',
-            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-            width: 280,
-          },
-        }}
-      >
-        <Box
-          sx={{
-            width: 280,
-            p: 3,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 2,
-          }}
-          role="presentation"
-          onClick={() => setMobileMenuOpen(false)}
-          onKeyDown={() => setMobileMenuOpen(false)}
-        >
-          {navItems.map((item, index) => (
-            <Button
-              key={index}
-              component={Link}
-              to={item.to}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                backgroundColor: primaryColor,
-                color: '#fff', // Texte en blanc uniquement dans le menu mobile
-                borderRadius: 2,
-                padding: 1.5,
-                transition: 'background-color 0.3s, transform 0.3s',
-                '&:hover': {
-                  backgroundColor: primaryDark,
-                  transform: 'scale(1.05)',
-                },
-              }}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </Box>
-      </Drawer>
 
       <Box
         component="main"
@@ -217,7 +149,6 @@ const Login = () => {
           fontFamily: '"Roboto", sans-serif'
         }}
       >
-        {/* Animation pour le numéro de téléphone */}
         <style>
           {`
             @keyframes laser {
@@ -228,8 +159,10 @@ const Login = () => {
           `}
         </style>
 
-        {/* HEADER - Bandeaux et Hero Section */}
         <header>
+          <Box sx={{ height: { xs: '56px', md: '0px' }, backgroundColor: "#01591f" }} />
+          <Box sx={{ height: { xs: '100px', md: '120px' }, backgroundColor: "#01591f" }} />
+
           <Box
             component="section"
             sx={{
@@ -246,27 +179,10 @@ const Login = () => {
               maxWidth="lg"
               sx={{ position: 'relative', zIndex: 1, pt: { xs: 8, md: 10 }, textAlign: 'center' }}
             >
-              <Typography
-                component="h1"
-                variant="h3"
-                gutterBottom
-                sx={{ fontWeight: '700', mb: 2, fontSize: { xs: '1.75rem', md: '2.5rem' } }}
-              >
+              <Typography component="h1" variant="h3" gutterBottom sx={{ fontWeight: '700', mb: 2, fontSize: { xs: '1.75rem', md: '2.5rem' } }}>
                 Un double de clé, une copie ? Facile et rapide !
               </Typography>
-              <Typography
-                component="h2"
-                variant="h4"
-                gutterBottom
-                sx={{
-                  fontWeight: '700',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: { xs: '1.25rem', md: '1.75rem' }
-                }}
-              >
+              <Typography component="h2" variant="h4" gutterBottom sx={{ fontWeight: '700', mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: { xs: '1.25rem', md: '1.75rem' } }}>
                 Appelez le&nbsp;
                 <Box
                   component="a"
@@ -297,23 +213,9 @@ const Login = () => {
                 {/* Sous-titre ou texte additionnel */}
               </Typography>
             </Container>
-
-            {/* Icône du menu mobile (visible uniquement sur mobile) */}
-            <IconButton
-              onClick={() => setMobileMenuOpen(true)}
-              sx={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                display: { xs: 'block', md: 'none' }
-              }}
-            >
-              <MenuIcon sx={{ fontSize: 28, color: primaryColor }} />
-            </IconButton>
           </Box>
         </header>
 
-        {/* SECTION - Boutons d'action et recherche */}
         <section>
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, py: 2, mx: 'auto' }}>
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -327,7 +229,6 @@ const Login = () => {
           </Container>
         </section>
 
-        {/* SECTION - Localisation */}
         <section>
           <Container
             maxWidth="lg"
@@ -351,13 +252,13 @@ const Login = () => {
               }}
             >
               Pour gagner du temps, notre boutique est à votre disposition<br />
-              pour toute reproduction de clé au 20 rue de Levis.<br />
+              pour toute reproduction de clé au 20 rue de levviss.<br />
               Du lundi au samedi, de 8h30 à 12h30<br />
               et de 14h à 18h.
             </Typography>
             <Box sx={{ boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
               <iframe
-                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyA7lo5IVVfLt8l5g5SiYbObTFVyEklhv5M&q=20+rue+de+Levis,+Paris,+France&zoom=18"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDl71ub7b41CY0j1_SvNjj53kSIQAyGgLs&q=20+rue+de+levviss,+Paris,+75017&zoom=18"
                 width="100%"
                 height="400"
                 style={{ border: 0 }}
@@ -369,7 +270,6 @@ const Login = () => {
           </Container>
         </section>
 
-        {/* SECTION - Nos Services En Ligne */}
         <section>
           <Container
             maxWidth="lg"
@@ -437,7 +337,6 @@ const Login = () => {
           </Container>
         </section>
 
-        {/* SECTION - Pourquoi Nous Choisir */}
         <section>
           <Container
             maxWidth="lg"
@@ -480,6 +379,8 @@ const Login = () => {
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
                     Service rapide et sécurisé
                   </Typography>
+                  <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
+                  </Typography>
                   <Typography component="p" sx={{ mt: 1, color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
                     Commandez en ligne et recevez vos clés directement chez vous en toute sécurité.
                   </Typography>
@@ -489,7 +390,6 @@ const Login = () => {
           </Container>
         </section>
 
-        {/* SECTION - Nos Fournisseurs */}
         <section>
           <Container
             maxWidth="lg"
@@ -530,7 +430,6 @@ const Login = () => {
           </Container>
         </section>
 
-        {/* SECTION - Processus de Commande */}
         <section>
           <Container
             maxWidth="lg"
@@ -589,7 +488,6 @@ const Login = () => {
           </Container>
         </section>
 
-        {/* SECTION - Engagement Qualité & Sécurité */}
         <section>
           <Container
             maxWidth="lg"
