@@ -169,16 +169,21 @@ const Header = () => {
         </Box>
       </Drawer>
 
-      
-       {/* Bandeau juste en dessous du header affichant le PhoneNumber */}
-       <Box sx={{
+      {/* Bandeau juste en dessous du header */}
+      <Box
+        sx={{
           mt: { xs: '64px', md: '80px' }, // espace pour tenir compte du header fixe
           background: 'linear-gradient(90deg, #1B5E20, #f4f4cc)',
           py: 2,
           textAlign: 'center',
-        }}>
-        <PhoneNumber />
+        }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: 600, ...gradientText }}>
+          Bienvenue sur Cleservice.com
+        </Typography>
       </Box>
+
+      
     </>
   );
 };
