@@ -17,8 +17,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
-// Si vous comptez utiliser KeySearch, vérifiez que le fichier s'appelle bien KeySearch.jsx
-import KeySearch from './PagePrincipale/KeySearch.jsx';
+import ErrorBoundary from './ErrorBoundary';
 
 const primaryColor = '#2E7D32';
 const primaryDark = '#1B5E20';
@@ -80,8 +79,6 @@ const MyCustomButton = React.forwardRef(function MyCustomButton(props, ref) {
   );
 });
 
-import ErrorBoundary from './ErrorBoundary';
-
 const Login = () => {
   return (
     <ErrorBoundary>
@@ -108,7 +105,7 @@ const Login = () => {
 
         {/* Données structurées (JSON-LD) */}
         <script type="application/ld+json">
-          {
+          {`
           {
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
@@ -125,7 +122,7 @@ const Login = () => {
             "url": "https://www.cleservice.com/",
             "priceRange": "$$"
           }
-          }
+          `}
         </script>
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -149,19 +146,18 @@ const Login = () => {
         }}
       >
         <style>
-          {
+          {`
             @keyframes laser {
               0% { left: -100%; }
               50% { left: 100%; }
               100% { left: 100%; }
             }
-          }
+          `}
         </style>
 
         <header>
           <Box sx={{ height: { xs: '56px', md: '0px' }, backgroundColor: "#01591f" }} />
           <Box sx={{ height: { xs: '100px', md: '120px' }, backgroundColor: "#01591f" }} />
-
           <Box
             component="section"
             sx={{
@@ -208,9 +204,7 @@ const Login = () => {
                   01 42 67 48 61
                 </Box>
               </Typography>
-              <Typography component="p" variant="h6" sx={{ mb: 0, fontWeight: '300' }}>
-                {/* Sous-titre ou texte additionnel */}
-              </Typography>
+              <Typography component="p" variant="h6" sx={{ mb: 0, fontWeight: '300' }} />
             </Container>
           </Box>
         </header>
@@ -335,211 +329,10 @@ const Login = () => {
             </Grid>
           </Container>
         </section>
-
-        <section>
-          <Container
-            maxWidth="lg"
-            sx={{
-              py: { xs: 4, md: 6 },
-              backgroundColor: lightBackground,
-              borderRadius: '4px',
-              mb: { xs: 4, md: 6 },
-              mx: 'auto'
-            }}
-          >
-            <Typography
-              component="h2"
-              variant="h4"
-              sx={{
-                fontWeight: '700',
-                mb: 4,
-                textAlign: 'center',
-                color: textPrimary,
-                fontSize: { xs: '1.5rem', md: '2rem' }
-              }}
-            >
-              Pourquoi Choisir CleService.com ?
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Box sx={cardStyle}>
-                  <BuildIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }} role="img" aria-label="Expertise reconnue" />
-                  <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
-                    Expertise reconnue
-                  </Typography>
-                  <Typography component="p" sx={{ mt: 1, color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                    Forts de plus de 50 ans d'expérience, nous sommes spécialisés dans la reproduction de clés en ligne.
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Box sx={cardStyle}>
-                  <AccessTimeIcon sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }} role="img" aria-label="Service rapide et sécurisé" />
-                  <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
-                    Service rapide et sécurisé
-                  </Typography>
-                  <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
-                  </Typography>
-                  <Typography component="p" sx={{ mt: 1, color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                    Commandez en ligne et recevez vos clés directement chez vous en toute sécurité.
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </Container>
-        </section>
-
-        <section>
-          <Container
-            maxWidth="lg"
-            sx={{
-              py: { xs: 4, md: 6 },
-              backgroundColor: '#FFFFFF',
-              borderRadius: '4px',
-              mb: { xs: 4, md: 6 },
-              mx: 'auto'
-            }}
-          >
-            <Typography
-              component="h2"
-              variant="h4"
-              sx={{
-                fontWeight: '700',
-                mb: 3,
-                textAlign: 'center',
-                color: textPrimary,
-                fontSize: { xs: '1.5rem', md: '2rem' }
-              }}
-            >
-              Nos Fournisseurs
-            </Typography>
-            <Typography
-              component="p"
-              variant="h6"
-              sx={{
-                textAlign: 'center',
-                color: textSecondary,
-                mb: 4,
-                fontSize: { xs: '1rem', md: '1.25rem' }
-              }}
-            >
-              Nous collaborons avec des marques de renom pour garantir la qualité de nos produits.
-            </Typography>
-            <Slider />
-          </Container>
-        </section>
-
-        <section>
-          <Container
-            maxWidth="lg"
-            sx={{
-              py: { xs: 4, md: 6 },
-              backgroundColor: lightBackground,
-              borderRadius: '4px',
-              mb: { xs: 4, md: 6 },
-              mx: 'auto'
-            }}
-          >
-            <Typography
-              component="h2"
-              variant="h4"
-              sx={{
-                fontWeight: '700',
-                mb: 4,
-                textAlign: 'center',
-                color: textPrimary,
-                fontSize: { xs: '1.5rem', md: '2rem' }
-              }}
-            >
-              Processus de Commande Simplifié
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              {[
-                { step: '1. Sélectionnez votre clé' },
-                { step: '2. Tapez votre numéro de clé' },
-                { step: '3. Payez en ligne' },
-                { step: '4. Livraison à domicile' }
-              ].map((item, index) => (
-                <Grid
-                  key={index}
-                  item
-                  xs={12}
-                  sm={6}
-                  md={3}
-                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                >
-                  <IconButton
-                    sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: primaryColor }}
-                    aria-label={Étape ${index + 1}}
-                  >
-                    <ArrowDownwardIcon sx={{ transform: 'rotate(-90deg)' }} />
-                  </IconButton>
-                  <Typography
-                    component="p"
-                    variant="h6"
-                    sx={{ mt: 2, fontWeight: '500', color: textSecondary, textAlign: 'center', fontSize: { xs: '0.9rem', md: '1rem' } }}
-                  >
-                    {item.step}
-                  </Typography>
-                </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </section>
-
-        <section>
-          <Container
-            maxWidth="lg"
-            sx={{
-              py: { xs: 4, md: 6 },
-              backgroundColor: '#FFFFFF',
-              borderRadius: '4px',
-              mb: { xs: 4, md: 6 },
-              mx: 'auto'
-            }}
-          >
-            <Typography
-              component="h2"
-              variant="h4"
-              sx={{
-                fontWeight: '700',
-                mb: 6,
-                textAlign: 'center',
-                color: textPrimary,
-                fontSize: { xs: '1.5rem', md: '2rem' }
-              }}
-            >
-              Engagement envers la qualité et la sécurité
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              <Grid item xs={12} sm={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <IconButton sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: primaryColor }} aria-label="Certifications et garanties">
-                  <VerifiedIcon />
-                </IconButton>
-                <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textSecondary }}>
-                  Certifications et garanties
-                </Typography>
-                <Typography component="p" sx={{ textAlign: 'center', color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                  Nous garantissons des reproductions de clés conformes aux normes de sécurité en vigueur.
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <IconButton sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: primaryColor }} aria-label="Sécurité des transactions">
-                  <LockIcon />
-                </IconButton>
-                <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textSecondary }}>
-                  Sécurité des transactions
-                </Typography>
-                <Typography component="p" sx={{ textAlign: 'center', color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                  Vos données personnelles et paiements sont protégés par des technologies de cryptage avancées.
-                </Typography>
-              </Grid>
-            </Grid>
-          </Container>
-        </section>
       </Box>
     </ErrorBoundary>
   );
 };
 
 export default Login;
+
