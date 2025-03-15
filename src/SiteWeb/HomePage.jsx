@@ -1,34 +1,9 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { styled } from '@mui/material/styles';
-import {
-  Box,
-  Typography,
-  Container,
-  Grid
-} from '@mui/material';
+import { Box, Typography, Container } from '@mui/material';
 import { Link } from 'react-router-dom';
-import KeyIcon from '@mui/icons-material/VpnKey';
-import FactoryIcon from '@mui/icons-material/Factory';
 import ErrorBoundary from './ErrorBoundary';
-
-const primaryColor = '#2E7D32';
-const primaryDark = '#1B5E20';
-const lightBackground = '#F1F8E9';
-const textPrimary = '#212121';
-const textSecondary = '#424242';
-
-const cardStyle = {
-  backgroundColor: '#FFFFFF',
-  padding: { xs: 2, sm: 4 },
-  borderRadius: '4px',
-  boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
-  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-  '&:hover': {
-    transform: 'scale(1.03)',
-    boxShadow: '0px 6px 16px rgba(0,0,0,0.15)'
-  }
-};
 
 const CustomButton = styled('button')(({ theme }) => ({
   backgroundColor: '#2E7D32',
@@ -78,7 +53,16 @@ const Login = () => (
       </section>
 
       <section>
-        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#F1F8E9', borderRadius: '8px', mb: { xs: 4, md: 6 }, mx: 'auto' }}>
+        <Container
+          maxWidth="lg"
+          sx={{
+            py: { xs: 4, md: 6 },
+            backgroundColor: '#F1F8E9',
+            borderRadius: '8px',
+            mb: { xs: 4, md: 6 },
+            mx: 'auto'
+          }}
+        >
           <Typography variant="h4" sx={{ fontWeight: '700', color: '#212121', textAlign: 'center', mb: 4 }}>
             Pour gagner du temps, notre boutique est à votre disposition<br />
             pour toute reproduction de clé au 20 rue de levviss.<br />
@@ -104,4 +88,3 @@ const Login = () => (
 );
 
 export default Login;
-
