@@ -43,6 +43,8 @@ const Login = () => (
   <ErrorBoundary>
     <Box component="main" sx={{ backgroundColor: '#F9F9F9', minHeight: '70vh', fontFamily: '"Roboto", sans-serif' }}>
 
+      <Box sx={{ height: { xs: '100px', md: '120px' } }} />
+
       <section>
         <Container maxWidth="lg" sx={{ py: 2, mx: 'auto', textAlign: 'center' }}>
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -88,4 +90,3 @@ const Login = () => (
 );
 
 export default Login;
-
