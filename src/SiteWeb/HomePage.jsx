@@ -171,7 +171,7 @@ const Login = () => {
       <Box
         component="main"
         sx={{
-          mt: '50px',
+          mt: '20px',  // Réduction de l'espace en haut
           backgroundColor: '#F9F9F9',
           minHeight: '70vh',
           display: 'flex',
@@ -180,7 +180,7 @@ const Login = () => {
           animation: 'fadeIn 1s ease',
         }}
       >
-        {/* HEADER - Hero sans bandeau */}
+        {/* HEADER - Hero sans bandeau supérieur */}
         <header>
           <Box
             component="section"
