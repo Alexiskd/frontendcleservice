@@ -187,8 +187,7 @@ const Header = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            // Réduction de la taille du texte dans le bandeau
-            fontSize: { xs: '1rem', md: '1.2rem' },
+            fontSize: { xs: '0.8rem', md: '1rem' },
             color: "#e0e0e0",
             py: 0,
           }}
