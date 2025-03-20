@@ -97,10 +97,9 @@ const Contact = () => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start', // Remplacé "space-between" par "flex-start"
       }}
     >
-    
       {/* Bandeau en haut - Hauteur réduite */}
      
       {/* Header avec image de fond - Espacement vertical réduit */}
