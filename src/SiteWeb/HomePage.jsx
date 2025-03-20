@@ -180,21 +180,8 @@ const Login = () => {
           animation: 'fadeIn 1s ease',
         }}
       >
-        {/* HEADER - Hero */}
+        {/* HEADER - Hero sans bandeau */}
         <header>
-          <Box
-            sx={{
-              height: { xs: '56px', md: '0px' },
-              backgroundColor: "#01591f",
-              ...pulseAnimation,
-            }}
-          />
-          <Box
-            sx={{
-              height: { xs: '100px', md: '120px' },
-              backgroundColor: "#01591f",
-            }}
-          />
           <Box
             component="section"
             sx={{
@@ -348,7 +335,7 @@ const Login = () => {
               }}
             >
               <iframe
-                src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(
+                src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyDl71ub7b41CY0j1_SvNjj53kSIQAyGgLs&q=${encodeURIComponent(
                   '20 rue de Lévis, Paris, France'
                 )}`}
                 width="100%"
