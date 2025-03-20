@@ -55,7 +55,7 @@ const MentionsLegales = () => {
       <Section>
         <Title>Éditeur du Site</Title>
         <Paragraph>
-          Le site <strong>cleservice.com</strong> est édité par Maison Bouvet S.A.S., au capital de 100 000 €, dont le siège social est situé au 20 Rue Lévis, 75017 Paris, France.
+          Le site <strong>cleservice.com</strong> est édité par Maison Bouvet S.A.S., au capital de 1000 €, dont le siège social est situé au 20 Rue Lévis, 75017 Paris, France.
           <br />
           RCS : <strong>500 188 339</strong> &nbsp;&mdash;&nbsp; TVA Intracommunautaire : <strong>FR55500188339</strong>.
         </Paragraph>
@@ -65,7 +65,7 @@ const MentionsLegales = () => {
       <Section>
         <Title>Directeur de Publication</Title>
         <Paragraph>
-          Directeur de publication : Monsieur Jean Dupont.
+          Directeur de publication : Monsieur Benjamin Bouvet.
         </Paragraph>
       </Section>
 
