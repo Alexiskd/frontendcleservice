@@ -15,7 +15,6 @@ import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
 
-
 // Style pour le texte en dégradé
 const gradientText = {
   background: 'linear-gradient(90deg, #15720a, #000)',
@@ -173,9 +172,9 @@ const Header = () => {
       {/* Bandeau juste en dessous du header */}
       <Box
         sx={{
-          mt: { xs: '64px', md: '80px' }, // espace pour tenir compte du header fixe
+          mt: { xs: '64px', md: '80px' },
           background: 'linear-gradient(90deg, #1B5E20, #f4f4cc)',
-          py: 2,
+          py: { xs: 3, md: 4 },
           textAlign: 'center',
         }}
       >
@@ -188,7 +187,7 @@ const Header = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '1rem', md: '1.1rem' },
+            fontSize: { xs: '1.3rem', md: '1.6rem' },
             color: "#e0e0e0",
             py: 0,
           }}
@@ -204,7 +203,7 @@ const Header = () => {
               display: 'inline-block',
               overflow: 'hidden',
               textDecoration: 'none',
-              padding: '0 2px',
+              px: 1,
               '&::after': {
                 content: '""',
                 position: 'absolute',
@@ -220,10 +219,8 @@ const Header = () => {
           >
             01 42 67 48 61
           </Box>
-          </Typography>
+        </Typography>
       </Box>
-
-      
     </>
   );
 };
