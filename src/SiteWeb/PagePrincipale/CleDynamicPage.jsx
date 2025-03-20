@@ -346,7 +346,7 @@ const CleDynamicPage = () => {
         
         <Container sx={styles.searchContainer}>
           <TextField
-            label="Tapez le numéro de votre clé"
+            label="Tapez le nom de votre clé"
             variant="outlined"
             fullWidth
             value={searchTerm}
