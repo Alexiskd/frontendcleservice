@@ -187,7 +187,8 @@ const Header = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '1.3rem', md: '1.6rem' },
+            // LIGNE À MODIFIER : réduction de la taille du texte
+            fontSize: { xs: '1rem', md: '1.2rem' },
             color: "#e0e0e0",
             py: 0,
           }}
@@ -226,4 +227,3 @@ const Header = () => {
 };
 
 export default Header;
-
