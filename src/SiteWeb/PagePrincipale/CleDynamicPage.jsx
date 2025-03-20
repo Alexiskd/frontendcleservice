@@ -1,5 +1,3 @@
-// src/SiteWeb/PagePrincipale/CleDynamicPage.jsx
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
@@ -461,7 +459,7 @@ const CleDynamicPage = () => {
                               },
                             }}
                           >
-                            Commander reproduction dans nos ateliers
+                            Commander par envoie/renvoie dans nos ateliers
                           </Button>
                         )}
                         <Button variant="text" onClick={() => handleViewProduct(item)} sx={{ mt: 1, textTransform: 'none' }}>
