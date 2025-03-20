@@ -37,14 +37,14 @@ const Header = () => {
 
   return (
     <>
-      {/* Header moderne */}
+      {/* AppBar avec style adapté pour mobile */}
       <AppBar
         position="fixed"
         sx={{
           background: 'linear-gradient(90deg, #f4f4cc, #1B5E20)',
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
           px: { xs: 1, md: 4 },
-          py: { xs: 1, md: 2 },
+          py: { xs: 0.5, md: 2 }, // Réduction du padding sur mobile
         }}
       >
         <Toolbar
@@ -54,7 +54,7 @@ const Header = () => {
             alignItems: 'center',
           }}
         >
-          {/* Logo et titre à gauche */}
+          {/* Logo et titre */}
           <Box
             component={Link}
             to="/"
@@ -69,14 +69,14 @@ const Header = () => {
               component="img"
               src={logo}
               alt="Logo"
-              sx={{ height: { xs: '40px', md: '50px' } }}
+              sx={{ height: { xs: '35px', md: '50px' } }} // Logo légèrement réduit sur mobile
             />
             <Typography
               variant="h6"
               sx={{
                 ml: 1,
                 fontWeight: 600,
-                fontSize: { xs: '1.2rem', md: '1.8rem' },
+                fontSize: { xs: '1.1rem', md: '1.8rem' },
                 ...gradientText,
               }}
             >
@@ -84,7 +84,7 @@ const Header = () => {
             </Typography>
           </Box>
 
-          {/* Boutons de navigation à droite */}
+          {/* Navigation classique (affichée sur desktop) */}
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
@@ -120,7 +120,7 @@ const Header = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Drawer pour mobile */}
+      {/* Drawer pour la navigation mobile */}
       <Drawer
         anchor="right"
         open={drawerOpen}
@@ -169,12 +169,12 @@ const Header = () => {
         </Box>
       </Drawer>
 
-      {/* Bandeau juste en dessous du header */}
+      {/* Bandeau d'information sous l'AppBar */}
       <Box
         sx={{
-          mt: { xs: '64px', md: '80px' },
+          mt: { xs: '56px', md: '80px' },
           background: 'linear-gradient(90deg, #1B5E20, #f4f4cc)',
-          py: { xs: 3, md: 4 },
+          py: { xs: 2, md: 4 },
           textAlign: 'center',
         }}
       >
@@ -187,8 +187,8 @@ const Header = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '0.8rem', md: '1rem' },
-            color: "#e0e0e0",
+            fontSize: { xs: '0.9rem', md: '1.2rem' },
+            color: '#e0e0e0',
             py: 0,
           }}
         >
