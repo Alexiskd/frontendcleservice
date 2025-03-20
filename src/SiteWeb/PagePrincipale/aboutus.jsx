@@ -7,14 +7,9 @@ import {
   Container,
   Grid,
   IconButton,
-  Avatar
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { CheckCircleOutline } from '@mui/icons-material';
-
-// Import des images d'avatars
-import benjamin from './benjamin.jpg';
-import alexis from './alexis.png';
 
 // Variables de couleurs et typographie
 const primaryColor = '#2E7D32';
@@ -81,13 +76,11 @@ const AboutUs = () => {
   return (
     <>
       <Helmet>
-        {/* Title et meta description */}
         <title>Qui sommes-nous ? | CLE SERVICE - Reproduction de clés depuis 50 ans</title>
         <meta
           name="description"
           content="CLE SERVICE, entreprise familiale issue de La Maison BOUVET, combine tradition et innovation pour offrir un service rapide et sécurisé de reproduction de clés en ligne. Découvrez notre histoire, notre mission et notre équipe."
         />
-        {/* Données structurées JSON-LD */}
         <script type="application/ld+json">
           {`
           {
@@ -445,11 +438,7 @@ const AboutUs = () => {
           </Typography>
           <Grid container spacing={4} justifyContent="center">
             <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
-              <Avatar 
-                alt="Benjamin Bouvet - Gérant de CLE SERVICE"
-                src={benjamin}
-                sx={{ width: { xs: 80, md: 100 }, height: { xs: 80, md: 100 }, mx: 'auto', mb: 2 }}
-              />
+              {/* Les photos ont été retirées */}
               <Typography
                 variant="h3"
                 sx={{
@@ -465,17 +454,7 @@ const AboutUs = () => {
               </Typography>
             </Grid>
             <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
-              <Avatar 
-                alt="Alexis Bouvet - Développeur chez CLE SERVICE"
-                src={alexis}
-                sx={{
-                  width: { xs: 80, md: 100 },
-                  height: { xs: 80, md: 100 },
-                  mx: 'auto',
-                  mb: 2,
-                  transform: 'scale(1.1)',
-                }}
-              />
+              {/* Les photos ont été retirées */}
               <Typography
                 variant="h3"
                 sx={{
@@ -491,10 +470,7 @@ const AboutUs = () => {
               </Typography>
             </Grid>
             <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
-              <Avatar 
-                alt="SAM YOS - WebMaster de CLE SERVICE"
-                sx={{ width: { xs: 80, md: 100 }, height: { xs: 80, md: 100 }, mx: 'auto', mb: 2 }}
-              />
+              {/* Les photos ont été retirées */}
               <Typography
                 variant="h3"
                 sx={{
