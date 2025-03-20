@@ -215,7 +215,7 @@ const Footer = () => {
             20 Rue Lévis, 75017 Paris <br />
             Tél : <strong>01 42 67 48 61</strong> <br />
             <a href="mailto:contact@cleservice.com">contact@cleservice.com</a> <br />
-            Du lundi au vendredi : 8h30 – 12h30 / 14h – 18h
+            Du lundi au samedi : 8h30 – 12h30 / 14h – 18h
           </FooterText>
         </FooterSection>
 
