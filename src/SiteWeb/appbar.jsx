@@ -185,7 +185,7 @@ const Header = () => {
             fontFamily: 'Lato, sans-serif',
             fontWeight: '700',
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: { xs: 'column', md: 'row' },
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: { xs: '0.9rem', md: '1.2rem' },
@@ -201,7 +201,7 @@ const Header = () => {
               color: 'red',
               fontFamily: 'Lato, sans-serif',
               position: 'relative',
-              display: { xs: 'block', md: 'inline-block' },
+              display: 'inline-block',
               overflow: 'hidden',
               textDecoration: 'none',
               px: 1,
@@ -227,4 +227,3 @@ const Header = () => {
 };
 
 export default Header;
-
