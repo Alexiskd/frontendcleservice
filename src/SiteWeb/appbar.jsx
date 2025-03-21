@@ -44,7 +44,7 @@ const Header = () => {
           background: 'linear-gradient(90deg, #f4f4cc, #1B5E20)',
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
           px: { xs: 1, md: 4 },
-          py: { xs: 0.5, md: 2 }, // Réduction du padding sur mobile
+          py: { xs: 0.5, md: 2 },
         }}
       >
         <Toolbar
@@ -69,7 +69,7 @@ const Header = () => {
               component="img"
               src={logo}
               alt="Logo"
-              sx={{ height: { xs: '35px', md: '50px' } }} // Logo légèrement réduit sur mobile
+              sx={{ height: { xs: '35px', md: '50px' } }}
             />
             <Typography
               variant="h6"
@@ -185,6 +185,7 @@ const Header = () => {
             fontFamily: 'Lato, sans-serif',
             fontWeight: '700',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: { xs: '0.9rem', md: '1.2rem' },
