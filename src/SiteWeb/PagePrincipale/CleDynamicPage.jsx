@@ -21,7 +21,6 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 
-
 // Tentative de récupérer jQuery depuis la variable globale
 let localJQuery;
 try {
@@ -183,10 +182,12 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés selon la recherche et inversion de l'ordre pour afficher les derniers en premier
+  // Filtrage des clés selon la recherche et vérification d'un prix pour copie dans nos ateliers,
+  // inversion de l'ordre pour afficher les derniers en premier
   const filteredKeys = useMemo(() => (
     keys.filter((item) =>
-      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) &&
+      Number(item.prixSansCartePropriete) > 0
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
@@ -343,7 +344,6 @@ const CleDynamicPage = () => {
         </script>
       </Helmet>
       <Box sx={styles.page}>
-        
         <Container sx={styles.searchContainer}>
           <TextField
             label="Tapez le nom de votre clé"
