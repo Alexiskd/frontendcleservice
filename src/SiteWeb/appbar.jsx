@@ -200,7 +200,7 @@ const Header = () => {
               color: 'red',
               fontFamily: 'Lato, sans-serif',
               position: 'relative',
-              display: 'inline-block',
+              display: { xs: 'block', md: 'inline-block' },
               overflow: 'hidden',
               textDecoration: 'none',
               px: 1,
