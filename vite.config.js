@@ -10,6 +10,6 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: ['frontendcleservice.onrender.com']
+    allowedHosts: ['frontendcleservice.onrender.com', 'www.cleservice.com']
   }
 });
