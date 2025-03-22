@@ -341,8 +341,8 @@ const CommandePage = () => {
         description: article
           ? `Veuillez procéder au paiement pour ${userInfo.nom}`
           : 'Veuillez procéder au paiement',
-        success_url: `http://localhost:5173/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `http://localhost:5173/commande-cancel?numeroCommande=${numeroCommande}`,
+        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
       };
 
       const paymentResponse = await fetch('https://cl-back.onrender.com/stripe/create', {
