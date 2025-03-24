@@ -221,20 +221,20 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Tri personnalisé : d'abord les clés avec un prix de reproduction en atelier (prixSansCartePropriete > 0), puis les autres.
-  // On filtre selon la recherche utilisateur puis on effectue le tri.
+  // Tri personnalisé : les clés disposant d'un prix de reproduction en atelier (prixSansCartePropriete > 0)
+  // sont affichées en premier, puis les autres, triées par id décroissant.
   const sortedKeys = useMemo(() => {
     const filtered = keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
-    return filtered.sort((a, b) => {
-      const aPostal = Number(a.prixSansCartePropriete) > 0;
-      const bPostal = Number(b.prixSansCartePropriete) > 0;
-      if (aPostal === bPostal) {
-        return b.id - a.id; // tri décroissant par id en cas d'égalité
-      }
-      return aPostal ? -1 : 1;
+    filtered.sort((a, b) => {
+      const aHasPostal = Number(a.prixSansCartePropriete) > 0;
+      const bHasPostal = Number(b.prixSansCartePropriete) > 0;
+      if (aHasPostal && !bHasPostal) return -1;
+      if (!aHasPostal && bHasPostal) return 1;
+      return b.id - a.id;
     });
+    return filtered;
   }, [keys, debouncedSearchTerm]);
 
   // Redirection vers la page de commande
