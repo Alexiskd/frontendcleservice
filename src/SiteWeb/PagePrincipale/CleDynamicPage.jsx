@@ -145,7 +145,7 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Chargement initial des clés en utilisant les marques préchargées pour trouver la meilleure correspondance
+  // Chargement initial des clés en utilisant les marques préchargées pour déterminer la meilleure correspondance
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -221,12 +221,21 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés selon la saisie utilisateur (affiche tous les produits de la marque)
-  const filteredKeys = useMemo(() => (
-    keys.filter((item) =>
+  // Tri personnalisé : d'abord les clés avec un prix de reproduction en atelier (prixSansCartePropriete > 0), puis les autres.
+  // On filtre selon la recherche utilisateur puis on effectue le tri.
+  const sortedKeys = useMemo(() => {
+    const filtered = keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    ).slice().reverse()
-  ), [keys, debouncedSearchTerm]);
+    );
+    return filtered.sort((a, b) => {
+      const aPostal = Number(a.prixSansCartePropriete) > 0;
+      const bPostal = Number(b.prixSansCartePropriete) > 0;
+      if (aPostal === bPostal) {
+        return b.id - a.id; // tri décroissant par id en cas d'égalité
+      }
+      return aPostal ? -1 : 1;
+    });
+  }, [keys, debouncedSearchTerm]);
 
   // Redirection vers la page de commande
   const handleOrderNow = useCallback((item, mode) => {
@@ -399,9 +408,9 @@ const CleDynamicPage = () => {
             <Typography align="center" color="error" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
               {error}
             </Typography>
-          ) : filteredKeys.length > 0 ? (
+          ) : sortedKeys.length > 0 ? (
             <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
-              {filteredKeys.map((item, index) => {
+              {sortedKeys.map((item, index) => {
                 const numeroPrice = Number(item.prix);
                 const postalPrice = Number(item.prixSansCartePropriete);
                 return (
@@ -555,5 +564,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
-
