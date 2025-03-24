@@ -21,6 +21,36 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData, preloadBrandsData } from '../brandsApi';
 
+// Marques hardcodées : pour ces marques, on effectuera directement une requête API
+const hardcodedBrands = [
+  { id: 1, manufacturer: 'CLES ASSA' },
+  { id: 2, manufacturer: 'CLES BODE' },
+  { id: 3, manufacturer: 'CLES CECCHERELLI' },
+  { id: 4, manufacturer: 'CLES CIS' },
+  { id: 5, manufacturer: 'CLES CONFORTI' },
+  { id: 6, manufacturer: 'CLES CORBIN' },
+  { id: 7, manufacturer: 'CLES DUTO' },
+  { id: 8, manufacturer: 'CLES FASTA' },
+  { id: 9, manufacturer: 'CLES FICHET BAUCHE' },
+  { id: 10, manufacturer: 'CLES FUMEO-PARMA' },
+  { id: 11, manufacturer: 'CLES GLITTENBERG' },
+  { id: 12, manufacturer: 'CLES HAGELIN' },
+  { id: 13, manufacturer: 'CLES KROMER' },
+  { id: 14, manufacturer: 'CLES LIPS-VAGO' },
+  { id: 15, manufacturer: 'CLES MAUER' },
+  { id: 16, manufacturer: 'CLES MELSMETALL' },
+  { id: 17, manufacturer: 'CLES PARMA' },
+  { id: 18, manufacturer: 'CLES PARMA-PAS' },
+  { id: 19, manufacturer: 'CLES PICARDIE' },
+  { id: 20, manufacturer: 'CLES ROSENGREN' },
+  { id: 21, manufacturer: 'CLES SECURCASA' },
+  { id: 22, manufacturer: 'CLES SELLA & VALZ' },
+  { id: 23, manufacturer: 'CLES SIBI' },
+  { id: 24, manufacturer: 'CLES STIEHM' },
+  { id: 25, manufacturer: 'CLES STUV' },
+  { id: 26, manufacturer: 'CLES SWEDEN' },
+];
+
 // Tentative de récupérer jQuery depuis la variable globale
 let localJQuery;
 try {
@@ -145,7 +175,7 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Chargement initial des clés en utilisant les marques préchargées pour déterminer la meilleure correspondance
+  // Chargement initial des clés
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -157,56 +187,78 @@ const CleDynamicPage = () => {
       return;
     }
     setLoading(true);
-
-    // Fonction de calcul de la distance de Levenshtein
-    const levenshteinDistance = (a, b) => {
-      const m = a.length, n = b.length;
-      const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-      for (let i = 0; i <= m; i++) dp[i][0] = i;
-      for (let j = 0; j <= n; j++) dp[0][j] = j;
-      for (let i = 1; i <= m; i++) {
-        for (let j = 1; j <= n; j++) {
-          const cost = a[i - 1].toLowerCase() === b[j - 1].toLowerCase() ? 0 : 1;
-          dp[i][j] = Math.min(
-            dp[i - 1][j] + 1,
-            dp[i][j - 1] + 1,
-            dp[i - 1][j - 1] + cost
-          );
-        }
-      }
-      return dp[m][n];
-    };
-
-    // Préchargement des marques pour déterminer la meilleure correspondance
-    preloadBrandsData()
-      .then((brands) => {
-        if (!brands || brands.length === 0) {
-          throw new Error("Aucune marque préchargée.");
-        }
-        let bestBrand = brands[0];
-        let bestDistance = levenshteinDistance(bestBrand.nom, adjustedBrandName);
-        brands.forEach((brand) => {
-          const distance = levenshteinDistance(brand.nom, adjustedBrandName);
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            bestBrand = brand;
+    // Vérification si la marque figure dans la liste hardcodée
+    const isHardcoded = hardcodedBrands.some(b => b.manufacturer === adjustedBrandName);
+    if (isHardcoded) {
+      // Pour les marques hardcodées, on effectue directement une requête API
+      fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(adjustedBrandName)}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Erreur lors de la récupération des clés pour ${adjustedBrandName}`);
           }
+          return res.json();
+        })
+        .then((data) => {
+          setKeys(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error('Erreur lors du chargement des clés:', err);
+          setError(err.message);
+          setSnackbarMessage(`Erreur: ${err.message}`);
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          setLoading(false);
         });
-        // Utiliser la marque ayant le nom le plus similaire pour charger les clés
-        return preloadKeysData(bestBrand.nom);
-      })
-      .then((data) => {
-        setKeys(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Erreur lors du chargement des clés:', err);
-        setError(err.message);
-        setSnackbarMessage(`Erreur: ${err.message}`);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        setLoading(false);
-      });
+    } else {
+      // Pour les autres marques, on utilise les clés préchargées avec la meilleure correspondance
+      const levenshteinDistance = (a, b) => {
+        const m = a.length, n = b.length;
+        const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+        for (let i = 0; i <= m; i++) dp[i][0] = i;
+        for (let j = 0; j <= n; j++) dp[0][j] = j;
+        for (let i = 1; i <= m; i++) {
+          for (let j = 1; j <= n; j++) {
+            const cost = a[i - 1].toLowerCase() === b[j - 1].toLowerCase() ? 0 : 1;
+            dp[i][j] = Math.min(
+              dp[i - 1][j] + 1,
+              dp[i][j - 1] + 1,
+              dp[i - 1][j - 1] + cost
+            );
+          }
+        }
+        return dp[m][n];
+      };
+
+      preloadBrandsData()
+        .then((brands) => {
+          if (!brands || brands.length === 0) {
+            throw new Error("Aucune marque préchargée.");
+          }
+          let bestBrand = brands[0];
+          let bestDistance = levenshteinDistance(bestBrand.nom, adjustedBrandName);
+          brands.forEach((brand) => {
+            const distance = levenshteinDistance(brand.nom, adjustedBrandName);
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              bestBrand = brand;
+            }
+          });
+          return preloadKeysData(bestBrand.nom);
+        })
+        .then((data) => {
+          setKeys(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error('Erreur lors du chargement des clés:', err);
+          setError(err.message);
+          setSnackbarMessage(`Erreur: ${err.message}`);
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          setLoading(false);
+        });
+    }
   }, [adjustedBrandName, brandFull]);
 
   // Préchargement des images des clés
@@ -564,3 +616,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
