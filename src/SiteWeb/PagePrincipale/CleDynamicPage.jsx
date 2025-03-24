@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react'; 
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -30,7 +30,6 @@ try {
   }
 } catch (err) {
   console.error("Erreur d'initialisation de jQuery :", err);
-  // Vous pouvez définir localJQuery sur une fonction vide ou gérer autrement
   localJQuery = null;
 }
 
@@ -75,16 +74,18 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (si ce n'est pas un slug produit)
+  // Extraction et normalisation du nom de la marque
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  const adjustedBrandName = actualBrandName.toUpperCase();
+  // Nom utilisé pour l'API (sans transformation) et pour l'affichage/SEO (en majuscules)
+  const brandForApi = actualBrandName;
+  const brandForDisplay = actualBrandName.toUpperCase();
 
   // Définition des balises SEO
-  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  const pageTitle = `${brandForDisplay} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${brandForDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
@@ -98,8 +99,8 @@ const CleDynamicPage = () => {
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `${adjustedBrandName} – Catalogue de clés`,
-    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
+    "name": `${brandForDisplay} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${brandForDisplay}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -121,16 +122,16 @@ const CleDynamicPage = () => {
         }
       }
     }))
-  }), [adjustedBrandName, keys, getImageSrc]);
+  }), [brandForDisplay, keys, getImageSrc]);
 
   // Récupération du logo pour la marque
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
-    if (!actualBrandName) return;
-    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
+    if (!brandForApi) return;
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(brandForApi)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(`Logo non trouvé pour ${actualBrandName}`);
+        throw new Error(`Logo non trouvé pour ${brandForApi}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -140,7 +141,7 @@ const CleDynamicPage = () => {
         console.error("Erreur lors du chargement du logo:", error);
         setBrandLogo(null);
       });
-  }, [actualBrandName, brandFull]);
+  }, [brandForApi, brandFull]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -152,23 +153,28 @@ const CleDynamicPage = () => {
       setLoading(false);
       return;
     }
-    if (!adjustedBrandName) {
+    if (!brandForApi) {
       setError("La marque n'a pas été fournie.");
       setLoading(false);
       return;
     }
-    setLoading(true);
-    preloadKeysData(adjustedBrandName)
-      .then((data) => setKeys(data))
-      .catch((err) => {
+    const fetchKeys = async () => {
+      try {
+        setLoading(true);
+        const data = await preloadKeysData(brandForApi);
+        setKeys(data);
+      } catch (err) {
         console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
         setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
-      })
-      .finally(() => setLoading(false));
-  }, [adjustedBrandName, brandFull]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchKeys();
+  }, [brandForApi, brandFull]);
 
   // Préchargement des images des clés
   useEffect(() => {
@@ -191,24 +197,27 @@ const CleDynamicPage = () => {
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
+  // Formatage du nom de marque pour l'URL (on utilise ici le nom tel que fourni à l'API)
+  const formattedBrand = brandForApi.trim().replace(/\s+/g, '-');
+
   // Redirection vers la page de commande
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      navigate(`/commander/${adjustedBrandName.replace(/\s+/g, '-')}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`);
+      navigate(`/commander/${formattedBrand}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`);
     } catch (error) {
       console.error('Erreur lors de la navigation vers la commande:', error);
       setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  }, [adjustedBrandName, navigate]);
+  }, [formattedBrand, navigate]);
 
   // Redirection vers la page produit
   const handleViewProduct = useCallback((item) => {
     const formattedName = item.nom.trim().replace(/\s+/g, '-');
-    const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-    navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
+    const formattedBrandProduct = item.marque.trim().replace(/\s+/g, '-');
+    navigate(`/produit/${formattedBrandProduct}/${encodeURIComponent(formattedName)}`);
   }, [navigate]);
 
   // Ouvre le popup d'agrandissement de l'image et réinitialise le zoom
@@ -333,7 +342,7 @@ const CleDynamicPage = () => {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
+          content={`${brandForDisplay}, clés, reproduction, commande, qualité, produit authentique`}
         />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
