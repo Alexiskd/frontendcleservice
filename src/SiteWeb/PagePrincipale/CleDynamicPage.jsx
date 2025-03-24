@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'; 
+import React, { useState, useEffect, useMemo, useCallback } from 'react';  
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -30,7 +30,6 @@ try {
   }
 } catch (err) {
   console.error("Erreur d'initialisation de jQuery :", err);
-  // Vous pouvez définir localJQuery sur une fonction vide ou gérer autrement
   localJQuery = null;
 }
 
@@ -67,9 +66,9 @@ const CleDynamicPage = () => {
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
-        navigate(/produit/${brand}/${encodeURIComponent(productName)});
+        navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
-        navigate(/produit/${encodeURIComponent(brandFull)});
+        navigate(`/produit/${encodeURIComponent(brandFull)}`);
       }
       return;
     }
@@ -83,14 +82,14 @@ const CleDynamicPage = () => {
   const adjustedBrandName = actualBrandName.toUpperCase();
 
   // Définition des balises SEO
-  const pageTitle = ${adjustedBrandName} – Clés et reproductions de qualité;
-  const pageDescription = Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.;
+  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
     if (imageUrl.startsWith('data:')) return imageUrl;
-    if (!imageUrl.startsWith('http')) return https://cl-back.onrender.com/${imageUrl};
+    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
     return imageUrl;
   }, []);
 
@@ -98,8 +97,8 @@ const CleDynamicPage = () => {
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": ${adjustedBrandName} – Catalogue de clés,
-    "description": Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.,
+    "name": `${adjustedBrandName} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -127,10 +126,10 @@ const CleDynamicPage = () => {
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
     if (!actualBrandName) return;
-    fetch(https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)})
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(Logo non trouvé pour ${actualBrandName});
+        throw new Error(`Logo non trouvé pour ${actualBrandName}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -163,7 +162,7 @@ const CleDynamicPage = () => {
       .catch((err) => {
         console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
-        setSnackbarMessage(Erreur: ${err.message});
+        setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       })
@@ -195,10 +194,10 @@ const CleDynamicPage = () => {
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      navigate(/commander/${adjustedBrandName.replace(/\s+/g, '-')}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode});
+      navigate(`/commander/${adjustedBrandName.replace(/\s+/g, '-')}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`);
     } catch (error) {
       console.error('Erreur lors de la navigation vers la commande:', error);
-      setSnackbarMessage(Erreur lors de la commande: ${error.message});
+      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -208,7 +207,7 @@ const CleDynamicPage = () => {
   const handleViewProduct = useCallback((item) => {
     const formattedName = item.nom.trim().replace(/\s+/g, '-');
     const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-    navigate(/produit/${formattedBrand}/${encodeURIComponent(formattedName)});
+    navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
   }, [navigate]);
 
   // Ouvre le popup d'agrandissement de l'image et réinitialise le zoom
@@ -333,7 +332,7 @@ const CleDynamicPage = () => {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content={${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique}
+          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
         />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
@@ -377,7 +376,7 @@ const CleDynamicPage = () => {
                               src={brandLogo}
                               alt={item.marque}
                               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                              onError={(e) => console.error(Erreur de chargement du logo pour ${item.marque}:, e)}
+                              onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
                             />
                           </Box>
                         )}
@@ -503,7 +502,7 @@ const CleDynamicPage = () => {
                 src={modalImageSrc}
                 alt="Agrandissement de la clé"
                 style={{
-                  transform: scale(${scale}),
+                  transform: `scale(${scale})`,
                   transition: 'transform 0.2s',
                   width: '100%',
                   height: 'auto',
@@ -518,4 +517,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
