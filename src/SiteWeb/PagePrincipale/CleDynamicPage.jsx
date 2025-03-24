@@ -79,9 +79,10 @@ const CleDynamicPage = () => {
   const actualBrandName = brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  // Nom utilisé pour l'API (sans transformation) et pour l'affichage/SEO (en majuscules)
-  const brandForApi = actualBrandName;
-  const brandForDisplay = actualBrandName.toUpperCase();
+  // Pour interroger l'API et le cache, on utilise la marque en majuscules
+  const brandForApi = actualBrandName.toUpperCase();
+  // Pour l'affichage et le SEO, on peut utiliser le même format
+  const brandForDisplay = brandForApi;
 
   // Définition des balises SEO
   const pageTitle = `${brandForDisplay} – Clés et reproductions de qualité`;
@@ -147,7 +148,7 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Chargement initial des clés via preloadKeysData
+  // Chargement initial des clés via preloadKeysData en utilisant la marque préchargée
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -161,6 +162,7 @@ const CleDynamicPage = () => {
     const fetchKeys = async () => {
       try {
         setLoading(true);
+        // On récupère les clés préchargées pour la marque (en majuscules)
         const data = await preloadKeysData(brandForApi);
         setKeys(data);
       } catch (err) {
@@ -197,7 +199,7 @@ const CleDynamicPage = () => {
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
-  // Formatage du nom de marque pour l'URL (on utilise ici le nom tel que fourni à l'API)
+  // Formatage du nom de marque pour l'URL
   const formattedBrand = brandForApi.trim().replace(/\s+/g, '-');
 
   // Redirection vers la page de commande
@@ -527,3 +529,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
