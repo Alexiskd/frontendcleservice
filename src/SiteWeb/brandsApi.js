@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+let preloadedBrands = null;
+let preloadedBrandsPromise = null;
 
-function BrandsApi() {
-  const [brands, setBrands] = useState([]);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetch('https://cl-back.onrender.com/brands')
+export function preloadBrandsData() {
+  if (!preloadedBrandsPromise) {
+    preloadedBrandsPromise = fetch('https://cl-back.onrender.com/brands')
       .then((res) => {
         if (!res.ok) {
           throw new Error('Erreur lors de la récupération des marques');
@@ -13,31 +11,32 @@ function BrandsApi() {
         return res.json();
       })
       .then((data) => {
-        setBrands(data);
-      })
-      .catch((err) => {
-        setError(err.message);
+        preloadedBrands = data;
+        return data;
       });
-  }, []);
-
-  if (error) {
-    return <div className="error">Erreur : {error}</div>;
   }
-
-  if (brands.length === 0) {
-    return <div>Aucune marque disponible.</div>;
-  }
-
-  return (
-    <div>
-      <h1>Liste des Marques</h1>
-      <ul>
-        {brands.map((brand) => (
-          <li key={brand.id}>{brand.nom}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  return preloadedBrandsPromise;
 }
 
-export default BrandsApi;
+// Préchargement des clés pour une marque donnée
+let preloadedKeys = {};
+let preloadedKeysPromises = {};
+
+export function preloadKeysData(brand) {
+  if (!preloadedKeysPromises[brand]) {
+    preloadedKeysPromises[brand] = fetch(
+      `https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(brand)}`
+    )
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Erreur lors de la récupération des clés pour ${brand}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        preloadedKeys[brand] = data;
+        return data;
+      });
+  }
+  return preloadedKeysPromises[brand];
+}
