@@ -19,7 +19,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '../brandsApi';
+import { preloadKeysData, preloadBrandsData } from '../brandsApi';
 
 // Tentative de récupérer jQuery depuis la variable globale
 let localJQuery;
@@ -145,7 +145,7 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Chargement initial des clés via preloadKeysData
+  // Chargement initial des clés en utilisant les marques préchargées pour trouver la meilleure correspondance
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -157,16 +157,56 @@ const CleDynamicPage = () => {
       return;
     }
     setLoading(true);
-    preloadKeysData(adjustedBrandName)
-      .then((data) => setKeys(data))
+
+    // Fonction de calcul de la distance de Levenshtein
+    const levenshteinDistance = (a, b) => {
+      const m = a.length, n = b.length;
+      const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1].toLowerCase() === b[j - 1].toLowerCase() ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
+        }
+      }
+      return dp[m][n];
+    };
+
+    // Préchargement des marques pour déterminer la meilleure correspondance
+    preloadBrandsData()
+      .then((brands) => {
+        if (!brands || brands.length === 0) {
+          throw new Error("Aucune marque préchargée.");
+        }
+        let bestBrand = brands[0];
+        let bestDistance = levenshteinDistance(bestBrand.nom, adjustedBrandName);
+        brands.forEach((brand) => {
+          const distance = levenshteinDistance(brand.nom, adjustedBrandName);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestBrand = brand;
+          }
+        });
+        // Utiliser la marque ayant le nom le plus similaire pour charger les clés
+        return preloadKeysData(bestBrand.nom);
+      })
+      .then((data) => {
+        setKeys(data);
+        setLoading(false);
+      })
       .catch((err) => {
         console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
         setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
-      })
-      .finally(() => setLoading(false));
+        setLoading(false);
+      });
   }, [adjustedBrandName, brandFull]);
 
   // Préchargement des images des clés
@@ -181,12 +221,10 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés selon la recherche et vérification d'un prix pour copie dans nos ateliers,
-  // inversion de l'ordre pour afficher les derniers en premier
+  // Filtrage des clés selon la saisie utilisateur (affiche tous les produits de la marque)
   const filteredKeys = useMemo(() => (
     keys.filter((item) =>
-      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) &&
-      Number(item.prixSansCartePropriete) > 0
+      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
@@ -517,4 +555,5 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
 
