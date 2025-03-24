@@ -187,8 +187,8 @@ const CleDynamicPage = () => {
       return;
     }
     setLoading(true);
-    // Vérification si la marque figure dans la liste hardcodée
-    const isHardcoded = hardcodedBrands.some(b => b.manufacturer === adjustedBrandName);
+    // Comparaison insensible à la casse
+    const isHardcoded = hardcodedBrands.some(b => b.manufacturer.toUpperCase() === adjustedBrandName);
     if (isHardcoded) {
       // Pour les marques hardcodées, on effectue directement une requête API
       fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(adjustedBrandName)}`)
@@ -616,4 +616,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
