@@ -189,11 +189,11 @@ const Header = () => {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: { xs: '0.9rem', md: '1.2rem' },
-            color: '#e0e0e0',
+            color: '#9e9e9e',
             py: 0,
           }}
         >
-          Si vous avez des questions ou besoin d'assistance pour passer commande, appelez le&nbsp;
+          Specialisé dans la reproduction de clé depuis 50ans pour toute question appelez le&nbsp;
           <Box
             component="a"
             href="tel:0142674861"
