@@ -193,7 +193,7 @@ const Header = () => {
             py: 0,
           }}
         >
-          Specialisé dans la reproduction de clé depuis 50ans pour toute question appelez le&nbsp;
+          Spécialisé dans la reproduction de clés depuis 50 ans, pour toute question, appelez le&nbsp;
           <Box
             component="a"
             href="tel:0142674861"
