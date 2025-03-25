@@ -27,15 +27,11 @@ import FileCopyIcon from '@mui/icons-material/FileCopy';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import DescriptionIcon from '@mui/icons-material/Description';
 
-// Composants stylisés
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
   boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
   transition: 'transform 0.3s',
   overflow: 'hidden',
-  '&:hover': {
-    transform: 'scale(1.02)',
-  },
 }));
 
 const StyledButton = styled(Button)(({ theme }) => ({
@@ -78,7 +74,6 @@ const PricingCellNoBorder = styled(Grid)(({ theme }) => ({
   borderBottom: '1px solid #1B5E20',
 }));
 
-// Fonction utilitaire pour déterminer le délai de livraison
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -99,7 +94,6 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Vérifier que productName est défini
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
@@ -110,20 +104,16 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyer le nom du produit s'il contient "-reproduction-cle.html"
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
   }
-  // Reconstruire le nom en remplaçant les tirets par des espaces
   const decodedProductName = cleanedProductName.replace(/-/g, ' ');
 
-  // Remonter en haut de la page au montage
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Requête vers le back-end pour récupérer la clé par son nom
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -148,23 +138,19 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName]);
 
-  // Navigation vers la page de commande
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
         navigate(
-          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
-            formattedProductName
-          )}?mode=${mode}`
+          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedProductName)}?mode=${mode}`
         );
       }
     },
     [navigate, product, brandName]
   );
 
-  // Navigation vers la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -199,6 +185,12 @@ const ProductPage = () => {
       </Container>
     );
   }
+
+  // Détection si c'est une clé de coffre‑fort
+  const isCoffreFort =
+    product &&
+    (product.nom.toUpperCase().includes("COFFRE FORT") ||
+     (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
   return (
     <>
@@ -242,6 +234,11 @@ const ProductPage = () => {
                 >
                   {product.nom}
                 </Typography>
+                {isCoffreFort && (
+                  <Typography variant="subtitle1" sx={{ color: '#D32F2F', fontWeight: 'bold', mb: 1 }}>
+                    Clé Coffre Fort
+                  </Typography>
+                )}
                 {product.marque && (
                   <Typography variant="h4" sx={{ color: '#1B5E20', fontWeight: 'medium', mb: 2 }}>
                     {product.marque}
@@ -291,7 +288,7 @@ const ProductPage = () => {
                     {Number(product.prixSansCartePropriete) > 0 && (
                       <>
                         <PricingCell item xs={12} sm={4}>
-                          Copie dans nos atelier
+                          Copie dans nos ateliers
                         </PricingCell>
                         <PricingCell item xs={12} sm={4}>
                           {product.prixSansCartePropriete} €
@@ -303,8 +300,6 @@ const ProductPage = () => {
                     )}
                   </PricingGrid>
                 </InfoBox>
-
-                {/* Bloc d'informations complémentaires avec icônes */}
                 <Box sx={{ mb: 2 }}>
                   <List>
                     {product.cleAvecCartePropriete !== null && (
@@ -312,9 +307,7 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <VpnKeyIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
-                        />
+                        <ListItemText primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`} />
                       </ListItem>
                     )}
                     {product.referenceEbauche && (
@@ -322,9 +315,7 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <LabelIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={`Référence ébauche : ${product.referenceEbauche}`}
-                        />
+                        <ListItemText primary={`Référence ébauche : ${product.referenceEbauche}`} />
                       </ListItem>
                     )}
                     {product.typeReproduction && (
@@ -332,9 +323,7 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <FileCopyIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={`Mode de reproduction : ${product.typeReproduction}`}
-                        />
+                        <ListItemText primary={`Mode de reproduction : ${product.typeReproduction}`} />
                       </ListItem>
                     )}
                     {product.descriptionNumero && product.descriptionNumero.trim() !== '' && (
@@ -342,9 +331,7 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <FormatListNumberedIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={`Détails du numéro : ${product.descriptionNumero}`}
-                        />
+                        <ListItemText primary={`Détails du numéro : ${product.descriptionNumero}`} />
                       </ListItem>
                     )}
                     {product.descriptionProduit && product.descriptionProduit.trim() !== '' && (
@@ -352,14 +339,11 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <DescriptionIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={`Description du produit : ${product.descriptionProduit}`}
-                        />
+                        <ListItemText primary={`Description du produit : ${product.descriptionProduit}`} />
                       </ListItem>
                     )}
                   </List>
                 </Box>
-
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
