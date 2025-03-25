@@ -189,7 +189,7 @@ const Header = () => {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: { xs: '0.9rem', md: '1.2rem' },
-            color: '#9e9e9e',
+            color: '#000000',
             py: 0,
           }}
         >
