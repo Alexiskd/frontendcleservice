@@ -21,7 +21,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData, preloadBrandsData } from '../brandsApi';
 
-// Marques hardcodées : pour ces marques, on effectuera directement une requête API
+// Marques hardcodées
 const hardcodedBrands = [
   { id: 1, manufacturer: 'CLES ASSA' },
   { id: 2, manufacturer: 'CLES BODE' },
@@ -77,7 +77,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret), rediriger vers la page produit
+  // Redirection vers la page produit si le paramètre ressemble à un slug produit
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
@@ -92,17 +92,23 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (si ce n'est pas un slug produit)
+  // Extraction et normalisation du nom de la marque
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  // Le slug issu de Coffrefort est généralement sans le préfixe "CLES"
   const adjustedBrandName = actualBrandName.toUpperCase();
 
+  // Détection si c'est une clé de coffre‑fort
+  const isCoffreFort = adjustedBrandName.replace(/[-_]/g, ' ').includes("COFFRE FORT");
+
   // Définition des balises SEO
-  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  const pageTitle = isCoffreFort
+    ? "Clés Coffre Fort – Bode Clé Dynamique"
+    : `${adjustedBrandName} – Clés et reproductions de qualité`;
+  const pageDescription = isCoffreFort
+    ? "Découvrez notre sélection exclusive de clés de coffre fort via notre Bode Clé Dynamique."
+    : `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
@@ -177,13 +183,36 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
 
-    // Recherche d'une correspondance dans les marques hardcodées en vérifiant si le nom complet se termine par le slug
+    if (isCoffreFort) {
+      // Pour une marque de coffre fort, on effectue directement la requête avec le nom en majuscules
+      fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(adjustedBrandName)}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Erreur lors de la récupération des clés pour ${adjustedBrandName}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setKeys(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error('Erreur lors du chargement des clés:', err);
+          setError(err.message);
+          setSnackbarMessage(`Erreur: ${err.message}`);
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          setLoading(false);
+        });
+      return;
+    }
+
+    // Pour les autres marques, on recherche une correspondance dans les marques hardcodées
     const matchedHardcoded = hardcodedBrands.find(b =>
       b.manufacturer.toUpperCase().endsWith(adjustedBrandName)
     );
 
     if (matchedHardcoded) {
-      // Utilisation de la marque complète (avec le préfixe) pour l'appel API
       fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(matchedHardcoded.manufacturer)}`)
         .then((res) => {
           if (!res.ok) {
@@ -204,7 +233,7 @@ const CleDynamicPage = () => {
           setLoading(false);
         });
     } else {
-      // Pour les marques non hardcodées, on utilise les données préchargées avec la meilleure correspondance
+      // Pour les marques non hardcodées, on utilise les données préchargées
       const levenshteinDistance = (a, b) => {
         const m = a.length, n = b.length;
         const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -252,7 +281,7 @@ const CleDynamicPage = () => {
           setLoading(false);
         });
     }
-  }, [adjustedBrandName, brandFull]);
+  }, [adjustedBrandName, brandFull, isCoffreFort]);
 
   // Préchargement des images des clés
   useEffect(() => {
@@ -266,7 +295,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Tri personnalisé : filtrer selon la recherche, puis trier les clés qui ont un prix de reproduction en atelier en premier
+  // Tri personnalisé
   const sortedKeys = useMemo(() => {
     const filtered = keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
@@ -301,7 +330,7 @@ const CleDynamicPage = () => {
     navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
   }, [navigate]);
 
-  // Ouvre le popup d'agrandissement de l'image et réinitialise le zoom
+  // Ouvre le popup d'agrandissement de l'image
   const openImageModal = useCallback((item) => {
     setModalImageSrc(getImageSrc(item.imageUrl));
     setScale(1);
@@ -313,7 +342,7 @@ const CleDynamicPage = () => {
     setSnackbarOpen(false);
   }, []);
 
-  // Gestion du zoom avec la roulette de la souris
+  // Gestion du zoom
   const handleWheel = useCallback((event) => {
     event.preventDefault();
     setScale((prevScale) => {
@@ -421,10 +450,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
-        />
+        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -434,6 +460,11 @@ const CleDynamicPage = () => {
         </script>
       </Helmet>
       <Box sx={styles.page}>
+        {isCoffreFort && (
+          <Typography variant="h5" sx={{ color: '#1B5E20', fontWeight: 700, textAlign: 'center', mb: 2 }}>
+            Clés Coffre Fort
+          </Typography>
+        )}
         <Container sx={styles.searchContainer}>
           <TextField
             label="Tapez le nom de votre clé"
