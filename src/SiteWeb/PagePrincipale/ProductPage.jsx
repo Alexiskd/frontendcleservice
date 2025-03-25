@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; 
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -12,11 +12,20 @@ import {
   Alert,
   Divider,
   Grid,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import LabelIcon from '@mui/icons-material/Label';
+import FileCopyIcon from '@mui/icons-material/FileCopy';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 // Composants stylisés
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -255,8 +264,12 @@ const ProductPage = () => {
                     </PricingCellNoBorder>
                     {Number(product.prix) > 0 && (
                       <>
-                        <PricingCell item xs={12} sm={4}>Copie fabricant</PricingCell>
-                        <PricingCell item xs={12} sm={4}>{product.prix} €</PricingCell>
+                        <PricingCell item xs={12} sm={4}>
+                          Copie fabricant
+                        </PricingCell>
+                        <PricingCell item xs={12} sm={4}>
+                          {product.prix} €
+                        </PricingCell>
                         <PricingCellNoBorder item xs={12} sm={4}>
                           Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont.
                         </PricingCellNoBorder>
@@ -267,7 +280,9 @@ const ProductPage = () => {
                         <PricingCell item xs={12} sm={4}>
                           Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
                         </PricingCell>
-                        <PricingCell item xs={12} sm={4}>{product.prixCleAPasse} €</PricingCell>
+                        <PricingCell item xs={12} sm={4}>
+                          {product.prixCleAPasse} €
+                        </PricingCell>
                         <PricingCellNoBorder item xs={12} sm={4}>
                           Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.
                         </PricingCellNoBorder>
@@ -275,8 +290,12 @@ const ProductPage = () => {
                     )}
                     {Number(product.prixSansCartePropriete) > 0 && (
                       <>
-                        <PricingCell item xs={12} sm={4}>Copie dans nos atelier</PricingCell>
-                        <PricingCell item xs={12} sm={4}>{product.prixSansCartePropriete} €</PricingCell>
+                        <PricingCell item xs={12} sm={4}>
+                          Copie dans nos atelier
+                        </PricingCell>
+                        <PricingCell item xs={12} sm={4}>
+                          {product.prixSansCartePropriete} €
+                        </PricingCell>
                         <PricingCellNoBorder item xs={12} sm={4}>
                           Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale).
                         </PricingCellNoBorder>
@@ -284,33 +303,63 @@ const ProductPage = () => {
                     )}
                   </PricingGrid>
                 </InfoBox>
+
+                {/* Bloc d'informations complémentaires avec icônes */}
                 <Box sx={{ mb: 2 }}>
-                  {product.cleAvecCartePropriete !== null && (
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Carte de propriété : {product.cleAvecCartePropriete ? 'Oui' : 'Non'}
-                    </Typography>
-                  )}
-                  {product.referenceEbauche && (
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Référence ébauche : {product.referenceEbauche}
-                    </Typography>
-                  )}
-                  {product.typeReproduction && (
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Mode de reproduction : {product.typeReproduction}
-                    </Typography>
-                  )}
-                  {product.descriptionNumero && product.descriptionNumero.trim() !== '' && (
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Détails du numéro : {product.descriptionNumero}
-                    </Typography>
-                  )}
-                  {product.descriptionProduit && product.descriptionProduit.trim() !== '' && (
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Description du produit : {product.descriptionProduit}
-                    </Typography>
-                  )}
+                  <List>
+                    {product.cleAvecCartePropriete !== null && (
+                      <ListItem disableGutters>
+                        <ListItemIcon>
+                          <VpnKeyIcon color="action" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
+                        />
+                      </ListItem>
+                    )}
+                    {product.referenceEbauche && (
+                      <ListItem disableGutters>
+                        <ListItemIcon>
+                          <LabelIcon color="action" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={`Référence ébauche : ${product.referenceEbauche}`}
+                        />
+                      </ListItem>
+                    )}
+                    {product.typeReproduction && (
+                      <ListItem disableGutters>
+                        <ListItemIcon>
+                          <FileCopyIcon color="action" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={`Mode de reproduction : ${product.typeReproduction}`}
+                        />
+                      </ListItem>
+                    )}
+                    {product.descriptionNumero && product.descriptionNumero.trim() !== '' && (
+                      <ListItem disableGutters>
+                        <ListItemIcon>
+                          <FormatListNumberedIcon color="action" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={`Détails du numéro : ${product.descriptionNumero}`}
+                        />
+                      </ListItem>
+                    )}
+                    {product.descriptionProduit && product.descriptionProduit.trim() !== '' && (
+                      <ListItem disableGutters>
+                        <ListItemIcon>
+                          <DescriptionIcon color="action" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={`Description du produit : ${product.descriptionProduit}`}
+                        />
+                      </ListItem>
+                    )}
+                  </List>
                 </Box>
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
