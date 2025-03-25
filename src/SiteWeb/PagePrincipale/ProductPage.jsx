@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import {
   Box,
   Typography,
@@ -17,7 +17,6 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-
 
 // Composants stylisés
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -194,7 +193,6 @@ const ProductPage = () => {
 
   return (
     <>
-      
       <Container sx={{ mt: 2, mb: 4 }}>
         <StyledCard>
           <Grid container spacing={2}>
@@ -246,40 +244,40 @@ const ProductPage = () => {
                     Tarifs
                   </Typography>
                   <PricingGrid container>
-                    <PricingCell item xs={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
+                    <PricingCell item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
                       Type
                     </PricingCell>
-                    <PricingCell item xs={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
+                    <PricingCell item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
                       TTC
                     </PricingCell>
-                    <PricingCellNoBorder item xs={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
+                    <PricingCellNoBorder item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
                       Procédure
                     </PricingCellNoBorder>
                     {Number(product.prix) > 0 && (
                       <>
-                        <PricingCell item xs={4}>Copie fabricant</PricingCell>
-                        <PricingCell item xs={4}>{product.prix} €</PricingCell>
-                        <PricingCellNoBorder item xs={4}>
+                        <PricingCell item xs={12} sm={4}>Copie fabricant</PricingCell>
+                        <PricingCell item xs={12} sm={4}>{product.prix} €</PricingCell>
+                        <PricingCellNoBorder item xs={12} sm={4}>
                           Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont.
                         </PricingCellNoBorder>
                       </>
                     )}
                     {Number(product.prixCleAPasse) > 0 && (
                       <>
-                        <PricingCell item xs={4}>
+                        <PricingCell item xs={12} sm={4}>
                           Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
                         </PricingCell>
-                        <PricingCell item xs={4}>{product.prixCleAPasse} €</PricingCell>
-                        <PricingCellNoBorder item xs={4}>
+                        <PricingCell item xs={12} sm={4}>{product.prixCleAPasse} €</PricingCell>
+                        <PricingCellNoBorder item xs={12} sm={4}>
                           Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.
                         </PricingCellNoBorder>
                       </>
                     )}
                     {Number(product.prixSansCartePropriete) > 0 && (
                       <>
-                        <PricingCell item xs={4}>Copie dans nos atelier</PricingCell>
-                        <PricingCell item xs={4}>{product.prixSansCartePropriete} €</PricingCell>
-                        <PricingCellNoBorder item xs={4}>
+                        <PricingCell item xs={12} sm={4}>Copie dans nos atelier</PricingCell>
+                        <PricingCell item xs={12} sm={4}>{product.prixSansCartePropriete} €</PricingCell>
+                        <PricingCellNoBorder item xs={12} sm={4}>
                           Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale).
                         </PricingCellNoBorder>
                       </>
