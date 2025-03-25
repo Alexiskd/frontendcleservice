@@ -15,9 +15,9 @@ import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
 
-// Style pour le texte en dégradé
+// Dégradé pour le texte (adapté à un style moderne)
 const gradientText = {
-  background: 'linear-gradient(90deg, #15720a, #000)',
+  background: 'linear-gradient(90deg, #00796b, #004d40)',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
 };
@@ -37,14 +37,14 @@ const Header = () => {
 
   return (
     <>
-      {/* AppBar avec style adapté pour mobile */}
+      {/* AppBar au style moderne */}
       <AppBar
         position="fixed"
         sx={{
-          background: 'linear-gradient(90deg, #f4f4cc, #1B5E20)',
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-          px: { xs: 1, md: 4 },
-          py: { xs: 0.5, md: 2 },
+          background: 'linear-gradient(90deg, #e0f7fa, #80deea)',
+          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+          px: { xs: 2, md: 4 },
+          py: { xs: 1, md: 2 },
         }}
       >
         <Toolbar
@@ -69,14 +69,14 @@ const Header = () => {
               component="img"
               src={logo}
               alt="Logo"
-              sx={{ height: { xs: '35px', md: '50px' } }}
+              sx={{ height: { xs: '40px', md: '60px' } }}
             />
             <Typography
               variant="h6"
               sx={{
                 ml: 1,
-                fontWeight: 600,
-                fontSize: { xs: '1.1rem', md: '1.8rem' },
+                fontWeight: 700,
+                fontSize: { xs: '1.2rem', md: '1.8rem' },
                 ...gradientText,
               }}
             >
@@ -84,11 +84,11 @@ const Header = () => {
             </Typography>
           </Box>
 
-          {/* Navigation classique (affichée sur desktop) */}
+          {/* Navigation desktop */}
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
-              gap: '20px',
+              gap: '25px',
             }}
           >
             {navItems.map((item, index) => (
@@ -98,7 +98,7 @@ const Header = () => {
                 to={item.to}
                 sx={{
                   fontWeight: 600,
-                  fontSize: { xs: '0.9rem', md: '1.1rem' },
+                  fontSize: { xs: '1rem', md: '1.1rem' },
                   textTransform: 'none',
                   ...gradientText,
                 }}
@@ -115,26 +115,26 @@ const Header = () => {
             onClick={() => toggleDrawer(true)}
             sx={{ display: { xs: 'block', md: 'none' } }}
           >
-            <MenuIcon sx={{ fontSize: { xs: '1.8rem', md: '2rem' } }} />
+            <MenuIcon sx={{ fontSize: { xs: '2rem', md: '2.5rem' } }} />
           </IconButton>
         </Toolbar>
       </AppBar>
 
-      {/* Drawer pour la navigation mobile */}
+      {/* Drawer pour mobile avec style bento moderne */}
       <Drawer
         anchor="right"
         open={drawerOpen}
         onClose={() => toggleDrawer(false)}
         PaperProps={{
           sx: {
-            backgroundColor: '#4E342E',
-            color: '#fff',
-            width: 250,
+            backgroundColor: '#ffffff',
+            boxShadow: '-2px 0px 10px rgba(0,0,0,0.1)',
+            width: 280,
           },
         }}
       >
         <Box
-          sx={{ width: 250, p: 2 }}
+          sx={{ width: 280, p: 3 }}
           role="presentation"
           onClick={() => toggleDrawer(false)}
           onKeyDown={() => toggleDrawer(false)}
@@ -147,18 +147,18 @@ const Header = () => {
                 to={item.to}
                 key={index}
                 sx={{
-                  py: 1,
+                  my: 1,
+                  borderRadius: '12px',
                   transition: 'background-color 0.3s ease, transform 0.3s ease',
                   '&:hover': {
-                    backgroundColor: '#5D4037',
-                    borderRadius: '8px',
-                    transform: 'scale(1.02)',
+                    backgroundColor: 'rgba(98, 0, 234, 0.1)',
+                    transform: 'translateX(5px)',
                   },
                 }}
               >
                 <ListItemText
                   primary={
-                    <Typography variant="body1" sx={{ ...gradientText }}>
+                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#424242' }}>
                       {item.label}
                     </Typography>
                   }
@@ -169,12 +169,12 @@ const Header = () => {
         </Box>
       </Drawer>
 
-      {/* Bandeau d'information sous l'AppBar */}
+      {/* Bandeau d'information */}
       <Box
         sx={{
-          mt: { xs: '56px', md: '80px' },
-          background: 'linear-gradient(90deg, #1B5E20, #f4f4cc)',
-          py: { xs: 2, md: 4 },
+          mt: { xs: '64px', md: '80px' },
+          background: 'linear-gradient(90deg, #80deea, #e0f7fa)',
+          py: { xs: 2, md: 3 },
           textAlign: 'center',
         }}
       >
@@ -188,9 +188,8 @@ const Header = () => {
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '0.9rem', md: '1.2rem' },
-            color: '#000000',
-            py: 0,
+            fontSize: { xs: '0.95rem', md: '1.1rem' },
+            color: '#424242',
           }}
         >
           Spécialisé dans la reproduction de clés depuis 50 ans, pour toute question, appelez le&nbsp;
@@ -198,24 +197,11 @@ const Header = () => {
             component="a"
             href="tel:0142674861"
             sx={{
-              color: 'red',
+              color: '#6200ea',
               fontFamily: 'Lato, sans-serif',
-              position: 'relative',
-              display: 'inline-block',
-              overflow: 'hidden',
               textDecoration: 'none',
-              px: 1,
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: '-100%',
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent)',
-                animation: 'laser 2s linear infinite',
-                borderRadius: '2px',
-              },
+              fontWeight: 700,
+              ml: 1,
             }}
           >
             01 42 67 48 61
