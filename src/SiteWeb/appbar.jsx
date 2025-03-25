@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
 
-// Style pour le texte en dégradé
+// Style pour le texte en dégradé (inchangé)
 const gradientText = {
   background: 'linear-gradient(90deg, #15720a, #000)',
   WebkitBackgroundClip: 'text',
@@ -37,7 +37,7 @@ const Header = () => {
 
   return (
     <>
-      {/* AppBar avec style existant */}
+      {/* AppBar avec les anciennes couleurs */}
       <AppBar
         position="fixed"
         sx={{
