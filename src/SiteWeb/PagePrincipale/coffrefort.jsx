@@ -17,7 +17,6 @@ import { Link } from 'react-router-dom';
 import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
 
-
 // Liste des marques en dur
 const hardcodedBrands = [
   { id: 1, manufacturer: 'CLES ASSA' },
@@ -64,8 +63,9 @@ const BrandCard = React.memo(({ brand }) => {
   const logoSrc = brand.logo ? `data:image/*;base64,${brand.logo}` : null;
   const imgLoaded = useImagePreloader(logoSrc);
 
-  // Suppression du préfixe "CLES" pour obtenir le nom de la marque
+  // Suppression du préfixe "CLES" et détection d'une marque coffre‑fort
   const nameWithoutPrefix = brand.manufacturer.replace(/^CLES\s*/i, '');
+  const isCoffreFort = nameWithoutPrefix.toUpperCase().includes("COFFRE FORT");
   const fullName = nameWithoutPrefix.toLowerCase().replace(/\s+/g, '_');
   const brandUrl = `/${fullName}_1_reproduction_cle.html`;
 
@@ -117,14 +117,8 @@ const BrandCard = React.memo(({ brand }) => {
               />
             </Box>
           )}
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: { xs: '0.9rem', md: '1.3rem' },
-              color: '#000',
-            }}
-          >
-            {nameWithoutPrefix.toUpperCase()}
+          <Typography variant="body2" sx={{ fontSize: { xs: '0.9rem', md: '1.3rem' }, color: '#000' }}>
+            {isCoffreFort ? `${nameWithoutPrefix.toUpperCase()} (COFFRE FORT)` : nameWithoutPrefix.toUpperCase()}
           </Typography>
         </CardContent>
       </Card>
@@ -145,7 +139,6 @@ const Coffrefort = () => {
     setSearchTerm(e.target.value);
   }, []);
 
-  // Filtrage des marques
   const filteredBrands = useMemo(() => {
     return brands.filter((brand) =>
       (brand.manufacturer || '')
@@ -162,7 +155,6 @@ const Coffrefort = () => {
     setBrands(hardcodedBrands);
   }, []);
 
-  // Définition dynamique des balises SEO
   const seoTitle = searchTerm
     ? `Résultats pour "${searchTerm}" – Marques de Clés | Maison Bouvet`
     : 'Catalogue des Marques de Clés – Reproduction de Clé en Ligne | Maison Bouvet';
@@ -171,7 +163,6 @@ const Coffrefort = () => {
     ? `Retrouvez les marques correspondant à "${searchTerm}" dans notre catalogue de clés.`
     : 'Découvrez notre catalogue exclusif regroupant les marques leaders dans le domaine des clés. Commandez votre double de clé en ligne rapidement et en toute sécurité avec Maison Bouvet.';
 
-  // Récupération d'une liste de mots-clés basée sur les marques filtrées
   const seoKeywords = filteredBrands.length > 0
     ? filteredBrands.map(b => b.manufacturer).join(', ')
     : hardcodedBrands.map(b => b.manufacturer).join(', ');
@@ -190,18 +181,13 @@ const Coffrefort = () => {
         <meta name="description" content={seoDescription} />
         <meta name="keywords" content={seoKeywords} />
         <link rel="canonical" href="https://www.maisonbouvet.com/catalogue" />
-        {/* Open Graph */}
         <meta property="og:title" content={seoTitle} />
         <meta property="og:description" content={seoDescription} />
         <meta property="og:url" content="https://www.maisonbouvet.com/catalogue" />
         <meta property="og:type" content="website" />
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
-      
-
-      {/* Section Hero */}
       <Box
         sx={{
           backgroundSize: 'cover',
@@ -211,25 +197,16 @@ const Coffrefort = () => {
           mb: -4,
         }}
       >
-        <Container
-          sx={{ position: 'relative', zIndex: 1, textAlign: 'center', color: '#000' }}
-        >
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: '700', mb: 1, fontSize: { xs: '1.8rem', md: '2.5rem' } }}
-          >
+        <Container sx={{ position: 'relative', zIndex: 1, textAlign: 'center', color: '#000' }}>
+          <Typography variant="h4" sx={{ fontWeight: '700', mb: 1, fontSize: { xs: '1.8rem', md: '2.5rem' } }}>
             Catalogue des Marques
           </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: '300', fontSize: { xs: '0.9rem', md: '1.2rem' } }}
-          >
+          <Typography variant="subtitle1" sx={{ fontWeight: '300', fontSize: { xs: '0.9rem', md: '1.2rem' } }}>
             Découvrez notre sélection exclusive de clés de qualité et commandez votre double en ligne.
           </Typography>
         </Container>
       </Box>
 
-      {/* Barre de recherche */}
       <Container sx={{ mb: 4 }}>
         <TextField
           label="Rechercher une marque"
@@ -241,7 +218,6 @@ const Coffrefort = () => {
         />
       </Container>
 
-      {/* Affichage des marques */}
       <Container sx={{ flexGrow: 1, mb: 8 }}>
         <Grid container spacing={3}>
           {filteredBrands
@@ -255,7 +231,6 @@ const Coffrefort = () => {
         </Grid>
       </Container>
 
-      {/* Bouton d'info flottant */}
       <Fab
         onClick={toggleInfo}
         sx={{
@@ -271,7 +246,6 @@ const Coffrefort = () => {
         <InfoIcon />
       </Fab>
 
-      {/* Slide d'information */}
       <Slide direction="left" in={showInfo} mountOnEnter unmountOnExit>
         <Box
           sx={{
@@ -292,10 +266,7 @@ const Coffrefort = () => {
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: '700', mb: 1, fontSize: { xs: '1rem', md: '1.25rem' } }}
-          >
+          <Typography variant="h6" sx={{ fontWeight: '700', mb: 1, fontSize: { xs: '1rem', md: '1.25rem' } }}>
             Informations Utiles
           </Typography>
           <Typography variant="body2" sx={{ mb: 1, fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
