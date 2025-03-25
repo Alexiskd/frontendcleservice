@@ -183,8 +183,8 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
 
+    // Si c'est une marque de coffre‑fort, on effectue directement la requête en utilisant le nom en majuscules
     if (isCoffreFort) {
-      // Pour une marque de coffre fort, on effectue directement la requête avec le nom en majuscules
       fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(adjustedBrandName)}`)
         .then((res) => {
           if (!res.ok) {
@@ -207,7 +207,7 @@ const CleDynamicPage = () => {
       return;
     }
 
-    // Pour les autres marques, on recherche une correspondance dans les marques hardcodées
+    // Recherche d'une correspondance dans les marques hardcodées
     const matchedHardcoded = hardcodedBrands.find(b =>
       b.manufacturer.toUpperCase().endsWith(adjustedBrandName)
     );
@@ -233,7 +233,7 @@ const CleDynamicPage = () => {
           setLoading(false);
         });
     } else {
-      // Pour les marques non hardcodées, on utilise les données préchargées
+      // Pour les marques non hardcodées (hors coffre‑fort), on utilise les données préchargées
       const levenshteinDistance = (a, b) => {
         const m = a.length, n = b.length;
         const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -330,7 +330,7 @@ const CleDynamicPage = () => {
     navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
   }, [navigate]);
 
-  // Ouvre le popup d'agrandissement de l'image
+  // Ouvre le popup d'agrandissement de l'image et réinitialise le zoom
   const openImageModal = useCallback((item) => {
     setModalImageSrc(getImageSrc(item.imageUrl));
     setScale(1);
@@ -639,6 +639,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
-
-
