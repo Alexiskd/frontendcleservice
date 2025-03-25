@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';  
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -51,18 +51,6 @@ const hardcodedBrands = [
   { id: 26, manufacturer: 'CLES SWEDEN' },
 ];
 
-// Tentative de récupérer jQuery depuis la variable globale
-let localJQuery;
-try {
-  localJQuery = window.$;
-  if (!localJQuery) {
-    throw new Error("jQuery n'est pas chargé globalement.");
-  }
-} catch (err) {
-  console.error("Erreur d'initialisation de jQuery :", err);
-  localJQuery = null;
-}
-
 // Hook de debounce pour la saisie utilisateur
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -89,7 +77,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret), rediriger vers la page produit
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
@@ -109,6 +97,7 @@ const CleDynamicPage = () => {
   const actualBrandName = brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
+  // Le slug issu de Coffrefort est généralement sans le préfixe "CLES"
   const adjustedBrandName = actualBrandName.toUpperCase();
 
   // Définition des balises SEO
@@ -187,14 +176,18 @@ const CleDynamicPage = () => {
       return;
     }
     setLoading(true);
-    // Comparaison insensible à la casse
-    const isHardcoded = hardcodedBrands.some(b => b.manufacturer.toUpperCase() === adjustedBrandName);
-    if (isHardcoded) {
-      // Pour les marques hardcodées, on effectue directement une requête API
-      fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(adjustedBrandName)}`)
+
+    // Recherche d'une correspondance dans les marques hardcodées en vérifiant si le nom complet se termine par le slug
+    const matchedHardcoded = hardcodedBrands.find(b =>
+      b.manufacturer.toUpperCase().endsWith(adjustedBrandName)
+    );
+
+    if (matchedHardcoded) {
+      // Utilisation de la marque complète (avec le préfixe) pour l'appel API
+      fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(matchedHardcoded.manufacturer)}`)
         .then((res) => {
           if (!res.ok) {
-            throw new Error(`Erreur lors de la récupération des clés pour ${adjustedBrandName}`);
+            throw new Error(`Erreur lors de la récupération des clés pour ${matchedHardcoded.manufacturer}`);
           }
           return res.json();
         })
@@ -211,7 +204,7 @@ const CleDynamicPage = () => {
           setLoading(false);
         });
     } else {
-      // Pour les autres marques, on utilise les clés préchargées avec la meilleure correspondance
+      // Pour les marques non hardcodées, on utilise les données préchargées avec la meilleure correspondance
       const levenshteinDistance = (a, b) => {
         const m = a.length, n = b.length;
         const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -273,8 +266,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Tri personnalisé : les clés disposant d'un prix de reproduction en atelier (prixSansCartePropriete > 0)
-  // sont affichées en premier, puis les autres, triées par id décroissant.
+  // Tri personnalisé : filtrer selon la recherche, puis trier les clés qui ont un prix de reproduction en atelier en premier
   const sortedKeys = useMemo(() => {
     const filtered = keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
@@ -616,5 +608,6 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
 
 
