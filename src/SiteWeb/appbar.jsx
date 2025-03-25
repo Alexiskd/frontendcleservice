@@ -15,9 +15,9 @@ import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import logo from './icon2.png';
 
-// Dégradé pour le texte (adapté à un style moderne)
+// Style pour le texte en dégradé
 const gradientText = {
-  background: 'linear-gradient(90deg, #00796b, #004d40)',
+  background: 'linear-gradient(90deg, #15720a, #000)',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
 };
@@ -37,14 +37,14 @@ const Header = () => {
 
   return (
     <>
-      {/* AppBar au style moderne */}
+      {/* AppBar avec style existant */}
       <AppBar
         position="fixed"
         sx={{
-          background: 'linear-gradient(90deg, #e0f7fa, #80deea)',
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-          px: { xs: 2, md: 4 },
-          py: { xs: 1, md: 2 },
+          background: 'linear-gradient(90deg, #f4f4cc, #1B5E20)',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+          px: { xs: 1, md: 4 },
+          py: { xs: 0.5, md: 2 },
         }}
       >
         <Toolbar
@@ -69,14 +69,14 @@ const Header = () => {
               component="img"
               src={logo}
               alt="Logo"
-              sx={{ height: { xs: '40px', md: '60px' } }}
+              sx={{ height: { xs: '35px', md: '50px' } }}
             />
             <Typography
               variant="h6"
               sx={{
                 ml: 1,
-                fontWeight: 700,
-                fontSize: { xs: '1.2rem', md: '1.8rem' },
+                fontWeight: 600,
+                fontSize: { xs: '1.1rem', md: '1.8rem' },
                 ...gradientText,
               }}
             >
@@ -84,11 +84,11 @@ const Header = () => {
             </Typography>
           </Box>
 
-          {/* Navigation desktop */}
+          {/* Navigation classique (affichée sur desktop) */}
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
-              gap: '25px',
+              gap: '20px',
             }}
           >
             {navItems.map((item, index) => (
@@ -98,7 +98,7 @@ const Header = () => {
                 to={item.to}
                 sx={{
                   fontWeight: 600,
-                  fontSize: { xs: '1rem', md: '1.1rem' },
+                  fontSize: { xs: '0.9rem', md: '1.1rem' },
                   textTransform: 'none',
                   ...gradientText,
                 }}
@@ -115,21 +115,22 @@ const Header = () => {
             onClick={() => toggleDrawer(true)}
             sx={{ display: { xs: 'block', md: 'none' } }}
           >
-            <MenuIcon sx={{ fontSize: { xs: '2rem', md: '2.5rem' } }} />
+            <MenuIcon sx={{ fontSize: { xs: '1.8rem', md: '2rem' } }} />
           </IconButton>
         </Toolbar>
       </AppBar>
 
-      {/* Drawer pour mobile avec style bento moderne */}
+      {/* Drawer pour la navigation mobile avec style modern bento */}
       <Drawer
         anchor="right"
         open={drawerOpen}
         onClose={() => toggleDrawer(false)}
         PaperProps={{
           sx: {
-            backgroundColor: '#ffffff',
-            boxShadow: '-2px 0px 10px rgba(0,0,0,0.1)',
+            backgroundColor: '#fff',
+            color: '#424242',
             width: 280,
+            boxShadow: '-2px 0px 10px rgba(0,0,0,0.1)',
           },
         }}
       >
@@ -151,14 +152,14 @@ const Header = () => {
                   borderRadius: '12px',
                   transition: 'background-color 0.3s ease, transform 0.3s ease',
                   '&:hover': {
-                    backgroundColor: 'rgba(98, 0, 234, 0.1)',
+                    backgroundColor: '#f0f0f0',
                     transform: 'translateX(5px)',
                   },
                 }}
               >
                 <ListItemText
                   primary={
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#424242' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
                       {item.label}
                     </Typography>
                   }
@@ -169,12 +170,12 @@ const Header = () => {
         </Box>
       </Drawer>
 
-      {/* Bandeau d'information */}
+      {/* Bandeau d'information sous l'AppBar */}
       <Box
         sx={{
-          mt: { xs: '64px', md: '80px' },
-          background: 'linear-gradient(90deg, #80deea, #e0f7fa)',
-          py: { xs: 2, md: 3 },
+          mt: { xs: '56px', md: '80px' },
+          background: 'linear-gradient(90deg, #1B5E20, #f4f4cc)',
+          py: { xs: 2, md: 4 },
           textAlign: 'center',
         }}
       >
@@ -188,8 +189,9 @@ const Header = () => {
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '0.95rem', md: '1.1rem' },
-            color: '#424242',
+            fontSize: { xs: '0.9rem', md: '1.2rem' },
+            color: '#000000',
+            py: 0,
           }}
         >
           Spécialisé dans la reproduction de clés depuis 50 ans, pour toute question, appelez le&nbsp;
@@ -197,11 +199,24 @@ const Header = () => {
             component="a"
             href="tel:0142674861"
             sx={{
-              color: '#6200ea',
+              color: 'red',
               fontFamily: 'Lato, sans-serif',
+              position: 'relative',
+              display: 'inline-block',
+              overflow: 'hidden',
               textDecoration: 'none',
-              fontWeight: 700,
-              ml: 1,
+              px: 1,
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent)',
+                animation: 'laser 2s linear infinite',
+                borderRadius: '2px',
+              },
             }}
           >
             01 42 67 48 61
