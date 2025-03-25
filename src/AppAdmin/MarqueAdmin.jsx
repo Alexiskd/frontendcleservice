@@ -85,7 +85,7 @@ const MarqueAdmin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    // Pour la création, le logo n'est plus requis ; en édition, il est optionnel
+    // Seul le nom est requis désormais (le logo est facultatif)
     if (!form.nom) {
       setError('Veuillez renseigner le nom.');
       return;
@@ -242,7 +242,7 @@ const MarqueAdmin = () => {
                 fontSize: { xs: '0.8rem', md: '1rem' },
               }}
             >
-              {editMode ? 'Changer le Logo' : 'Télécharger le Logo (optionnel)'}
+              {editMode ? 'Changer le Logo' : 'Télécharger le Logo'}
               <input
                 type="file"
                 accept="image/*"
@@ -376,3 +376,4 @@ const MarqueAdmin = () => {
 };
 
 export default MarqueAdmin;
+
