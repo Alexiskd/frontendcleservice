@@ -185,7 +185,6 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
 
-    // Si c'est une marque de coffre‑fort, on utilise "COFFRE FORT" comme critère de recherche
     if (isCoffreFort) {
       fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent("COFFRE FORT")}`)
         .then((res) => {
@@ -209,7 +208,6 @@ const CleDynamicPage = () => {
       return;
     }
 
-    // Pour les autres marques, recherche d'une correspondance dans les marques hardcodées
     const matchedHardcoded = hardcodedBrands.find(b =>
       b.manufacturer.toUpperCase().endsWith(adjustedBrandName)
     );
@@ -235,7 +233,7 @@ const CleDynamicPage = () => {
           setLoading(false);
         });
     } else {
-      // Pour les marques non hardcodées (hors coffre‑fort), on utilise les données préchargées
+      // Pour les marques non hardcodées
       const levenshteinDistance = (a, b) => {
         const m = a.length, n = b.length;
         const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -325,4 +323,92 @@ const CleDynamicPage = () => {
     }
   }, [adjustedBrandName, navigate]);
 
-  // Redirection vers la page
+  // Redirection vers une autre page (exemple)
+  const handleRedirect = () => {
+    navigate('/');
+  };
+
+  // === Rendu de la page ===
+  return (
+    <HelmetProvider>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLdData)}
+        </script>
+      </Helmet>
+      <Container sx={{ my: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          {adjustedBrandName}
+        </Typography>
+        {brandLogo && (
+          <Box sx={{ my: 2, textAlign: 'center' }}>
+            <img src={brandLogo} alt={adjustedBrandName} style={{ maxWidth: '200px' }} />
+          </Box>
+        )}
+        <TextField
+          label="Rechercher une clé"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          fullWidth
+          sx={{ my: 2 }}
+        />
+        {loading ? (
+          <Skeleton variant="rectangular" width="100%" height={200} />
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : (
+          <Grid container spacing={2}>
+            {sortedKeys.map((item) => (
+              <Grid item xs={12} sm={6} md={4} key={item.id}>
+                <Card>
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={getImageSrc(item.imageUrl)}
+                    alt={item.nom}
+                  />
+                  <CardContent>
+                    <Typography variant="h6">{item.nom}</Typography>
+                    <Typography variant="body2">
+                      {item.descriptionNumero || 'Clé de reproduction'}
+                    </Typography>
+                  </CardContent>
+                  <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between' }}>
+                    <Button variant="contained" onClick={() => handleOrderNow(item, 'mode1')}>
+                      Commander
+                    </Button>
+                    <Button variant="outlined" onClick={handleRedirect}>
+                      Retour accueil
+                    </Button>
+                  </Box>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarOpen(false)}
+        >
+          <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Container>
+      <Dialog open={modalOpen} onClose={() => setModalOpen(false)}>
+        <DialogContent>
+          <img
+            src={modalImageSrc}
+            alt="Aperçu"
+            style={{ transform: `scale(${scale})`, maxWidth: '100%' }}
+          />
+        </DialogContent>
+      </Dialog>
+    </HelmetProvider>
+  );
+};
+
+export default CleDynamicPage;
