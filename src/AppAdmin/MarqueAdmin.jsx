@@ -92,7 +92,6 @@ const MarqueAdmin = () => {
     }
 
     const formData = new FormData();
-    // Envoi du champ "nom" attendu par le serveur
     formData.append('nom', form.nom);
     // Le logo n'est ajouté que s'il est fourni
     if (form.logoFile) {
@@ -108,13 +107,11 @@ const MarqueAdmin = () => {
       setLoading(true);
       let res;
       if (editMode) {
-        // Mise à jour de la marque existante via PATCH
         res = await fetch(`https://cl-back.onrender.com/brands/${editBrandId}`, {
           method: 'PATCH',
           body: formData,
         });
       } else {
-        // Création d'une nouvelle marque via POST
         res = await fetch(`https://cl-back.onrender.com/brands`, {
           method: 'POST',
           body: formData,
