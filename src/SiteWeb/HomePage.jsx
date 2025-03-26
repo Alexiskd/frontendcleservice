@@ -406,34 +406,13 @@ const Login = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Box sx={cardStyle}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <KeyIcon
-                      sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }}
-                      role="img"
-                      aria-label="Copie de clé"
-                    />
-                    <KeyIcon
-                      sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }}
-                      role="img"
-                      aria-label="Copie de clé"
-                    />
-                    <KeyIcon
-                      sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor, mx: 0.5 }}
-                      role="img"
-                      aria-label="Copie de clé"
-                    />
-                  </Box>
-                  <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
-                    Demande de devis
-                  </Typography>
-                  <Typography component="p" sx={{ mt: 1, color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                    Pour plus de 10 clés à reproduire, un devis personnalisé est nécessaire.
-                  </Typography>
-                </Box>
-              </Grid>
             </Grid>
+            {/* Bouton "Demande de devis" ajouté sous la section */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <MyCustomButton as={Link} to="/contact.php">
+                Demande de devis
+              </MyCustomButton>
+            </Box>
           </Container>
         </section>
 
