@@ -14,7 +14,6 @@ import KeyIcon from '@mui/icons-material/VpnKey';
 import LockIcon from '@mui/icons-material/Lock';
 import BuildIcon from '@mui/icons-material/Build';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import FactoryIcon from '@mui/icons-material/Factory';
 import Slider from './PagePrincipale/Slider';
@@ -287,7 +286,6 @@ const Login = () => {
               <MyCustomButton as={Link} to="/trouvez.php">
                 Commander un double de clé
               </MyCustomButton>
-             
             </Box>
           </Container>
         </section>
@@ -458,39 +456,11 @@ const Login = () => {
               }}
             >
               {[
-                {
-                  step: '1. Sélectionnez votre clé',
-                  icon: (
-                    <ArrowDownwardIcon
-                      sx={{ fontSize: { xs: 50, md: 70 }, transform: 'rotate(-90deg)' }}
-                    />
-                  ),
-                },
-                {
-                  step: '2. Tapez votre numéro de clé',
-                  icon: (
-                    <ArrowDownwardIcon
-                      sx={{ fontSize: { xs: 50, md: 70 }, transform: 'rotate(-90deg)' }}
-                    />
-                  ),
-                },
-                {
-                  step: '3. Payez en ligne',
-                  icon: (
-                    <ArrowDownwardIcon
-                      sx={{ fontSize: { xs: 50, md: 70 }, transform: 'rotate(-90deg)' }}
-                    />
-                  ),
-                },
-                {
-                  step: '4. Livraison à domicile',
-                  icon: (
-                    <ArrowDownwardIcon
-                      sx={{ fontSize: { xs: 50, md: 70 }, transform: 'rotate(-90deg)' }}
-                    />
-                  ),
-                },
-              ].map((item, index) => (
+                '1. Sélectionnez votre clé',
+                '2. Tapez votre numéro de clé',
+                '3. Payez en ligne',
+                '4. Livraison à domicile',
+              ].map((step, index) => (
                 <Box
                   key={index}
                   sx={{
@@ -500,7 +470,6 @@ const Login = () => {
                     minWidth: { xs: '150px', md: '200px' },
                   }}
                 >
-                  <Box sx={{ mb: 2 }}>{item.icon}</Box>
                   <Typography
                     component="p"
                     variant="h6"
@@ -511,7 +480,7 @@ const Login = () => {
                       fontSize: { xs: '1rem', md: '1.125rem' },
                     }}
                   >
-                    {item.step}
+                    {step}
                   </Typography>
                 </Box>
               ))}
