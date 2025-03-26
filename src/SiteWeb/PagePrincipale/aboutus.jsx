@@ -439,51 +439,7 @@ const AboutUs = () => {
           <Grid container spacing={4} justifyContent="center">
             <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
               {/* Les photos ont été retirées */}
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 600,
-                  color: textPrimary,
-                  fontSize: { xs: '1rem', md: '1.25rem' },
-                }}
-              >
-                Benjamin Bouvet
-              </Typography>
-              <Typography variant="body2" sx={{ color: textSecondary, fontSize: { xs: '0.8rem', md: '1rem' } }}>
-                Gérant
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
-              {/* Les photos ont été retirées */}
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 600,
-                  color: textPrimary,
-                  fontSize: { xs: '1rem', md: '1.25rem' },
-                }}
-              >
-                Alexis Bouvet
-              </Typography>
-              <Typography variant="body2" sx={{ color: textSecondary, fontSize: { xs: '0.8rem', md: '1rem' } }}>
-                Développeur
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
-              {/* Les photos ont été retirées */}
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 600,
-                  color: textPrimary,
-                  fontSize: { xs: '1rem', md: '1.25rem' },
-                }}
-              >
-                SAM YOS
-              </Typography>
-              <Typography variant="body2" sx={{ color: textSecondary, fontSize: { xs: '0.8rem', md: '1rem' } }}>
-                WebMaster
-              </Typography>
+             
             </Grid>
           </Grid>
         </Container>
