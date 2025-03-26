@@ -183,12 +183,12 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
 
-    // Si c'est une marque de coffre‑fort, on effectue directement la requête en utilisant le nom en majuscules
+    // Si c'est une marque de coffre‑fort, on utilise "COFFRE FORT" comme critère de recherche
     if (isCoffreFort) {
-      fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(adjustedBrandName)}`)
+      fetch(`https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent("COFFRE FORT")}`)
         .then((res) => {
           if (!res.ok) {
-            throw new Error(`Erreur lors de la récupération des clés pour ${adjustedBrandName}`);
+            throw new Error(`Erreur lors de la récupération des clés pour COFFRE FORT`);
           }
           return res.json();
         })
@@ -207,7 +207,7 @@ const CleDynamicPage = () => {
       return;
     }
 
-    // Recherche d'une correspondance dans les marques hardcodées
+    // Pour les autres marques, recherche d'une correspondance dans les marques hardcodées
     const matchedHardcoded = hardcodedBrands.find(b =>
       b.manufacturer.toUpperCase().endsWith(adjustedBrandName)
     );
