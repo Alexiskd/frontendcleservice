@@ -67,7 +67,7 @@ const BrandCard = React.memo(({ brand }) => {
   const nameWithoutPrefix = brand.manufacturer.replace(/^CLES\s*/i, '');
   const isCoffreFort = nameWithoutPrefix.toUpperCase().includes("COFFRE FORT");
   const fullName = nameWithoutPrefix.toLowerCase().replace(/\s+/g, '_');
-  // Modification pour naviguer vers la page coffre fort si applicable
+  // Si c'est une marque coffre‑fort, l'URL comporte le suffixe _1_coffre_fort.html
   const brandUrl = isCoffreFort
     ? `/${fullName}_1_coffre_fort.html`
     : `/${fullName}_1_reproduction_cle.html`;
@@ -121,7 +121,9 @@ const BrandCard = React.memo(({ brand }) => {
             </Box>
           )}
           <Typography variant="body2" sx={{ fontSize: { xs: '0.9rem', md: '1.3rem' }, color: '#000' }}>
-            {isCoffreFort ? `${nameWithoutPrefix.toUpperCase()} (COFFRE FORT)` : nameWithoutPrefix.toUpperCase()}
+            {isCoffreFort
+              ? `${nameWithoutPrefix.toUpperCase()} (COFFRE FORT)`
+              : nameWithoutPrefix.toUpperCase()}
           </Typography>
         </CardContent>
       </Card>
