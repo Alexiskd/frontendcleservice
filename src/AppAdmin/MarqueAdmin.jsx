@@ -93,10 +93,9 @@ const MarqueAdmin = () => {
 
     const formData = new FormData();
     formData.append('nom', form.nom);
-    // Le logo n'est ajouté que s'il est fourni
-    if (form.logoFile) {
-      formData.append('logo', form.logoFile);
-    }
+    // On envoie toujours le champ "logo" :
+    // s'il n'est pas fourni, la valeur sera une chaîne vide, que vous pouvez interpréter comme null côté serveur
+    formData.append('logo', form.logoFile || '');
 
     console.log('Contenu du FormData envoyé :');
     for (let pair of formData.entries()) {
