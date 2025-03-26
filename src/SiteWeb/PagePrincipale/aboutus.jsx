@@ -415,35 +415,7 @@ const AboutUs = () => {
         </Container>
 
         {/* SECTION NOTRE ÉQUIPE */}
-        <Container
-          sx={{
-            py: { xs: 4, md: 6 },
-            backgroundColor: lightBackground,
-            borderRadius: '16px',
-            mb: { xs: 4, md: 6 },
-            px: { xs: 2, md: 4 },
-          }}
-        >
-          <Typography
-            variant="h2"
-            sx={{
-              fontWeight: 700,
-              mb: { xs: 2, md: 3 },
-              textAlign: 'center',
-              color: textPrimary,
-              fontSize: { xs: '1.5rem', md: '2rem' },
-            }}
-          >
-            Notre Équipe
-          </Typography>
-          <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
-              {/* Les photos ont été retirées */}
-             
-            </Grid>
-          </Grid>
-        </Container>
-
+        
         {/* SECTION APPEL À L'ACTION */}
         <Box sx={{ display: 'flex', justifyContent: 'center', pb: { xs: 4, md: 6 } }}>
           <MyCustomButton as={Link} to="/contact.php">
