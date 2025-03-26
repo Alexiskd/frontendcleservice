@@ -287,9 +287,7 @@ const Login = () => {
               <MyCustomButton as={Link} to="/trouvez.php">
                 Commander un double de clé
               </MyCustomButton>
-              <MyCustomButton as={Link} to="/contact.php">
-                Demande de devis
-              </MyCustomButton>
+             
             </Box>
           </Container>
         </section>
