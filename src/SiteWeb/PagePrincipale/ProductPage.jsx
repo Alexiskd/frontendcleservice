@@ -190,7 +190,7 @@ const ProductPage = () => {
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
-     (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
+      (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
   return (
     <>
@@ -240,9 +240,14 @@ const ProductPage = () => {
                   </Typography>
                 )}
                 {product.marque && (
-                  <Typography variant="h4" sx={{ color: '#1B5E20', fontWeight: 'medium', mb: 2 }}>
-                    {product.marque}
-                  </Typography>
+                  <>
+                    <Typography variant="h4" sx={{ color: '#1B5E20', fontWeight: 'medium', mb: 1 }}>
+                      {product.marque}
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#000', mb: 2 }}>
+                      Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
+                    </Typography>
+                  </>
                 )}
                 <Divider sx={{ my: 2 }} />
                 <InfoBox>
