@@ -67,7 +67,10 @@ const BrandCard = React.memo(({ brand }) => {
   const nameWithoutPrefix = brand.manufacturer.replace(/^CLES\s*/i, '');
   const isCoffreFort = nameWithoutPrefix.toUpperCase().includes("COFFRE FORT");
   const fullName = nameWithoutPrefix.toLowerCase().replace(/\s+/g, '_');
-  const brandUrl = `/${fullName}_1_reproduction_cle.html`;
+  // Modification pour naviguer vers la page coffre fort si applicable
+  const brandUrl = isCoffreFort
+    ? `/${fullName}_1_coffre_fort.html`
+    : `/${fullName}_1_reproduction_cle.html`;
 
   return (
     <Link to={brandUrl} style={{ textDecoration: 'none' }}>
