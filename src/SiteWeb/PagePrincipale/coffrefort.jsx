@@ -40,7 +40,7 @@ const hardcodedBrands = [
   { id: 19, manufacturer: 'CLES PICARDIE' },
   { id: 20, manufacturer: 'CLES ROSENGREN' },
   { id: 21, manufacturer: 'CLES SECURCASA' },
-  { id: 22, manufacturer: 'CLES SELLA & VALZ' },
+  { id: 22, manufacturer: 'CLES SELLA-VALZ' },
   { id: 23, manufacturer: 'CLES SIBI' },
   { id: 24, manufacturer: 'CLES STIEHM' },
   { id: 25, manufacturer: 'CLES STUV' },
