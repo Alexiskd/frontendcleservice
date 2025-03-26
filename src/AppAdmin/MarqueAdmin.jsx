@@ -94,6 +94,7 @@ const MarqueAdmin = () => {
     const formData = new FormData();
     // Envoi du champ "nom" attendu par le serveur
     formData.append('nom', form.nom);
+    // Le logo n'est ajouté que s'il est fourni
     if (form.logoFile) {
       formData.append('logo', form.logoFile);
     }
@@ -242,7 +243,7 @@ const MarqueAdmin = () => {
                 fontSize: { xs: '0.8rem', md: '1rem' },
               }}
             >
-              {editMode ? 'Changer le Logo' : 'Télécharger le Logo'}
+              {editMode ? 'Changer le Logo (facultatif)' : 'Ajouter un Logo (facultatif)'}
               <input
                 type="file"
                 accept="image/*"
@@ -376,4 +377,3 @@ const MarqueAdmin = () => {
 };
 
 export default MarqueAdmin;
-
