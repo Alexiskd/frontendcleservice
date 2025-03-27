@@ -380,7 +380,7 @@ const Login = () => {
                     aria-label="Copie de clé"
                   />
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
-                    Réplique de votre clé : envoyez-nous votre clé
+                   Faites reproduire votre clé en nous la faisant parvenir en recommandé.
                   </Typography>
                   <Typography component="p" sx={{ mt: 1, color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
                     Envoyez-nous votre clé physique en recommandé et nous réaliserons une copie fidèle que nous vous renverrons par courrier.
