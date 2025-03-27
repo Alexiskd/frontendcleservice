@@ -254,32 +254,41 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                {/* Nom du produit et prix principal */}
+                {/* Nom du produit */}
+                <Typography
+                  variant="h4"
+                  sx={{ 
+                    fontFamily: 'Bento, sans-serif', 
+                    color: '#1B5E20', 
+                    mb: 1, 
+                    cursor: 'pointer' 
+                  }}
+                  onClick={handleViewProduct}
+                >
+                  {product.nom}
+                </Typography>
+                {/* Ligne alignée : marque et prix */}
                 <Box 
                   display="flex" 
                   justifyContent="space-between" 
                   alignItems="center" 
-                  sx={{ flexWrap: 'nowrap' }}  // Empêche le wrapping du contenu
+                  sx={{ flexWrap: 'nowrap', mb: 2 }}
                 >
-                  <Typography
-                    variant="h4"
-                    sx={{ 
-                      fontFamily: 'Bento, sans-serif', 
-                      color: '#1B5E20', 
-                      mb: 1, 
-                      cursor: 'pointer' 
-                    }}
-                    onClick={handleViewProduct}
-                  >
-                    {product.nom}
-                  </Typography>
+                  {product.marque && (
+                    <Typography
+                      variant="h5"
+                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}
+                    >
+                      {product.marque}
+                    </Typography>
+                  )}
                   {mainPrice && (
                     <Typography
-                      variant="h4"
+                      variant="h5"
                       sx={{ 
                         fontFamily: 'Bento, sans-serif', 
                         color: '#1B5E20',
-                        whiteSpace: 'nowrap'  // Empêche le retour à la ligne pour le prix
+                        whiteSpace: 'nowrap'
                       }}
                     >
                       {mainPrice} €
@@ -296,18 +305,6 @@ const ProductPage = () => {
                     }}
                   >
                     Clé Coffre Fort
-                  </Typography>
-                )}
-                {product.marque && (
-                  <Typography 
-                    variant="h4" 
-                    sx={{ 
-                      fontFamily: 'Bento, sans-serif', 
-                      color: '#1B5E20', 
-                      mb: 2 
-                    }}
-                  >
-                    {product.marque}
                   </Typography>
                 )}
                 <Divider sx={{ my: 2 }} />
