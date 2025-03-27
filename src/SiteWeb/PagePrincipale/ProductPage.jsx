@@ -262,7 +262,7 @@ const ProductPage = () => {
                   sx={{ flexWrap: 'nowrap' }}  // Empêche le wrapping du contenu
                 >
                   <Typography
-                    variant="h3"
+                    variant="h4"
                     sx={{ 
                       fontFamily: 'Bento, sans-serif', 
                       color: '#1B5E20', 
