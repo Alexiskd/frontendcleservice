@@ -27,7 +27,7 @@ const hardcodedBrands = [
   { id: 6, manufacturer: 'CLES CORBIN' },
   { id: 7, manufacturer: 'CLES DUTO' },
   { id: 8, manufacturer: 'CLES FASTA' },
-  { id: 9, manufacturer: 'CLES FICHET BAUCHE' },
+  { id: 9, manufacturer: 'CLES FICHET-BAUCHE' },
   { id: 10, manufacturer: 'CLES FUMEO-PARMA' },
   { id: 11, manufacturer: 'CLES GLITTENBERG' },
   { id: 12, manufacturer: 'CLES HAGELIN' },
