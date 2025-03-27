@@ -261,7 +261,6 @@ const ProductPage = () => {
                     sx={{ 
                       fontFamily: 'Bento, sans-serif', 
                       color: '#1B5E20', 
-                      fontWeight: 500, 
                       mb: 1, 
                       cursor: 'pointer' 
                     }}
@@ -274,8 +273,7 @@ const ProductPage = () => {
                       variant="h3"
                       sx={{ 
                         fontFamily: 'Bento, sans-serif', 
-                        color: '#1B5E20', 
-                        fontWeight: 500 
+                        color: '#1B5E20'
                       }}
                     >
                       {mainPrice} €
@@ -300,7 +298,6 @@ const ProductPage = () => {
                     sx={{ 
                       fontFamily: 'Bento, sans-serif', 
                       color: '#1B5E20', 
-                      fontWeight: 500, 
                       mb: 2 
                     }}
                   >
@@ -315,7 +312,6 @@ const ProductPage = () => {
                     sx={{ 
                       fontFamily: 'Bento, sans-serif', 
                       color: '#1B5E20', 
-                      fontWeight: 500, 
                       mb: 2 
                     }}
                   >
@@ -325,7 +321,7 @@ const ProductPage = () => {
                     <Grid item xs={12} md={6}>
                       <Typography 
                         variant="subtitle1" 
-                        sx={{ fontFamily: 'Bento, sans-serif', fontWeight: 500 }}
+                        sx={{ fontFamily: 'Bento, sans-serif' }}
                       >
                         Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
                       </Typography>
@@ -333,7 +329,7 @@ const ProductPage = () => {
                     <Grid item xs={12} md={6}>
                       <Typography 
                         variant="subtitle1" 
-                        sx={{ fontFamily: 'Bento, sans-serif', fontWeight: 500 }}
+                        sx={{ fontFamily: 'Bento, sans-serif' }}
                       >
                         {processText}
                       </Typography>
@@ -348,7 +344,6 @@ const ProductPage = () => {
                       sx={{ 
                         fontFamily: 'Bento, sans-serif', 
                         color: '#1B5E20', 
-                        fontWeight: 500, 
                         mb: 2 
                       }}
                     >
@@ -434,7 +429,6 @@ const ProductPage = () => {
                         sx={{ 
                           fontFamily: 'Bento, sans-serif', 
                           color: '#1B5E20', 
-                          fontWeight: 500, 
                           mb: 1 
                         }}
                       >
@@ -458,7 +452,6 @@ const ProductPage = () => {
                         sx={{ 
                           fontFamily: 'Bento, sans-serif', 
                           color: '#1B5E20', 
-                          fontWeight: 500, 
                           mb: 1 
                         }}
                       >
