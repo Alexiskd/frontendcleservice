@@ -336,6 +336,25 @@ const ProductPage = () => {
                     </Grid>
                   </Grid>
                 </InfoBox>
+                {/* Bouton de commande placé juste en dessous de la section Processus */}
+                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {Number(product.prix) > 0 && (
+                    <StyledButton 
+                      onClick={() => handleOrderNow('numero')} 
+                      startIcon={<ConfirmationNumberIcon />}
+                    >
+                      Commander par numéro chez le fabricant
+                    </StyledButton>
+                  )}
+                  {Number(product.prixSansCartePropriete) > 0 && (
+                    <StyledButton 
+                      onClick={() => handleOrderNow('postal')} 
+                      startIcon={<LocalShippingIcon />}
+                    >
+                      Commander, la reproduction sera effectuée dans notre atelier.
+                    </StyledButton>
+                  )}
+                </Box>
                 {/* Tableau pour clé de passe */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
@@ -469,24 +488,6 @@ const ProductPage = () => {
                     </InfoBox>
                   </Grid>
                 </Grid>
-                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {Number(product.prix) > 0 && (
-                    <StyledButton 
-                      onClick={() => handleOrderNow('numero')} 
-                      startIcon={<ConfirmationNumberIcon />}
-                    >
-                      Commander par numéro chez le fabricant
-                    </StyledButton>
-                  )}
-                  {Number(product.prixSansCartePropriete) > 0 && (
-                    <StyledButton 
-                      onClick={() => handleOrderNow('postal')} 
-                      startIcon={<LocalShippingIcon />}
-                    >
-                      Commander, la reproduction sera effectuée dans notre atelier.
-                    </StyledButton>
-                  )}
-                </Box>
               </CardContent>
             </Grid>
           </Grid>
