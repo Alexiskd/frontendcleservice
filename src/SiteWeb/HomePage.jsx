@@ -170,7 +170,7 @@ const Login = () => {
       <Box
         component="main"
         sx={{
-          mt: '20px',  // Réduction de l'espace en haut
+          mt: '20px',
           backgroundColor: '#F9F9F9',
           minHeight: '70vh',
           display: 'flex',
@@ -377,13 +377,13 @@ const Login = () => {
                   <KeyIcon
                     sx={{ fontSize: { xs: 40, md: 50 }, color: primaryColor }}
                     role="img"
-                    aria-label="Livraison de clé"
+                    aria-label="Copie de clé"
                   />
                   <Typography component="h3" variant="h6" sx={{ mt: 2, fontWeight: '600', color: textPrimary }}>
-                    Faites-vous livrer votre clé
+                    Copie de votre clé en nous l'envoyant
                   </Typography>
                   <Typography component="p" sx={{ mt: 1, color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                    Grâce au numéro de votre clé, nous réalisons une copie et vous l'envoyons directement.
+                    Envoyez-nous une image claire ou un scan de votre clé et nous réaliserons une copie fidèle que nous vous renverrons par courrier.
                   </Typography>
                 </Box>
               </Grid>
