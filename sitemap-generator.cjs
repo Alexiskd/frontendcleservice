@@ -1,7 +1,7 @@
 const path = require('path');
 const Sitemap = require('react-router-sitemap').default;
 // Importez ou définissez vos routes. Par exemple, si vos routes sont dans src/App.js :
-const router = require('./src/App').default; 
+const router = require('./src/siteweb/App').default; 
 
 function generateSitemap() {
   return (
