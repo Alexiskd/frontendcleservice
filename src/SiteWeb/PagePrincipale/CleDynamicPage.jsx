@@ -188,6 +188,17 @@ const CleDynamicPage = () => {
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
+  // Tri des clés pour que les produits fabricant (avec un prix > 0) soient en bas de page
+  const sortedKeys = useMemo(() => {
+    return [...filteredKeys].sort((a, b) => {
+      const aIsManufacturer = Number(a.prix) > 0;
+      const bIsManufacturer = Number(b.prix) > 0;
+      if (aIsManufacturer && !bIsManufacturer) return 1;
+      if (!aIsManufacturer && bIsManufacturer) return -1;
+      return 0;
+    });
+  }, [filteredKeys]);
+
   // Redirection vers la page de commande
   const handleOrderNow = useCallback((item, mode) => {
     try {
@@ -358,9 +369,9 @@ const CleDynamicPage = () => {
             <Typography align="center" color="error" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
               {error}
             </Typography>
-          ) : filteredKeys.length > 0 ? (
+          ) : sortedKeys.length > 0 ? (
             <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
-              {filteredKeys.map((item, index) => {
+              {sortedKeys.map((item, index) => {
                 const numeroPrice = Number(item.prix);
                 const postalPrice = Number(item.prixSansCartePropriete);
                 return (
