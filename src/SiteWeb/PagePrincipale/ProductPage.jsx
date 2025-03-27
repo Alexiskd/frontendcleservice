@@ -97,9 +97,9 @@ const ProductPage = () => {
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography 
-          variant="h6" 
-          color="error" 
+        <Typography
+          variant="h6"
+          color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
           Nom de produit non spécifié.
@@ -173,8 +173,8 @@ const ProductPage = () => {
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography 
-          variant="h6" 
+        <Typography
+          variant="h6"
           color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
@@ -187,8 +187,8 @@ const ProductPage = () => {
   if (!product) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography 
-          variant="h6" 
+        <Typography
+          variant="h6"
           color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
@@ -257,21 +257,21 @@ const ProductPage = () => {
                 {/* Nom du produit */}
                 <Typography
                   variant="h4"
-                  sx={{ 
-                    fontFamily: 'Bento, sans-serif', 
-                    color: '#1B5E20', 
-                    mb: 1, 
-                    cursor: 'pointer' 
+                  sx={{
+                    fontFamily: 'Bento, sans-serif',
+                    color: '#1B5E20',
+                    mb: 1,
+                    cursor: 'pointer',
                   }}
                   onClick={handleViewProduct}
                 >
                   {product.nom}
                 </Typography>
                 {/* Ligne alignée : marque et prix */}
-                <Box 
-                  display="flex" 
-                  justifyContent="space-between" 
-                  alignItems="center" 
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
                   sx={{ flexWrap: 'nowrap', mb: 2 }}
                 >
                   {product.marque && (
@@ -285,10 +285,10 @@ const ProductPage = () => {
                   {mainPrice && (
                     <Typography
                       variant="h5"
-                      sx={{ 
-                        fontFamily: 'Bento, sans-serif', 
+                      sx={{
+                        fontFamily: 'Bento, sans-serif',
                         color: '#1B5E20',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {mainPrice} €
@@ -296,12 +296,12 @@ const ProductPage = () => {
                   )}
                 </Box>
                 {isCoffreFort && (
-                  <Typography 
-                    variant="subtitle1" 
-                    sx={{ 
-                      fontFamily: 'Bento, sans-serif', 
-                      color: '#D32F2F', 
-                      mb: 1 
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontFamily: 'Bento, sans-serif',
+                      color: '#D32F2F',
+                      mb: 1,
                     }}
                   >
                     Clé Coffre Fort
@@ -310,28 +310,28 @@ const ProductPage = () => {
                 <Divider sx={{ my: 2 }} />
                 {/* Section Processus de fabrication */}
                 <InfoBox>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontFamily: 'Bento, sans-serif', 
-                      color: '#1B5E20', 
-                      mb: 2 
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: 'Bento, sans-serif',
+                      color: '#1B5E20',
+                      mb: 2,
                     }}
                   >
                     Processus de fabrication
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
-                      <Typography 
-                        variant="subtitle1" 
+                      <Typography
+                        variant="subtitle1"
                         sx={{ fontFamily: 'Bento, sans-serif' }}
                       >
                         Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
                       </Typography>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      <Typography 
-                        variant="subtitle1" 
+                      <Typography
+                        variant="subtitle1"
                         sx={{ fontFamily: 'Bento, sans-serif' }}
                       >
                         {processText}
@@ -339,34 +339,15 @@ const ProductPage = () => {
                     </Grid>
                   </Grid>
                 </InfoBox>
-                {/* Bouton de commande placé juste en dessous de la section Processus */}
-                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {Number(product.prix) > 0 && (
-                    <StyledButton 
-                      onClick={() => handleOrderNow('numero')} 
-                      startIcon={<ConfirmationNumberIcon />}
-                    >
-                      Commander par numéro chez le fabricant
-                    </StyledButton>
-                  )}
-                  {Number(product.prixSansCartePropriete) > 0 && (
-                    <StyledButton 
-                      onClick={() => handleOrderNow('postal')} 
-                      startIcon={<LocalShippingIcon />}
-                    >
-                      Commander, la reproduction sera effectuée dans notre atelier.
-                    </StyledButton>
-                  )}
-                </Box>
-                {/* Tableau pour clé de passe */}
+                {/* Affichage du tableau pour clé de passe (si applicable) */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
-                    <Typography 
-                      variant="h6" 
-                      sx={{ 
-                        fontFamily: 'Bento, sans-serif', 
-                        color: '#1B5E20', 
-                        mb: 2 
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: 'Bento, sans-serif',
+                        color: '#1B5E20',
+                        mb: 2,
                       }}
                     >
                       Clé de passe
@@ -391,8 +372,8 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <VpnKeyIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`} 
+                        <ListItemText
+                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -402,8 +383,8 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <LabelIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary={`Référence ébauche : ${product.referenceEbauche}`} 
+                        <ListItemText
+                          primary={`Référence ébauche : ${product.referenceEbauche}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -413,8 +394,8 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <FileCopyIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary={`Mode de reproduction : ${product.typeReproduction}`} 
+                        <ListItemText
+                          primary={`Mode de reproduction : ${product.typeReproduction}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -424,8 +405,8 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <FormatListNumberedIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary={`Détails du numéro : ${product.descriptionNumero}`} 
+                        <ListItemText
+                          primary={`Détails du numéro : ${product.descriptionNumero}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -435,8 +416,8 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <DescriptionIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary={`Description du produit : ${product.descriptionProduit}`} 
+                        <ListItemText
+                          primary={`Description du produit : ${product.descriptionProduit}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -446,21 +427,21 @@ const ProductPage = () => {
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          fontFamily: 'Bento, sans-serif', 
-                          color: '#1B5E20', 
-                          mb: 1 
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
+                          mb: 1,
                         }}
                       >
                         Délai de livraison
                       </Typography>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          fontFamily: 'Bento, sans-serif', 
-                          color: '#1B5E20' 
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
                         }}
                       >
                         {getDeliveryDelay(product.typeReproduction)}
@@ -469,21 +450,21 @@ const ProductPage = () => {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          fontFamily: 'Bento, sans-serif', 
-                          color: '#1B5E20', 
-                          mb: 1 
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
+                          mb: 1,
                         }}
                       >
                         Moyens de paiement
                       </Typography>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          fontFamily: 'Bento, sans-serif', 
-                          color: '#1B5E20' 
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
                         }}
                       >
                         Paiement par carte uniquement (Mastercard, Visa, American Express).
@@ -491,6 +472,25 @@ const ProductPage = () => {
                     </InfoBox>
                   </Grid>
                 </Grid>
+                {/* Bloc de commande déplacé en bas de la page */}
+                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {Number(product.prix) > 0 && (
+                    <StyledButton
+                      onClick={() => handleOrderNow('numero')}
+                      startIcon={<ConfirmationNumberIcon />}
+                    >
+                      Commander par numéro chez le fabricant
+                    </StyledButton>
+                  )}
+                  {Number(product.prixSansCartePropriete) > 0 && (
+                    <StyledButton
+                      onClick={() => handleOrderNow('postal')}
+                      startIcon={<LocalShippingIcon />}
+                    >
+                      Commander, la reproduction sera effectuée dans notre atelier.
+                    </StyledButton>
+                  )}
+                </Box>
               </CardContent>
             </Grid>
           </Grid>
