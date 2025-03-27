@@ -326,7 +326,7 @@ const ProductPage = () => {
                         variant="subtitle1"
                         sx={{ fontFamily: 'Bento, sans-serif' }}
                       >
-                        Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
+                      Vous pouvez venir directement en boutique, au 20 rue de Lévis, pour faire reproduire votre clé. C'est plus simple et plus rapide.
                       </Typography>
                     </Grid>
                     <Grid item xs={12} md={6}>
