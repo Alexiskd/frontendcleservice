@@ -319,7 +319,7 @@ const ProductPage = () => {
                       mb: 2 
                     }}
                   >
-                    processus de fabrication
+                    Processus de fabrication
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
