@@ -255,7 +255,12 @@ const ProductPage = () => {
             <Grid item xs={12} md={8}>
               <CardContent>
                 {/* Nom du produit et prix principal */}
-                <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Box 
+                  display="flex" 
+                  justifyContent="space-between" 
+                  alignItems="center" 
+                  sx={{ flexWrap: 'nowrap' }}  // Empêche le wrapping du contenu
+                >
                   <Typography
                     variant="h3"
                     sx={{ 
@@ -273,7 +278,8 @@ const ProductPage = () => {
                       variant="h4"
                       sx={{ 
                         fontFamily: 'Bento, sans-serif', 
-                        color: '#1B5E20'
+                        color: '#1B5E20',
+                        whiteSpace: 'nowrap'  // Empêche le retour à la ligne pour le prix
                       }}
                     >
                       {mainPrice} €
