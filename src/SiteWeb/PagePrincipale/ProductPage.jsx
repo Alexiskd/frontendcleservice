@@ -97,9 +97,9 @@ const ProductPage = () => {
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography
-          variant="h6"
-          color="error"
+        <Typography 
+          variant="h6" 
+          color="error" 
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
           Nom de produit non spécifié.
@@ -173,8 +173,8 @@ const ProductPage = () => {
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography
-          variant="h6"
+        <Typography 
+          variant="h6" 
           color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
@@ -187,8 +187,8 @@ const ProductPage = () => {
   if (!product) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography
-          variant="h6"
+        <Typography 
+          variant="h6" 
           color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
@@ -198,7 +198,7 @@ const ProductPage = () => {
     );
   }
 
-  // Détection si c'est une clé de coffre‑fort
+  // Vérification si c'est une clé de coffre‑fort
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
@@ -211,13 +211,19 @@ const ProductPage = () => {
     ? product.prixSansCartePropriete
     : null;
 
-  // Texte de procédé en fonction du type de reproduction
+  // Texte de procédé pour la section principale
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
       : Number(product.prixSansCartePropriete) > 0
       ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale)."
       : "";
+
+  // Texte de la cellule droite du tableau clé de passe
+  // Si le type de reproduction contient "atelier", on considère que c'est le mode postal (atelier) ; sinon, c'est le mode fabricant.
+  const cleAPasseText = (Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier'))
+    ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
+    : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
 
   return (
     <>
@@ -339,7 +345,7 @@ const ProductPage = () => {
                     </Grid>
                   </Grid>
                 </InfoBox>
-                {/* Affichage du tableau pour clé de passe (si applicable) */}
+                {/* Tableau pour clé de passe : affiché uniquement si c'est une clé de passe */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
                     <Typography
@@ -360,7 +366,7 @@ const ProductPage = () => {
                         {product.prixCleAPasse} €
                       </PricingCell>
                       <PricingCellNoBorder item xs={12} sm={4}>
-                        Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.
+                        {cleAPasseText}
                       </PricingCellNoBorder>
                     </PricingGrid>
                   </InfoBox>
