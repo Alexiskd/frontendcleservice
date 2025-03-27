@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import {
   Box,
   Typography,
@@ -97,7 +97,11 @@ const ProductPage = () => {
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error">
+        <Typography
+          variant="h6"
+          color="error"
+          sx={{ fontFamily: 'Bento, sans-serif' }}
+        >
           Nom de produit non spécifié.
         </Typography>
       </Container>
@@ -169,7 +173,11 @@ const ProductPage = () => {
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error">
+        <Typography
+          variant="h6"
+          color="error"
+          sx={{ fontFamily: 'Bento, sans-serif' }}
+        >
           {error}
         </Typography>
       </Container>
@@ -179,7 +187,11 @@ const ProductPage = () => {
   if (!product) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error">
+        <Typography
+          variant="h6"
+          color="error"
+          sx={{ fontFamily: 'Bento, sans-serif' }}
+        >
           Produit non trouvé.
         </Typography>
       </Container>
@@ -191,6 +203,21 @@ const ProductPage = () => {
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
+
+  // Détermination du prix principal (sauf clé de passe)
+  const mainPrice = Number(product.prix) > 0
+    ? product.prix
+    : Number(product.prixSansCartePropriete) > 0
+    ? product.prixSansCartePropriete
+    : null;
+
+  // Texte de procédé en fonction du type de reproduction
+  const processText =
+    Number(product.prix) > 0
+      ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
+      : Number(product.prixSansCartePropriete) > 0
+      ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale)."
+      : "";
 
   return (
     <>
@@ -227,84 +254,117 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
+                {/* Nom du produit */}
                 <Typography
-                  variant="h3"
-                  sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 1, cursor: 'pointer' }}
+                  variant="h4"
+                  sx={{
+                    fontFamily: 'Bento, sans-serif',
+                    color: '#1B5E20',
+                    mb: 1,
+                    cursor: 'pointer',
+                  }}
                   onClick={handleViewProduct}
                 >
                   {product.nom}
                 </Typography>
+                {/* Ligne alignée : marque et prix */}
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ flexWrap: 'nowrap', mb: 2 }}
+                >
+                  {product.marque && (
+                    <Typography
+                      variant="h5"
+                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}
+                    >
+                      {product.marque}
+                    </Typography>
+                  )}
+                  {mainPrice && (
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily: 'Bento, sans-serif',
+                        color: '#1B5E20',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {mainPrice} €
+                    </Typography>
+                  )}
+                </Box>
                 {isCoffreFort && (
-                  <Typography variant="subtitle1" sx={{ color: '#D32F2F', fontWeight: 'bold', mb: 1 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontFamily: 'Bento, sans-serif',
+                      color: '#D32F2F',
+                      mb: 1,
+                    }}
+                  >
                     Clé Coffre Fort
                   </Typography>
                 )}
-                {product.marque && (
-                  <>
-                    <Typography variant="h4" sx={{ color: '#1B5E20', fontWeight: 'medium', mb: 1 }}>
-                      {product.marque}
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: '#000', mb: 2 }}>
-                      Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
-                    </Typography>
-                  </>
-                )}
                 <Divider sx={{ my: 2 }} />
+                {/* Section Processus de fabrication */}
                 <InfoBox>
-                  <Typography variant="h6" sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 2 }}>
-                    Tarifs
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: 'Bento, sans-serif',
+                      color: '#1B5E20',
+                      mb: 2,
+                    }}
+                  >
+                    Processus de fabrication
                   </Typography>
-                  <PricingGrid container>
-                    <PricingCell item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
-                      Type
-                    </PricingCell>
-                    <PricingCell item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
-                      TTC
-                    </PricingCell>
-                    <PricingCellNoBorder item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
-                      Procédure
-                    </PricingCellNoBorder>
-                    {Number(product.prix) > 0 && (
-                      <>
-                        <PricingCell item xs={12} sm={4}>
-                          Copie fabricant
-                        </PricingCell>
-                        <PricingCell item xs={12} sm={4}>
-                          {product.prix} €
-                        </PricingCell>
-                        <PricingCellNoBorder item xs={12} sm={4}>
-                          Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont.
-                        </PricingCellNoBorder>
-                      </>
-                    )}
-                    {Number(product.prixCleAPasse) > 0 && (
-                      <>
-                        <PricingCell item xs={12} sm={4}>
-                          Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
-                        </PricingCell>
-                        <PricingCell item xs={12} sm={4}>
-                          {product.prixCleAPasse} €
-                        </PricingCell>
-                        <PricingCellNoBorder item xs={12} sm={4}>
-                          Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.
-                        </PricingCellNoBorder>
-                      </>
-                    )}
-                    {Number(product.prixSansCartePropriete) > 0 && (
-                      <>
-                        <PricingCell item xs={12} sm={4}>
-                          Copie dans nos ateliers
-                        </PricingCell>
-                        <PricingCell item xs={12} sm={4}>
-                          {product.prixSansCartePropriete} €
-                        </PricingCell>
-                        <PricingCellNoBorder item xs={12} sm={4}>
-                          Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale).
-                        </PricingCellNoBorder>
-                      </>
-                    )}
-                  </PricingGrid>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontFamily: 'Bento, sans-serif' }}
+                      >
+                        Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontFamily: 'Bento, sans-serif' }}
+                      >
+                        {processText}
+                      </Typography>
+                    </Grid>
+                  </Grid>
                 </InfoBox>
+                {/* Affichage du tableau pour clé de passe (si applicable) */}
+                {Number(product.prixCleAPasse) > 0 && (
+                  <InfoBox>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: 'Bento, sans-serif',
+                        color: '#1B5E20',
+                        mb: 2,
+                      }}
+                    >
+                      Clé de passe
+                    </Typography>
+                    <PricingGrid container>
+                      <PricingCell item xs={12} sm={4}>
+                        Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
+                      </PricingCell>
+                      <PricingCell item xs={12} sm={4}>
+                        {product.prixCleAPasse} €
+                      </PricingCell>
+                      <PricingCellNoBorder item xs={12} sm={4}>
+                        Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.
+                      </PricingCellNoBorder>
+                    </PricingGrid>
+                  </InfoBox>
+                )}
                 <Box sx={{ mb: 2 }}>
                   <List>
                     {product.cleAvecCartePropriete !== null && (
@@ -312,7 +372,10 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <VpnKeyIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`} />
+                        <ListItemText
+                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
+                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
+                        />
                       </ListItem>
                     )}
                     {product.referenceEbauche && (
@@ -320,7 +383,10 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <LabelIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText primary={`Référence ébauche : ${product.referenceEbauche}`} />
+                        <ListItemText
+                          primary={`Référence ébauche : ${product.referenceEbauche}`}
+                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
+                        />
                       </ListItem>
                     )}
                     {product.typeReproduction && (
@@ -328,7 +394,10 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <FileCopyIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText primary={`Mode de reproduction : ${product.typeReproduction}`} />
+                        <ListItemText
+                          primary={`Mode de reproduction : ${product.typeReproduction}`}
+                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
+                        />
                       </ListItem>
                     )}
                     {product.descriptionNumero && product.descriptionNumero.trim() !== '' && (
@@ -336,7 +405,10 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <FormatListNumberedIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText primary={`Détails du numéro : ${product.descriptionNumero}`} />
+                        <ListItemText
+                          primary={`Détails du numéro : ${product.descriptionNumero}`}
+                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
+                        />
                       </ListItem>
                     )}
                     {product.descriptionProduit && product.descriptionProduit.trim() !== '' && (
@@ -344,7 +416,10 @@ const ProductPage = () => {
                         <ListItemIcon>
                           <DescriptionIcon color="action" />
                         </ListItemIcon>
-                        <ListItemText primary={`Description du produit : ${product.descriptionProduit}`} />
+                        <ListItemText
+                          primary={`Description du produit : ${product.descriptionProduit}`}
+                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
+                        />
                       </ListItem>
                     )}
                   </List>
@@ -352,33 +427,66 @@ const ProductPage = () => {
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
-                      <Typography variant="h6" sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 1 }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
+                          mb: 1,
+                        }}
+                      >
                         Délai de livraison
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#1B5E20' }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
+                        }}
+                      >
                         {getDeliveryDelay(product.typeReproduction)}
                       </Typography>
                     </InfoBox>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
-                      <Typography variant="h6" sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 1 }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
+                          mb: 1,
+                        }}
+                      >
                         Moyens de paiement
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#1B5E20' }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: 'Bento, sans-serif',
+                          color: '#1B5E20',
+                        }}
+                      >
                         Paiement par carte uniquement (Mastercard, Visa, American Express).
                       </Typography>
                     </InfoBox>
                   </Grid>
                 </Grid>
+                {/* Bloc de commande déplacé en bas de la page */}
                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Number(product.prix) > 0 && (
-                    <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
+                    <StyledButton
+                      onClick={() => handleOrderNow('numero')}
+                      startIcon={<ConfirmationNumberIcon />}
+                    >
                       Commander par numéro chez le fabricant
                     </StyledButton>
                   )}
                   {Number(product.prixSansCartePropriete) > 0 && (
-                    <StyledButton onClick={() => handleOrderNow('postal')} startIcon={<LocalShippingIcon />}>
+                    <StyledButton
+                      onClick={() => handleOrderNow('postal')}
+                      startIcon={<LocalShippingIcon />}
+                    >
                       Commander, la reproduction sera effectuée dans notre atelier.
                     </StyledButton>
                   )}
