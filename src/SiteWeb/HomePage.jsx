@@ -383,7 +383,7 @@ const Login = () => {
                     Copie de votre clé en nous l'envoyant
                   </Typography>
                   <Typography component="p" sx={{ mt: 1, color: textSecondary, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                    Envoyez-nous une image claire ou un scan de votre clé et nous réaliserons une copie fidèle que nous vous renverrons par courrier.
+                    Envoyez-nous votre clé physique en recommandé et nous réaliserons une copie fidèle que nous vous renverrons par courrier.
                   </Typography>
                 </Box>
               </Grid>
