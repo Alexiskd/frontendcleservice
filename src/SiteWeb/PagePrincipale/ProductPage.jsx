@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import {
   Box,
   Typography,
@@ -192,6 +192,21 @@ const ProductPage = () => {
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
+  // Détermination du prix principal (sauf clé de passe)
+  const mainPrice = Number(product.prix) > 0
+    ? product.prix
+    : Number(product.prixSansCartePropriete) > 0
+    ? product.prixSansCartePropriete
+    : null;
+
+  // Texte de procédé en fonction du type de reproduction
+  const processText =
+    Number(product.prix) > 0
+      ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
+      : Number(product.prixSansCartePropriete) > 0
+      ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale)."
+      : "";
+
   return (
     <>
       <Container sx={{ mt: 2, mb: 4 }}>
@@ -227,84 +242,69 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                <Typography
-                  variant="h3"
-                  sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 1, cursor: 'pointer' }}
-                  onClick={handleViewProduct}
-                >
-                  {product.nom}
-                </Typography>
+                {/* Nom du produit et prix principal */}
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography
+                    variant="h3"
+                    sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 1, cursor: 'pointer' }}
+                    onClick={handleViewProduct}
+                  >
+                    {product.nom}
+                  </Typography>
+                  {mainPrice && (
+                    <Typography variant="h3" sx={{ color: '#1B5E20', fontWeight: 'bold' }}>
+                      {mainPrice} €
+                    </Typography>
+                  )}
+                </Box>
                 {isCoffreFort && (
                   <Typography variant="subtitle1" sx={{ color: '#D32F2F', fontWeight: 'bold', mb: 1 }}>
                     Clé Coffre Fort
                   </Typography>
                 )}
                 {product.marque && (
-                  <>
-                    <Typography variant="h4" sx={{ color: '#1B5E20', fontWeight: 'medium', mb: 1 }}>
-                      {product.marque}
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: '#000', mb: 2 }}>
-                      Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
-                    </Typography>
-                  </>
+                  <Typography variant="h4" sx={{ color: '#1B5E20', fontWeight: 'medium', mb: 2 }}>
+                    {product.marque}
+                  </Typography>
                 )}
                 <Divider sx={{ my: 2 }} />
+                {/* Section Processus de fabrication */}
                 <InfoBox>
                   <Typography variant="h6" sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 2 }}>
-                    Tarifs
+                    processus de fabrication
                   </Typography>
-                  <PricingGrid container>
-                    <PricingCell item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
-                      Type
-                    </PricingCell>
-                    <PricingCell item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
-                      TTC
-                    </PricingCell>
-                    <PricingCellNoBorder item xs={12} sm={4} sx={{ fontWeight: 'bold', backgroundColor: '#c8e6c9' }}>
-                      Procédure
-                    </PricingCellNoBorder>
-                    {Number(product.prix) > 0 && (
-                      <>
-                        <PricingCell item xs={12} sm={4}>
-                          Copie fabricant
-                        </PricingCell>
-                        <PricingCell item xs={12} sm={4}>
-                          {product.prix} €
-                        </PricingCell>
-                        <PricingCellNoBorder item xs={12} sm={4}>
-                          Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont.
-                        </PricingCellNoBorder>
-                      </>
-                    )}
-                    {Number(product.prixCleAPasse) > 0 && (
-                      <>
-                        <PricingCell item xs={12} sm={4}>
-                          Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
-                        </PricingCell>
-                        <PricingCell item xs={12} sm={4}>
-                          {product.prixCleAPasse} €
-                        </PricingCell>
-                        <PricingCellNoBorder item xs={12} sm={4}>
-                          Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.
-                        </PricingCellNoBorder>
-                      </>
-                    )}
-                    {Number(product.prixSansCartePropriete) > 0 && (
-                      <>
-                        <PricingCell item xs={12} sm={4}>
-                          Copie dans nos ateliers
-                        </PricingCell>
-                        <PricingCell item xs={12} sm={4}>
-                          {product.prixSansCartePropriete} €
-                        </PricingCell>
-                        <PricingCellNoBorder item xs={12} sm={4}>
-                          Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale).
-                        </PricingCellNoBorder>
-                      </>
-                    )}
-                  </PricingGrid>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                        Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                        {processText}
+                      </Typography>
+                    </Grid>
+                  </Grid>
                 </InfoBox>
+                {/* Tableau pour clé de passe */}
+                {Number(product.prixCleAPasse) > 0 && (
+                  <InfoBox>
+                    <Typography variant="h6" sx={{ color: '#1B5E20', fontWeight: 'bold', mb: 2 }}>
+                      Clé de passe
+                    </Typography>
+                    <PricingGrid container>
+                      <PricingCell item xs={12} sm={4}>
+                        Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
+                      </PricingCell>
+                      <PricingCell item xs={12} sm={4}>
+                        {product.prixCleAPasse} €
+                      </PricingCell>
+                      <PricingCellNoBorder item xs={12} sm={4}>
+                        Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.
+                      </PricingCellNoBorder>
+                    </PricingGrid>
+                  </InfoBox>
+                )}
                 <Box sx={{ mb: 2 }}>
                   <List>
                     {product.cleAvecCartePropriete !== null && (
