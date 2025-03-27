@@ -188,7 +188,7 @@ const CleDynamicPage = () => {
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
-  // Tri des clés : toutes celles copiées chez le fabricant (prix > 0) sont déplacées à la fin
+  // Tri des clés pour que les produits fabricant (avec un prix > 0) soient en bas de page
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
@@ -525,3 +525,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
