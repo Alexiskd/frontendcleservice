@@ -277,7 +277,10 @@ const ProductPage = () => {
                     </Typography>
                   )}
                   {mainPrice && (
-                    <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}
+                    >
                       {mainPrice} €
                     </Typography>
                   )}
