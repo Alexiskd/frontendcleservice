@@ -47,7 +47,7 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Redirection si le paramètre correspond exactement au produit à rediriger
+  // Redirection immédiate si le paramètre correspond exactement au produit à rediriger
   if (brandFull === "Clé Izis Cavers Reparation de clé") {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
@@ -194,7 +194,7 @@ const CleDynamicPage = () => {
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
-  // Tri des clés : toutes celles copiées chez le fabricant (prix > 0) sont déplacées à la fin
+  // Tri des clés : celles copiées chez le fabricant (prix > 0) sont déplacées à la fin
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
