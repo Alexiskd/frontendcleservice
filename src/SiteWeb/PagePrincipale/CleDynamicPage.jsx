@@ -21,7 +21,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 
-// Tentative de récupérer jQuery depuis la variable globale
+// Tentative de récupération de jQuery depuis la variable globale
 let localJQuery;
 try {
   localJQuery = window.$;
@@ -47,8 +47,10 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Redirection immédiate si le paramètre correspond exactement au produit à rediriger
-  if (brandFull === "Clé Izis Cavers Reparation de clé") {
+  // Normalisation pour la redirection : conversion en minuscules et suppression des espaces
+  const normalizedBrandFull = brandFull ? brandFull.trim().toLowerCase() : "";
+  const targetProduct = "clé izis cavers reparation de clé";
+  if (normalizedBrandFull === targetProduct) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
 
@@ -80,7 +82,7 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (si ce n'est pas un slug produit)
+  // Extraction et normalisation du nom de la marque (pour les URLs non slug)
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
@@ -187,7 +189,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés selon la recherche et inversion de l'ordre pour afficher les derniers en premier
+  // Filtrage et inversion des clés pour afficher les dernières en premier
   const filteredKeys = useMemo(() => (
     keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
@@ -205,7 +207,6 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  // Redirection vers la page de commande
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
@@ -218,14 +219,12 @@ const CleDynamicPage = () => {
     }
   }, [adjustedBrandName, navigate]);
 
-  // Redirection vers la page produit
   const handleViewProduct = useCallback((item) => {
     const formattedName = item.nom.trim().replace(/\s+/g, '-');
     const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
     navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
   }, [navigate]);
 
-  // Ouvre le popup d'agrandissement de l'image et réinitialise le zoom
   const openImageModal = useCallback((item) => {
     setModalImageSrc(getImageSrc(item.imageUrl));
     setScale(1);
@@ -237,7 +236,6 @@ const CleDynamicPage = () => {
     setSnackbarOpen(false);
   }, []);
 
-  // Gestion du zoom avec la roulette de la souris
   const handleWheel = useCallback((event) => {
     event.preventDefault();
     setScale((prevScale) => {
@@ -531,3 +529,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
