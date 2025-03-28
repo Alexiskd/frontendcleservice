@@ -299,7 +299,7 @@ const ProductPage = () => {
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
-                        Notre boutique, située au 20 rue de Lévis, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
+                        Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
                       </Typography>
                     </Grid>
                     <Grid item xs={12} md={6}>
