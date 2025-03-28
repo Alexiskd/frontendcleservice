@@ -45,7 +45,6 @@ const CleDynamicPage = () => {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
 
-  // Suite du composant pour afficher le catalogue des clés...
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [keys, setKeys] = useState([]);
@@ -181,7 +180,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés selon la recherche et inversion pour afficher les dernières en premier
+  // Filtrage et inversion des clés pour afficher les dernières en premier
   const filteredKeys = useMemo(() => (
     keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
@@ -199,22 +198,17 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  const handleOrderNow = useCallback((item, mode) => {
-    try {
-      const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      navigate(`/commander/${adjustedBrandName.replace(/\s+/g, '-')}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`);
-    } catch (error) {
-      console.error('Erreur lors de la navigation vers la commande:', error);
-      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
-  }, [adjustedBrandName, navigate]);
-
+  // Lorsque l'utilisateur clique sur "Voir le produit", on vérifie le nom du produit.
+  // Si c'est "Clé Izis Cavers Reparation de clé", on redirige vers /cle-izis-cassee.php,
+  // sinon on navigue vers la route standard.
   const handleViewProduct = useCallback((item) => {
-    const formattedName = item.nom.trim().replace(/\s+/g, '-');
-    const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-    navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
+    if (item.nom.trim().toLowerCase() === "clé izis cavers reparation de clé") {
+      navigate("/cle-izis-cassee.php");
+    } else {
+      const formattedName = item.nom.trim().replace(/\s+/g, '-');
+      const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
+      navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
+    }
   }, [navigate]);
 
   const openImageModal = useCallback((item) => {
