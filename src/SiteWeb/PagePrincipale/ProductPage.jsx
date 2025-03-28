@@ -47,19 +47,6 @@ const StyledButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const StyledGrayButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.grey[500],
-  color: '#fff',
-  textTransform: 'none',
-  padding: theme.spacing(1.5, 4),
-  borderRadius: 4,
-  boxShadow: 'none',
-  transition: 'background-color 0.3s',
-  '&:hover': {
-    backgroundColor: theme.palette.grey[700],
-  },
-}));
-
 const InfoBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: 4,
@@ -508,10 +495,6 @@ const ProductPage = () => {
                       Commander, la reproduction sera effectuée dans notre atelier.
                     </StyledButton>
                   )}
-                  {/* Bouton Voir produit avec fond grisé */}
-                  <StyledGrayButton onClick={handleViewProduct}>
-                    Voir produit
-                  </StyledGrayButton>
                 </Box>
               </CardContent>
             </Grid>
