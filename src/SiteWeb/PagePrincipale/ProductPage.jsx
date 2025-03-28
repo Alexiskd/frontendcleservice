@@ -159,7 +159,6 @@ const ProductPage = () => {
     }
   }, [navigate, product, brandName]);
 
-  // Ne rien afficher pendant le chargement pour un affichage instantané lors de la redirection
   if (loading) {
     return null;
   }
@@ -218,7 +217,7 @@ const ProductPage = () => {
         <StyledCard>
           <Grid container spacing={2}>
             {product.imageUrl && (
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={4} container justifyContent="center" alignItems="center">
                 <CardMedia
                   component="img"
                   image={product.imageUrl}
