@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; 
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -44,6 +44,19 @@ const StyledButton = styled(Button)(({ theme }) => ({
   transition: 'background-color 0.3s',
   '&:hover': {
     backgroundColor: '#155724',
+  },
+}));
+
+const StyledGrayButton = styled(Button)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[500],
+  color: '#fff',
+  textTransform: 'none',
+  padding: theme.spacing(1.5, 4),
+  borderRadius: 4,
+  boxShadow: 'none',
+  transition: 'background-color 0.3s',
+  '&:hover': {
+    backgroundColor: theme.palette.grey[700],
   },
 }));
 
@@ -97,9 +110,9 @@ const ProductPage = () => {
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography 
-          variant="h6" 
-          color="error" 
+        <Typography
+          variant="h6"
+          color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
           Nom de produit non spécifié.
@@ -173,8 +186,8 @@ const ProductPage = () => {
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography 
-          variant="h6" 
+        <Typography
+          variant="h6"
           color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
@@ -187,8 +200,8 @@ const ProductPage = () => {
   if (!product) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography 
-          variant="h6" 
+        <Typography
+          variant="h6"
           color="error"
           sx={{ fontFamily: 'Bento, sans-serif' }}
         >
@@ -220,7 +233,6 @@ const ProductPage = () => {
       : "";
 
   // Texte de la cellule droite du tableau clé de passe
-  // Si le type de reproduction contient "atelier", on considère que c'est le mode postal (atelier) ; sinon, c'est le mode fabricant.
   const cleAPasseText = (Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier'))
     ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
     : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
@@ -478,7 +490,7 @@ const ProductPage = () => {
                     </InfoBox>
                   </Grid>
                 </Grid>
-                {/* Bloc de commande déplacé en bas de la page */}
+                {/* Bloc de commande */}
                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Number(product.prix) > 0 && (
                     <StyledButton
@@ -496,6 +508,10 @@ const ProductPage = () => {
                       Commander, la reproduction sera effectuée dans notre atelier.
                     </StyledButton>
                   )}
+                  {/* Bouton Voir produit avec fond grisé */}
+                  <StyledGrayButton onClick={handleViewProduct}>
+                    Voir produit
+                  </StyledGrayButton>
                 </Box>
               </CardContent>
             </Grid>
