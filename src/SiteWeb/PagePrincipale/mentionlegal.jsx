@@ -136,6 +136,14 @@ const MentionsLegales = () => {
         </Paragraph>
       </Section>
 
+      {/* Clause relative aux Photos et aux Clés */}
+      <Section>
+        <Title>Clause relative aux Photos et aux Clés</Title>
+        <Paragraph>
+          Les photos des clés présentées sur ce site ont un caractère strictement illustratif et ne constituent en aucun cas une garantie contractuelle. De plus, les clés produites dans nos ateliers sont des copies et non des originaux.
+        </Paragraph>
+      </Section>
+
       {/* Informations Complémentaires */}
       <Section>
         <Title>Informations Complémentaires</Title>
