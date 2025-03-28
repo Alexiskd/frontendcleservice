@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; 
+import React, { useState, useEffect, useCallback } from 'react';  
 import {
   Box,
   Typography,
@@ -296,11 +296,17 @@ const ProductPage = () => {
                   <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
                     Processus de fabrication
                   </Typography>
-                  <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif', mb: 2 }}>
-                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
-                  </Typography>
                   <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
                     {processText}
+                  </Typography>
+                </InfoBox>
+                {/* Autre moyen de reproduction */}
+                <InfoBox>
+                  <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
+                    Autre moyen de reproduction
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
+                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
                   </Typography>
                 </InfoBox>
                 {/* Tableau pour clé de passe */}
