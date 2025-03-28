@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -109,7 +109,7 @@ const CommandePage = () => {
   const { brandName, articleType, articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode'); 
+  const mode = searchParams.get('mode');
   const navigate = useNavigate();
 
   const [article, setArticle] = useState(null);
@@ -406,8 +406,9 @@ const CommandePage = () => {
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
+        {/* Sur ordinateur, on empile les sections en les faisant occuper toute la largeur */}
         <Grid container spacing={4}>
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12}>
             <SectionPaper>
               <Typography variant="h5" gutterBottom>
                 Informations de Commande
@@ -583,7 +584,7 @@ const CommandePage = () => {
 
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  Quantité de copies souhaitée                
+                  Quantité de copies souhaitée
                 </Typography>
                 <TextField
                   type="number"
@@ -818,7 +819,8 @@ const CommandePage = () => {
             </SectionPaper>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          {/* Sur ordinateur, la section récapitulative est désormais affichée en dessous */}
+          <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Récapitulatif
