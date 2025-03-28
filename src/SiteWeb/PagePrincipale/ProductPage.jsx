@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';  
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -7,7 +7,6 @@ import {
   Card,
   CardMedia,
   CardContent,
-  CircularProgress,
   Snackbar,
   Alert,
   Divider,
@@ -160,12 +159,9 @@ const ProductPage = () => {
     }
   }, [navigate, product, brandName]);
 
+  // Ne rien afficher pendant le chargement pour un affichage instantané lors de la redirection
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return null;
   }
 
   if (error) {
@@ -223,30 +219,20 @@ const ProductPage = () => {
           <Grid container spacing={2}>
             {product.imageUrl && (
               <Grid item xs={12} md={4}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '100%',
-                    p: 2,
-                    cursor: 'pointer',
-                  }}
+                <CardMedia
+                  component="img"
+                  image={product.imageUrl}
+                  alt={product.nom}
                   onClick={handleViewProduct}
-                >
-                  <CardMedia
-                    component="img"
-                    image={product.imageUrl}
-                    alt={product.nom}
-                    sx={{
-                      width: '80%',
-                      maxWidth: 150,
-                      objectFit: 'contain',
-                      transition: 'transform 0.3s',
-                      '&:hover': { transform: 'scale(1.1)' },
-                    }}
-                  />
-                </Box>
+                  sx={{
+                    width: '80%',
+                    maxWidth: 150,
+                    objectFit: 'contain',
+                    transition: 'transform 0.3s',
+                    cursor: 'pointer',
+                    '&:hover': { transform: 'scale(1.1)' },
+                  }}
+                />
               </Grid>
             )}
             <Grid item xs={12} md={8}>
