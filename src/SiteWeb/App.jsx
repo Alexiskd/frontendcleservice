@@ -196,17 +196,7 @@ const App = () => {
                   }
                 />
                 <Route path="/app" element={<Loginside />} />
-                <Route
-                  path="*"
-                  element={
-                    <div style={{ textAlign: 'center', padding: '50px' }}>
-                      <h1 style={{ fontSize: '3rem', color: '#FF4D4F' }}>404 - Page Non Trouvée</h1>
-                      <p style={{ fontSize: '1.5rem', color: '#555' }}>
-                        La page que vous recherchez n'existe pas ou a été déplacée.
-                      </p>
-                    </div>
-                  }
-                />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
             {!isAppRoute && <Footer />}
@@ -218,3 +208,4 @@ const App = () => {
 };
 
 export default App;
+
