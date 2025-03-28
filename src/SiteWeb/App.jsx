@@ -171,7 +171,6 @@ const App = () => {
                 {/* Nouvelle route produit avec 3 paramètres */}
                 <Route path="/produit/:brandName/:productName" element={<ProductPage />} />
                 
-                
                 {/* Routes Admin protégées */}
                 <Route
                   path="/app/admin/*"
@@ -219,3 +218,4 @@ const App = () => {
 };
 
 export default App;
+
