@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';  
 import {
   Box,
   Typography,
@@ -7,6 +7,7 @@ import {
   Card,
   CardMedia,
   CardContent,
+  CircularProgress,
   Snackbar,
   Alert,
   Divider,
@@ -117,7 +118,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
+          https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}
         );
         if (!response.ok) {
           throw new Error('Produit introuvable.');
@@ -143,9 +144,9 @@ const ProductPage = () => {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
         navigate(
-          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
+          /commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
             formattedProductName
-          )}?mode=${mode}`
+          )}?mode=${mode}
         );
       }
     },
@@ -155,12 +156,16 @@ const ProductPage = () => {
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-      navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
+      navigate(/produit/${brandName}/${encodeURIComponent(formattedProductName)});
     }
   }, [navigate, product, brandName]);
 
   if (loading) {
-    return null;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (error) {
@@ -217,21 +222,31 @@ const ProductPage = () => {
         <StyledCard>
           <Grid container spacing={2}>
             {product.imageUrl && (
-              <Grid item xs={12} md={4} container justifyContent="center" alignItems="center">
-                <CardMedia
-                  component="img"
-                  image={product.imageUrl}
-                  alt={product.nom}
-                  onClick={handleViewProduct}
+              <Grid item xs={12} md={4}>
+                <Box
                   sx={{
-                    width: '80%',
-                    maxWidth: 150,
-                    objectFit: 'contain',
-                    transition: 'transform 0.3s',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    p: 2,
                     cursor: 'pointer',
-                    '&:hover': { transform: 'scale(1.1)' },
                   }}
-                />
+                  onClick={handleViewProduct}
+                >
+                  <CardMedia
+                    component="img"
+                    image={product.imageUrl}
+                    alt={product.nom}
+                    sx={{
+                      width: '80%',
+                      maxWidth: 150,
+                      objectFit: 'contain',
+                      transition: 'transform 0.3s',
+                      '&:hover': { transform: 'scale(1.1)' },
+                    }}
+                  />
+                </Box>
               </Grid>
             )}
             <Grid item xs={12} md={8}>
@@ -321,7 +336,7 @@ const ProductPage = () => {
                           <VpnKeyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
+                          primary={Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -332,7 +347,7 @@ const ProductPage = () => {
                           <LabelIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Référence ébauche : ${product.referenceEbauche}`}
+                          primary={Référence ébauche : ${product.referenceEbauche}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -343,7 +358,7 @@ const ProductPage = () => {
                           <FileCopyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Mode de reproduction : ${product.typeReproduction}`}
+                          primary={Mode de reproduction : ${product.typeReproduction}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -354,7 +369,7 @@ const ProductPage = () => {
                           <FormatListNumberedIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Détails du numéro : ${product.descriptionNumero}`}
+                          primary={Détails du numéro : ${product.descriptionNumero}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -365,7 +380,7 @@ const ProductPage = () => {
                           <DescriptionIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Description du produit : ${product.descriptionProduit}`}
+                          primary={Description du produit : ${product.descriptionProduit}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
