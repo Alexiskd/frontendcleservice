@@ -21,18 +21,6 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 
-// Tentative de récupération de jQuery depuis la variable globale
-let localJQuery;
-try {
-  localJQuery = window.$;
-  if (!localJQuery) {
-    throw new Error("jQuery n'est pas chargé globalement.");
-  }
-} catch (err) {
-  console.error("Erreur d'initialisation de jQuery :", err);
-  localJQuery = null;
-}
-
 // Hook de debounce pour la saisie utilisateur
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -47,13 +35,17 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Normalisation pour la redirection : conversion en minuscules et suppression des espaces
+  // Normalisation : conversion en minuscules et suppression des espaces en début/fin
   const normalizedBrandFull = brandFull ? brandFull.trim().toLowerCase() : "";
   const targetProduct = "clé izis cavers reparation de clé";
+
+  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé",
+  // on redirige vers la page spécifique.
   if (normalizedBrandFull === targetProduct) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
 
+  // Suite du composant pour afficher le catalogue des clés...
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [keys, setKeys] = useState([]);
@@ -82,7 +74,7 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (pour les URLs non slug)
+  // Extraction et normalisation du nom de la marque (pour les URL non slug)
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
@@ -189,7 +181,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage et inversion des clés pour afficher les dernières en premier
+  // Filtrage des clés selon la recherche et inversion pour afficher les dernières en premier
   const filteredKeys = useMemo(() => (
     keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
