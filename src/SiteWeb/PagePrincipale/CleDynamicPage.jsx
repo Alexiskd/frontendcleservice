@@ -16,7 +16,7 @@ import {
   Dialog,
   DialogContent
 } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
@@ -46,6 +46,12 @@ function useDebounce(value, delay) {
 const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
+
+  // Redirection si le paramètre correspond exactement au produit à rediriger
+  if (brandFull === "Clé Izis Cavers Reparation de clé") {
+    return <Navigate to="/cle-izis-cassee.php" replace />;
+  }
+
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [keys, setKeys] = useState([]);
