@@ -31,17 +31,17 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
+// Fonction de normalisation pour comparer les chaînes de caractères
+function normalizeString(str) {
+  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Normalisation : conversion en minuscules et suppression des espaces en début/fin
-  const normalizedBrandFull = brandFull ? brandFull.trim().toLowerCase() : "";
-  const targetProduct = "clé izis cavers reparation de clé";
-
-  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé",
-  // on redirige vers la page spécifique.
-  if (normalizedBrandFull === targetProduct) {
+  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", on redirige
+  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
 
@@ -75,10 +75,10 @@ const CleDynamicPage = () => {
 
   // Extraction et normalisation du nom de la marque (pour les URL non slug)
   const suffix = '_1_reproduction_cle.html';
-  const actualBrandName = brandFull.endsWith(suffix)
+  const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  const adjustedBrandName = actualBrandName.toUpperCase();
+  const adjustedBrandName = actualBrandName ? actualBrandName.toUpperCase() : "";
 
   // Définition des balises SEO
   const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
@@ -198,11 +198,30 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  // Lorsque l'utilisateur clique sur "Voir le produit", on vérifie le nom du produit.
-  // Si c'est "Clé Izis Cavers Reparation de clé", on redirige vers /cle-izis-cassee.php,
-  // sinon on navigue vers la route standard.
+  // Correction de handleOrderNow
+  const handleOrderNow = useCallback((item, mode) => {
+    try {
+      // Vérifier que la référence existe
+      if (!item.referenceEbauche) {
+        throw new Error("Référence introuvable pour cet article");
+      }
+      const formattedName = item.nom.trim().replace(/\s+/g, '-');
+      // On utilise adjustedBrandName qui est déjà en majuscules
+      const formattedBrand = adjustedBrandName.replace(/\s+/g, '-');
+      const url = `/commander/${formattedBrand}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`;
+      console.log("Navigation vers", url);
+      navigate(url);
+    } catch (error) {
+      console.error('Erreur lors de la navigation vers la commande:', error);
+      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }, [adjustedBrandName, navigate]);
+
+  // Lors du clic sur "Voir le produit", si le nom est le produit cible, on redirige
   const handleViewProduct = useCallback((item) => {
-    if (item.nom.trim().toLowerCase() === "clé izis cavers reparation de clé") {
+    if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
       navigate("/cle-izis-cassee.php");
     } else {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
@@ -515,3 +534,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
