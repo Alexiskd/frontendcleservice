@@ -8,7 +8,7 @@ import Header from "./appbar.jsx";
 import Footer from './PagePrincipale/footer.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import { DataProvider } from './PagePrincipale/DataContext.jsx';
-import ProductPage from './PagePrincipale/ProductPage.jsx';
+import ProductPage from './PagePrincipale/ProductPage.jsx'; // Version modifiée pour rediriger si nécessaire
 import { preloadBrandsData, preloadKeysData } from './brandsApi';
 
 // Composantes Admin (lazy loading)
@@ -24,7 +24,7 @@ const StatistiquesCommandes = lazy(() => import('../AppAdmin/stat.jsx')); // Nou
 const CommandePagePanier = lazy(() => import('./PagePrincipale/commandePagePanier.jsx'));
 const Login = lazy(() => import("../SiteWeb/HomePage.jsx"));
 import Catalogue from "./PagePrincipale/catologue.jsx"; // Correction du nom de fichier
-const CleDynamicPage = lazy(() => import("./PagePrincipale/CleDynamicPage.jsx"));
+const CleDynamicPage = lazy(() => import("./PagePrincipale/CleDynamicPage.jsx")); // Version modifiée pour rediriger si nécessaire
 const Coffrefort = lazy(() => import('./PagePrincipale/coffrefort.jsx'));
 const Telecommande = lazy(() => import('./PagePrincipale/telecommande.jsx')); // Correction du nom de variable
 const Badgeuu = lazy(() => import('./PagePrincipale/badge.jsx'));
@@ -218,4 +218,3 @@ const App = () => {
 };
 
 export default App;
-
