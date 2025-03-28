@@ -47,6 +47,19 @@ const StyledButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+const StyledGrayButton = styled(Button)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[500],
+  color: '#fff',
+  textTransform: 'none',
+  padding: theme.spacing(1.5, 4),
+  borderRadius: 4,
+  boxShadow: 'none',
+  transition: 'background-color 0.3s',
+  '&:hover': {
+    backgroundColor: theme.palette.grey[700],
+  },
+}));
+
 const InfoBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: 4,
@@ -97,11 +110,7 @@ const ProductPage = () => {
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography
-          variant="h6"
-          color="error"
-          sx={{ fontFamily: 'Bento, sans-serif' }}
-        >
+        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
           Nom de produit non spécifié.
         </Typography>
       </Container>
@@ -148,7 +157,9 @@ const ProductPage = () => {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
         navigate(
-          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedProductName)}?mode=${mode}`
+          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
+            formattedProductName
+          )}?mode=${mode}`
         );
       }
     },
@@ -173,11 +184,7 @@ const ProductPage = () => {
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography
-          variant="h6"
-          color="error"
-          sx={{ fontFamily: 'Bento, sans-serif' }}
-        >
+        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
           {error}
         </Typography>
       </Container>
@@ -187,11 +194,7 @@ const ProductPage = () => {
   if (!product) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography
-          variant="h6"
-          color="error"
-          sx={{ fontFamily: 'Bento, sans-serif' }}
-        >
+        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
           Produit non trouvé.
         </Typography>
       </Container>
@@ -205,11 +208,12 @@ const ProductPage = () => {
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
   // Détermination du prix principal (sauf clé de passe)
-  const mainPrice = Number(product.prix) > 0
-    ? product.prix
-    : Number(product.prixSansCartePropriete) > 0
-    ? product.prixSansCartePropriete
-    : null;
+  const mainPrice =
+    Number(product.prix) > 0
+      ? product.prix
+      : Number(product.prixSansCartePropriete) > 0
+      ? product.prixSansCartePropriete
+      : null;
 
   // Texte de procédé pour la section principale
   const processText =
@@ -220,9 +224,10 @@ const ProductPage = () => {
       : "";
 
   // Texte de la cellule droite du tableau clé de passe
-  const cleAPasseText = (Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier'))
-    ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
-    : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
+  const cleAPasseText =
+    Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier')
+      ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
+      : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
 
   return (
     <>
@@ -272,7 +277,7 @@ const ProductPage = () => {
                 >
                   {product.nom}
                 </Typography>
-                {/* Ligne alignée : marque et prix */}
+                {/* Marque et prix */}
                 <Box
                   display="flex"
                   justifyContent="space-between"
@@ -280,21 +285,14 @@ const ProductPage = () => {
                   sx={{ flexWrap: 'nowrap', mb: 2 }}
                 >
                   {product.marque && (
-                    <Typography
-                      variant="h5"
-                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}
-                    >
+                    <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
                       {product.marque}
                     </Typography>
                   )}
                   {mainPrice && (
                     <Typography
                       variant="h5"
-                      sx={{
-                        fontFamily: 'Bento, sans-serif',
-                        color: '#1B5E20',
-                        whiteSpace: 'nowrap',
-                      }}
+                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}
                     >
                       {mainPrice} €
                     </Typography>
@@ -313,7 +311,7 @@ const ProductPage = () => {
                   </Typography>
                 )}
                 <Divider sx={{ my: 2 }} />
-                {/* Section Processus de fabrication */}
+                {/* Processus de fabrication */}
                 <InfoBox>
                   <Typography
                     variant="h6"
@@ -327,24 +325,18 @@ const ProductPage = () => {
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontFamily: 'Bento, sans-serif' }}
-                      >
+                      <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
                         Les clients peuvent directement venir en boutique au 20 rue de Lévis pour faire une reproduction de leur clé, c'est plus simple et plus rapide.
                       </Typography>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontFamily: 'Bento, sans-serif' }}
-                      >
+                      <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
                         {processText}
                       </Typography>
                     </Grid>
                   </Grid>
                 </InfoBox>
-                {/* Tableau pour clé de passe : affiché uniquement si c'est une clé de passe */}
+                {/* Tableau pour clé de passe */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
                     <Typography
@@ -442,13 +434,7 @@ const ProductPage = () => {
                       >
                         Délai de livraison
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: 'Bento, sans-serif',
-                          color: '#1B5E20',
-                        }}
-                      >
+                      <Typography variant="body2" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
                         {getDeliveryDelay(product.typeReproduction)}
                       </Typography>
                     </InfoBox>
@@ -465,13 +451,7 @@ const ProductPage = () => {
                       >
                         Moyens de paiement
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: 'Bento, sans-serif',
-                          color: '#1B5E20',
-                        }}
-                      >
+                      <Typography variant="body2" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
                         Paiement par carte uniquement (Mastercard, Visa, American Express).
                       </Typography>
                     </InfoBox>
@@ -480,21 +460,16 @@ const ProductPage = () => {
                 {/* Bloc de commande */}
                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Number(product.prix) > 0 && (
-                    <StyledButton
-                      onClick={() => handleOrderNow('numero')}
-                      startIcon={<ConfirmationNumberIcon />}
-                    >
+                    <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
                       Commander par numéro chez le fabricant
                     </StyledButton>
                   )}
                   {Number(product.prixSansCartePropriete) > 0 && (
-                    <StyledButton
-                      onClick={() => handleOrderNow('postal')}
-                      startIcon={<LocalShippingIcon />}
-                    >
+                    <StyledButton onClick={() => handleOrderNow('postal')} startIcon={<LocalShippingIcon />}>
                       Commander, la reproduction sera effectuée dans notre atelier.
                     </StyledButton>
                   )}
+                  <StyledGrayButton onClick={handleViewProduct}>Voir produit</StyledGrayButton>
                 </Box>
               </CardContent>
             </Grid>
@@ -511,4 +486,5 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
+
 
