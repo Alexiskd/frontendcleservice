@@ -47,19 +47,6 @@ const StyledButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const StyledGrayButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.grey[500],
-  color: '#fff',
-  textTransform: 'none',
-  padding: theme.spacing(1.5, 4),
-  borderRadius: 4,
-  boxShadow: 'none',
-  transition: 'background-color 0.3s',
-  '&:hover': {
-    backgroundColor: theme.palette.grey[700],
-  },
-}));
-
 const InfoBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: 4,
@@ -290,37 +277,20 @@ const ProductPage = () => {
                     </Typography>
                   )}
                   {mainPrice && (
-                    <Typography
-                      variant="h5"
-                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}
-                    >
+                    <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}>
                       {mainPrice} €
                     </Typography>
                   )}
                 </Box>
                 {isCoffreFort && (
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontFamily: 'Bento, sans-serif',
-                      color: '#D32F2F',
-                      mb: 1,
-                    }}
-                  >
+                  <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif', color: '#D32F2F', mb: 1 }}>
                     Clé Coffre Fort
                   </Typography>
                 )}
                 <Divider sx={{ my: 2 }} />
                 {/* Processus de fabrication */}
                 <InfoBox>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontFamily: 'Bento, sans-serif',
-                      color: '#1B5E20',
-                      mb: 2,
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
                     Processus de fabrication
                   </Typography>
                   <Grid container spacing={2}>
@@ -339,14 +309,7 @@ const ProductPage = () => {
                 {/* Tableau pour clé de passe */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontFamily: 'Bento, sans-serif',
-                        color: '#1B5E20',
-                        mb: 2,
-                      }}
-                    >
+                    <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
                       Clé de passe
                     </Typography>
                     <PricingGrid container>
@@ -424,14 +387,7 @@ const ProductPage = () => {
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: 'Bento, sans-serif',
-                          color: '#1B5E20',
-                          mb: 1,
-                        }}
-                      >
+                      <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 1 }}>
                         Délai de livraison
                       </Typography>
                       <Typography variant="body2" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
@@ -441,14 +397,7 @@ const ProductPage = () => {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <InfoBox>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: 'Bento, sans-serif',
-                          color: '#1B5E20',
-                          mb: 1,
-                        }}
-                      >
+                      <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 1 }}>
                         Moyens de paiement
                       </Typography>
                       <Typography variant="body2" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
@@ -469,7 +418,6 @@ const ProductPage = () => {
                       Commander, la reproduction sera effectuée dans notre atelier.
                     </StyledButton>
                   )}
-                  <StyledGrayButton onClick={handleViewProduct}>Voir produit</StyledGrayButton>
                 </Box>
               </CardContent>
             </Grid>
