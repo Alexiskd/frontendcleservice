@@ -198,17 +198,23 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  // Correction de handleOrderNow
+  // Correction de handleOrderNow avec les modifications
   const handleOrderNow = useCallback((item, mode) => {
     try {
-      // Vérifier que la référence existe
-      if (!item.referenceEbauche) {
+      // Utiliser la référence disponible (referenceEbauche ou reference)
+      const reference = item.referenceEbauche || item.reference;
+      if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
+      // Formater le nom et la marque
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      // On utilise adjustedBrandName qui est déjà en majuscules
-      const formattedBrand = adjustedBrandName.replace(/\s+/g, '-');
-      const url = `/commander/${formattedBrand}/cle/${item.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`;
+      // Utiliser item.marque pour être sûr d'avoir la bonne valeur (ou fallback sur adjustedBrandName)
+      const formattedBrand = (item.marque || adjustedBrandName)
+        .trim()
+        .replace(/\s+/g, '-')
+        .toUpperCase();
+      // Construction de l'URL en fonction de votre configuration de routes
+      const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
@@ -534,4 +540,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
