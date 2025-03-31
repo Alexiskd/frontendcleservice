@@ -152,32 +152,13 @@ const Coffrefort = () => {
     );
   }, [brands, searchTerm]);
 
-  // Tri différencié :
-  // - Marques "coffre fort" triées en A-Z
-  // - Marques de reproduction de clé triées en Z-A
+  // Tri alphabétique A-Z après suppression du préfixe "CLES"
   const sortedFilteredBrands = useMemo(() => {
-    const safeLockBrands = filteredBrands.filter((brand) => {
-      const name = brand.manufacturer.replace(/^CLES\s*/i, '');
-      return name.toUpperCase().includes("COFFRE FORT");
-    });
-    const keyBrands = filteredBrands.filter((brand) => {
-      const name = brand.manufacturer.replace(/^CLES\s*/i, '');
-      return !name.toUpperCase().includes("COFFRE FORT");
-    });
-
-    safeLockBrands.sort((a, b) => {
-      const nameA = a.manufacturer.replace(/^CLES\s*/i, '');
-      const nameB = b.manufacturer.replace(/^CLES\s*/i, '');
+    return filteredBrands.slice().sort((a, b) => {
+      const nameA = a.manufacturer.replace(/^CLES\s*/i, '').trim().toUpperCase();
+      const nameB = b.manufacturer.replace(/^CLES\s*/i, '').trim().toUpperCase();
       return nameA.localeCompare(nameB);
     });
-
-    keyBrands.sort((a, b) => {
-      const nameA = a.manufacturer.replace(/^CLES\s*/i, '');
-      const nameB = b.manufacturer.replace(/^CLES\s*/i, '');
-      return nameB.localeCompare(nameA);
-    });
-
-    return [...safeLockBrands, ...keyBrands];
   }, [filteredBrands]);
 
   const toggleInfo = useCallback(() => {
@@ -197,8 +178,8 @@ const Coffrefort = () => {
     : 'Découvrez notre catalogue exclusif regroupant les marques leaders dans le domaine des clés. Commandez votre double de clé en ligne rapidement et en toute sécurité avec Maison Bouvet.';
 
   const seoKeywords = sortedFilteredBrands.length > 0
-    ? sortedFilteredBrands.map(b => b.manufacturer).join(', ')
-    : hardcodedBrands.map(b => b.manufacturer).join(', ');
+    ? sortedFilteredBrands.map((b) => b.manufacturer).join(', ')
+    : hardcodedBrands.map((b) => b.manufacturer).join(', ');
 
   return (
     <Box
