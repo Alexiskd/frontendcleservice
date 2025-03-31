@@ -40,7 +40,7 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", on redirige
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
@@ -198,17 +198,22 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  // Fonction handleOrderNow modifiée pour rediriger vers la page commande
+  // Correction de handleOrderNow avec les modifications
   const handleOrderNow = useCallback((item, mode) => {
     try {
-      // Vérification et récupération de la référence
+      // Utiliser la référence disponible (referenceEbauche ou reference)
       const reference = item.referenceEbauche || item.reference;
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      // Imitation du formatage utilisé dans ProductPage : la marque est issue des paramètres en minuscules
-      const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
+      // Formater le nom et la marque
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
+      // Utiliser item.marque pour être sûr d'avoir la bonne valeur (ou fallback sur adjustedBrandName)
+      const formattedBrand = (item.marque || adjustedBrandName)
+        .trim()
+        .replace(/\s+/g, '-')
+        .toUpperCase();
+      // Construction de l'URL en fonction de votre configuration de routes
       const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
@@ -218,7 +223,7 @@ const CleDynamicPage = () => {
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  }, [brandFull, navigate]);
+  }, [adjustedBrandName, navigate]);
 
   // Lors du clic sur "Voir le produit", on redirige vers la page produit
   const handleViewProduct = useCallback((item) => {
@@ -230,6 +235,13 @@ const CleDynamicPage = () => {
       navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
     }
   }, [navigate]);
+
+  // La fonction openImageModal n'est plus utilisée, on peut éventuellement la supprimer.
+  // const openImageModal = useCallback((item) => {
+  //   setModalImageSrc(getImageSrc(item.imageUrl));
+  //   setScale(1);
+  //   setModalOpen(true);
+  // }, [getImageSrc]);
 
   const handleCloseSnackbar = useCallback((event, reason) => {
     if (reason === 'clickaway') return;
@@ -381,6 +393,7 @@ const CleDynamicPage = () => {
                 return (
                   <Grid key={item.id || index} item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
                     <Card sx={styles.card}>
+                      {/* Modification : redirection vers la page produit au clic sur l'image */}
                       <Box onClick={() => handleViewProduct(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
                         {brandLogo && (
                           <Box sx={styles.brandLogoContainer}>
@@ -529,3 +542,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
