@@ -16,6 +16,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Dialog,
+  DialogContent
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -93,6 +95,9 @@ const ProductPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // États pour le modal d'image agrandie
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const [modalImage, setModalImage] = useState('');
 
   if (!productName) {
     return (
@@ -159,6 +164,19 @@ const ProductPage = () => {
       navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
     }
   }, [navigate, product, brandName]);
+
+  // Ouvre le modal d'image agrandie
+  const handleOpenImageModal = useCallback(() => {
+    if (product && product.imageUrl) {
+      setModalImage(product.imageUrl);
+      setOpenImageModal(true);
+    }
+  }, [product]);
+
+  // Ferme le modal
+  const handleCloseImageModal = useCallback(() => {
+    setOpenImageModal(false);
+  }, []);
 
   if (loading) {
     return (
@@ -232,7 +250,7 @@ const ProductPage = () => {
                     p: 2,
                     cursor: 'pointer',
                   }}
-                  onClick={handleViewProduct}
+                  onClick={handleOpenImageModal}
                 >
                   <CardMedia
                     component="img"
@@ -432,8 +450,21 @@ const ProductPage = () => {
           </Snackbar>
         )}
       </Container>
+      {/* Dialog affichant l'image agrandie */}
+      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
+        <DialogContent>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <img
+              src={modalImage}
+              alt={product.nom}
+              style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
+            />
+          </Box>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
 
 export default ProductPage;
+
