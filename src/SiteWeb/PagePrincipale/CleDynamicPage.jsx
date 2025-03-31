@@ -198,15 +198,15 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  // Fonction handleOrderNow modifiée pour rediriger vers la page commande
+  // Fonction handleOrderNow mise à jour avec fallback sur item.id
   const handleOrderNow = useCallback((item, mode) => {
     try {
-      // Vérification et récupération de la référence
-      const reference = item.referenceEbauche || item.reference;
+      // Utiliser la référence disponible : referenceEbauche, reference ou id
+      const reference = item.referenceEbauche || item.reference || item.id;
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      // Imitation du formatage utilisé dans ProductPage : la marque est issue des paramètres en minuscules
+      // La marque est obtenue depuis le paramètre brandFull (converti en minuscules et avec des tirets)
       const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
