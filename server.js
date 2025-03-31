@@ -2,15 +2,17 @@
 import express from 'express';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import App from './App.js'; // Assurez-vous que cette ligne n'est présente qu'une seule fois
+import App from './App.js'; // Assurez-vous que App.js est dans le même dossier
 
 const app = express();
 
+// Sert les fichiers statiques (build, CSS, images, etc.)
 app.use(express.static('build'));
 
 app.get('*', (req, res) => {
-  // Utilisez React.createElement si vous ne voulez pas utiliser JSX directement
+  // On utilise React.createElement pour éviter d'utiliser directement JSX
   const appHtml = ReactDOMServer.renderToString(React.createElement(App));
+  
   const html = `
     <!DOCTYPE html>
     <html lang="fr">
