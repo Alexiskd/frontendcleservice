@@ -1,439 +1,531 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
   Typography,
-  Button,
   Container,
   Card,
   CardMedia,
   CardContent,
-  CircularProgress,
+  Button,
+  TextField,
   Snackbar,
   Alert,
-  Divider,
+  Skeleton,
   Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
+  Dialog,
+  DialogContent
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import LabelIcon from '@mui/icons-material/Label';
-import FileCopyIcon from '@mui/icons-material/FileCopy';
-import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import DescriptionIcon from '@mui/icons-material/Description';
+import { preloadKeysData } from '../brandsApi';
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: 8,
-  boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
-  transition: 'transform 0.3s',
-  overflow: 'hidden',
-}));
+// Hook de debounce pour la saisie utilisateur
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
-const StyledButton = styled(Button)(({ theme }) => ({
-  backgroundColor: '#1B5E20',
-  color: '#fff',
-  textTransform: 'none',
-  padding: theme.spacing(1.5, 4),
-  borderRadius: 4,
-  boxShadow: 'none',
-  transition: 'background-color 0.3s',
-  '&:hover': {
-    backgroundColor: '#155724',
-  },
-}));
+// Fonction de normalisation pour comparer les chaînes de caractères
+function normalizeString(str) {
+  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
-const InfoBox = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  borderRadius: 4,
-  background: 'linear-gradient(45deg, #e8f5e9, #f1f8e9)',
-  marginBottom: theme.spacing(2),
-}));
-
-const PricingGrid = styled(Grid)(({ theme }) => ({
-  border: '1px solid #1B5E20',
-  borderRadius: 4,
-  overflow: 'hidden',
-}));
-
-const PricingCell = styled(Grid)(({ theme }) => ({
-  padding: theme.spacing(1),
-  borderRight: '1px solid #1B5E20',
-  borderBottom: '1px solid #1B5E20',
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '0.9rem',
-  },
-}));
-
-const PricingCellNoBorder = styled(Grid)(({ theme }) => ({
-  padding: theme.spacing(1),
-  borderBottom: '1px solid #1B5E20',
-}));
-
-const getDeliveryDelay = (typeReproduction) => {
-  switch (typeReproduction) {
-    case 'copie':
-      return 'Livraison en 3 jours ouvrés pour cette clé';
-    case 'clé à IA':
-      return 'Livraison en 5 jours ouvrés pour cette clé';
-    case 'clé à numéro':
-      return 'Livraison en 1/2 semaine pour cette clé';
-    default:
-      return 'Délai de livraison à confirmer';
-  }
-};
-
-const ProductPage = () => {
-  const { brandName, productName } = useParams();
+const CleDynamicPage = () => {
+  const { brandFull } = useParams();
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
+
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
+    return <Navigate to="/cle-izis-cassee.php" replace />;
+  }
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [brandLogo, setBrandLogo] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalImageSrc, setModalImageSrc] = useState('');
+  const [scale, setScale] = useState(1);
 
-  if (!productName) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
-          Nom de produit non spécifié.
-        </Typography>
-      </Container>
-    );
-  }
+  // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  useEffect(() => {
+    if (/^\d+-/.test(brandFull)) {
+      const parts = brandFull.split("-");
+      if (parts.length >= 3) {
+        const brand = parts[0];
+        const productName = parts.slice(2).join("-");
+        navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
+      } else {
+        navigate(`/produit/${encodeURIComponent(brandFull)}`);
+      }
+      return;
+    }
+  }, [brandFull, navigate]);
 
-  let cleanedProductName = productName;
-  if (cleanedProductName.endsWith('-reproduction-cle.html')) {
-    cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
-  }
-  const decodedProductName = cleanedProductName.replace(/-/g, ' ');
+  // Extraction et normalisation du nom de la marque (pour les URL non slug)
+  const suffix = '_1_reproduction_cle.html';
+  const actualBrandName = brandFull && brandFull.endsWith(suffix)
+    ? brandFull.slice(0, -suffix.length)
+    : brandFull;
+  const adjustedBrandName = actualBrandName ? actualBrandName.toUpperCase() : "";
+
+  // Définition des balises SEO
+  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+
+  // Fonction pour obtenir l'URL d'une image
+  const getImageSrc = useCallback((imageUrl) => {
+    if (!imageUrl || imageUrl.trim() === '') return '';
+    if (imageUrl.startsWith('data:')) return imageUrl;
+    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
+    return imageUrl;
+  }, []);
+
+  // Génération des données structurées Schema.org (ItemList)
+  const jsonLdData = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": `${adjustedBrandName} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
+    "itemListElement": keys.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Product",
+        "name": item.nom,
+        "description": item.descriptionNumero || "Clé de reproduction",
+        "image": getImageSrc(item.imageUrl),
+        "brand": {
+          "@type": "Brand",
+          "name": item.marque
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": item.prix,
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": window.location.href
+        }
+      }
+    }))
+  }), [adjustedBrandName, keys, getImageSrc]);
+
+  // Récupération du logo pour la marque
+  useEffect(() => {
+    if (/^\d+-/.test(brandFull)) return;
+    if (!actualBrandName) return;
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
+      .then((res) => {
+        if (res.ok) return res.blob();
+        throw new Error(`Logo non trouvé pour ${actualBrandName}`);
+      })
+      .then((blob) => {
+        const logoUrl = URL.createObjectURL(blob);
+        setBrandLogo(logoUrl);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement du logo:", error);
+        setBrandLogo(null);
+      });
+  }, [actualBrandName, brandFull]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  // Chargement initial des clés via preloadKeysData
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(
-          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
-        );
-        if (!response.ok) {
-          throw new Error('Produit introuvable.');
-        }
-        const data = await response.json();
-        if (!data) {
-          throw new Error('Réponse vide du serveur.');
-        }
-        setProduct(data);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [decodedProductName]);
-
-  const handleOrderNow = useCallback(
-    (mode) => {
-      if (product) {
-        const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
-        const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-        navigate(
-          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
-            formattedProductName
-          )}?mode=${mode}`
-        );
-      }
-    },
-    [navigate, product, brandName]
-  );
-
-  const handleViewProduct = useCallback(() => {
-    if (product) {
-      const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-      navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
+    if (/^\d+-/.test(brandFull)) {
+      setLoading(false);
+      return;
     }
-  }, [navigate, product, brandName]);
+    if (!adjustedBrandName) {
+      setError("La marque n'a pas été fournie.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    preloadKeysData(adjustedBrandName)
+      .then((data) => setKeys(data))
+      .catch((err) => {
+        console.error('Erreur lors du chargement des clés:', err);
+        setError(err.message);
+        setSnackbarMessage(`Erreur: ${err.message}`);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      })
+      .finally(() => setLoading(false));
+  }, [adjustedBrandName, brandFull]);
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // Préchargement des images des clés
+  useEffect(() => {
+    keys.forEach((item) => {
+      const img = new Image();
+      img.src = getImageSrc(item.imageUrl);
+    });
+  }, [keys, getImageSrc]);
 
-  if (error) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
-          {error}
-        </Typography>
-      </Container>
-    );
-  }
+  const handleSearchChange = useCallback((event) => {
+    setSearchTerm(event.target.value);
+  }, []);
 
-  if (!product) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
-          Produit non trouvé.
-        </Typography>
-      </Container>
-    );
-  }
+  // Filtrage et inversion des clés pour afficher les dernières en premier
+  const filteredKeys = useMemo(() => (
+    keys.filter((item) =>
+      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    ).slice().reverse()
+  ), [keys, debouncedSearchTerm]);
 
-  // Vérification si c'est une clé de coffre‑fort
-  const isCoffreFort =
-    product &&
-    (product.nom.toUpperCase().includes("COFFRE FORT") ||
-      (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
+  // Tri des clés : celles copiées chez le fabricant (prix > 0) sont déplacées à la fin
+  const sortedKeys = useMemo(() => {
+    return [...filteredKeys].sort((a, b) => {
+      const aIsManufacturer = Number(a.prix) > 0;
+      const bIsManufacturer = Number(b.prix) > 0;
+      if (aIsManufacturer && !bIsManufacturer) return 1;
+      if (!aIsManufacturer && bIsManufacturer) return -1;
+      return 0;
+    });
+  }, [filteredKeys]);
 
-  // Détermination du prix principal (sauf clé de passe)
-  const mainPrice =
-    Number(product.prix) > 0
-      ? product.prix
-      : Number(product.prixSansCartePropriete) > 0
-      ? product.prixSansCartePropriete
-      : null;
+  // Fonction handleOrderNow modifiée pour rediriger vers la page commande
+  const handleOrderNow = useCallback((item, mode) => {
+    try {
+      // Vérification et récupération de la référence
+      const reference = item.referenceEbauche || item.reference;
+      if (!reference) {
+        throw new Error("Référence introuvable pour cet article");
+      }
+      // Imitation du formatage utilisé dans ProductPage : la marque est issue des paramètres en minuscules
+      const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
+      const formattedName = item.nom.trim().replace(/\s+/g, '-');
+      const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
+      console.log("Navigation vers", url);
+      navigate(url);
+    } catch (error) {
+      console.error('Erreur lors de la navigation vers la commande:', error);
+      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }, [brandFull, navigate]);
 
-  // Texte de procédé pour la section principale
-  const processText =
-    Number(product.prix) > 0
-      ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
-      : Number(product.prixSansCartePropriete) > 0
-      ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale)."
-      : "";
+  // Lors du clic sur "Voir le produit", on redirige vers la page produit
+  const handleViewProduct = useCallback((item) => {
+    if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
+      navigate("/cle-izis-cassee.php");
+    } else {
+      const formattedName = item.nom.trim().replace(/\s+/g, '-');
+      const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
+      navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
+    }
+  }, [navigate]);
 
-  // Texte de la cellule droite du tableau clé de passe
-  const cleAPasseText =
-    Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier')
-      ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
-      : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
+  const handleCloseSnackbar = useCallback((event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbarOpen(false);
+  }, []);
+
+  const handleWheel = useCallback((event) => {
+    event.preventDefault();
+    setScale((prevScale) => {
+      let newScale = prevScale + (event.deltaY < 0 ? 0.1 : -0.1);
+      newScale = Math.max(0.5, Math.min(newScale, 3));
+      return newScale;
+    });
+  }, []);
+
+  const styles = useMemo(() => ({
+    page: {
+      backgroundColor: '#fafafa',
+      minHeight: '100vh',
+      paddingBottom: '24px',
+    },
+    searchContainer: {
+      marginTop: { xs: '20px', sm: '40px' }
+    },
+    gridContainer: {
+      padding: '16px 0',
+    },
+    card: {
+      backgroundColor: '#fff',
+      borderRadius: '12px',
+      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+      transition: 'transform 0.2s, box-shadow 0.2s',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      minHeight: '400px',
+      width: '100%',
+      flex: 1,
+    },
+    cardMedia: {
+      height: 180,
+      objectFit: 'contain',
+      backgroundColor: '#fff',
+      borderTopLeftRadius: '12px',
+      borderTopRightRadius: '12px',
+    },
+    cardContent: {
+      flexGrow: 1,
+      padding: { xs: '8px', sm: '16px' },
+      fontFamily: 'Montserrat, sans-serif',
+      textAlign: 'left',
+    },
+    productName: {
+      fontSize: '1.2rem',
+      fontWeight: 700,
+      marginBottom: 0,
+      color: '#333',
+      cursor: 'pointer',
+    },
+    brandName: {
+      fontSize: '0.9rem',
+      color: '#777',
+      marginBottom: '8px',
+    },
+    pricesContainer: {
+      display: 'flex',
+      gap: '8px',
+      marginTop: '12px',
+    },
+    priceBadge: {
+      backgroundColor: '#e8f5e9',
+      padding: '6px 12px',
+      borderRadius: '8px',
+      textAlign: 'center',
+      color: '#1B5E20',
+    },
+    buttonSecondary: {
+      borderRadius: '50px',
+      padding: '8px 16px',
+      fontFamily: 'Montserrat, sans-serif',
+      textTransform: 'none',
+      fontWeight: 600,
+      fontSize: '0.75rem',
+      boxShadow: 'none',
+      marginTop: '8px',
+    },
+    buttonContainer: {
+      padding: { xs: '8px', sm: '16px' },
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      mt: 'auto',
+    },
+    brandLogoContainer: {
+      position: 'absolute',
+      top: 8,
+      left: 8,
+      width: 32,
+      height: 32,
+      borderRadius: '50%',
+      overflow: 'hidden',
+      backgroundColor: '#fff',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      zIndex: 2,
+    },
+  }), []);
 
   return (
-    <>
-      <Container sx={{ mt: 2, mb: 4 }}>
-        <StyledCard>
-          <Grid container spacing={2}>
-            {product.imageUrl && (
-              <Grid item xs={12} md={4}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '100%',
-                    p: 2,
-                    cursor: 'pointer',
-                  }}
-                  onClick={handleViewProduct}
-                >
-                  <CardMedia
-                    component="img"
-                    image={product.imageUrl}
-                    alt={product.nom}
-                    sx={{
-                      width: '80%',
-                      maxWidth: 150,
-                      objectFit: 'contain',
-                      transition: 'transform 0.3s',
-                      '&:hover': { transform: 'scale(1.1)' },
-                    }}
-                  />
-                </Box>
-              </Grid>
-            )}
-            <Grid item xs={12} md={8}>
-              <CardContent>
-                {/* Nom du produit */}
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontFamily: 'Bento, sans-serif',
-                    color: '#1B5E20',
-                    mb: 1,
-                    cursor: 'pointer',
-                  }}
-                  onClick={handleViewProduct}
-                >
-                  {product.nom}
-                </Typography>
-                {/* Marque et prix */}
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ flexWrap: 'nowrap', mb: 2 }}
-                >
-                  {product.marque && (
-                    <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
-                      {product.marque}
-                    </Typography>
-                  )}
-                  {mainPrice && (
-                    <Typography
-                      variant="h5"
-                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}
-                    >
-                      {mainPrice} €
-                    </Typography>
-                  )}
-                </Box>
-                {isCoffreFort && (
-                  <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif', color: '#D32F2F', mb: 1 }}>
-                    Clé Coffre Fort
-                  </Typography>
-                )}
-                <Divider sx={{ my: 2 }} />
-                {/* Processus de fabrication */}
-                <InfoBox>
-                  <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
-                    Processus de fabrication
-                  </Typography>
-                  <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
-                    {processText}
-                  </Typography>
-                </InfoBox>
-                {/* Autre moyen de reproduction */}
-                <InfoBox>
-                  <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
-                    Autre moyen de reproduction
-                  </Typography>
-                  <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
-                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
-                  </Typography>
-                </InfoBox>
-                {/* Tableau pour clé de passe */}
-                {Number(product.prixCleAPasse) > 0 && (
-                  <InfoBox>
-                    <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
-                      Clé de passe
-                    </Typography>
-                    <PricingGrid container>
-                      <PricingCell item xs={12} sm={4}>
-                        Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
-                      </PricingCell>
-                      <PricingCell item xs={12} sm={4}>
-                        {product.prixCleAPasse} €
-                      </PricingCell>
-                      <PricingCellNoBorder item xs={12} sm={4}>
-                        {cleAPasseText}
-                      </PricingCellNoBorder>
-                    </PricingGrid>
-                  </InfoBox>
-                )}
-                <Box sx={{ mb: 2 }}>
-                  <List>
-                    {product.cleAvecCartePropriete !== null && (
-                      <ListItem disableGutters>
-                        <ListItemIcon>
-                          <VpnKeyIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
-                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
+    <HelmetProvider>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
+        />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://votre-site.com" />
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLdData)}
+        </script>
+      </Helmet>
+      <Box sx={styles.page}>
+        <Container sx={styles.searchContainer}>
+          <TextField
+            label="Tapez le numéro de votre clé"
+            variant="outlined"
+            fullWidth
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </Container>
+        <Container maxWidth="xl">
+          {loading ? (
+            <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Chargement...
+            </Typography>
+          ) : error ? (
+            <Typography align="center" color="error" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
+              {error}
+            </Typography>
+          ) : sortedKeys.length > 0 ? (
+            <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
+              {sortedKeys.map((item, index) => {
+                const numeroPrice = Number(item.prix);
+                const postalPrice = Number(item.prixSansCartePropriete);
+                return (
+                  <Grid key={item.id || index} item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
+                    <Card sx={styles.card}>
+                      <Box onClick={() => handleViewProduct(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
+                        {brandLogo && (
+                          <Box sx={styles.brandLogoContainer}>
+                            <img
+                              src={brandLogo}
+                              alt={item.marque}
+                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                              onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
+                            />
+                          </Box>
+                        )}
+                        <CardMedia
+                          component="img"
+                          image={getImageSrc(item.imageUrl)}
+                          alt={item.nom}
+                          sx={styles.cardMedia}
+                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
                         />
-                      </ListItem>
-                    )}
-                    {product.referenceEbauche && (
-                      <ListItem disableGutters>
-                        <ListItemIcon>
-                          <LabelIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`Référence ébauche : ${product.referenceEbauche}`}
-                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
+                        <Skeleton
+                          variant="rectangular"
+                          sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: 180,
+                            borderTopLeftRadius: '12px',
+                            borderTopRightRadius: '12px',
+                          }}
                         />
-                      </ListItem>
-                    )}
-                    {product.typeReproduction && (
-                      <ListItem disableGutters>
-                        <ListItemIcon>
-                          <FileCopyIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`Mode de reproduction : ${product.typeReproduction}`}
-                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
-                        />
-                      </ListItem>
-                    )}
-                    {product.descriptionNumero && product.descriptionNumero.trim() !== '' && (
-                      <ListItem disableGutters>
-                        <ListItemIcon>
-                          <FormatListNumberedIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`Détails du numéro : ${product.descriptionNumero}`}
-                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
-                        />
-                      </ListItem>
-                    )}
-                    {product.descriptionProduit && product.descriptionProduit.trim() !== '' && (
-                      <ListItem disableGutters>
-                        <ListItemIcon>
-                          <DescriptionIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`Description du produit : ${product.descriptionProduit}`}
-                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
-                        />
-                      </ListItem>
-                    )}
-                  </List>
-                </Box>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <InfoBox>
-                      <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 1 }}>
-                        Délai de livraison
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
-                        {getDeliveryDelay(product.typeReproduction)}
-                      </Typography>
-                    </InfoBox>
+                      </Box>
+                      <CardContent sx={styles.cardContent}>
+                        <Typography sx={styles.productName} onClick={() => handleViewProduct(item)}>
+                          {item.nom}
+                        </Typography>
+                        <Typography sx={styles.brandName}>{item.marque}</Typography>
+                        <Box sx={styles.pricesContainer}>
+                          {numeroPrice > 0 && (
+                            <Box sx={styles.priceBadge}>
+                              <Typography variant="caption">Copie chez le fabricant</Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                {item.prix} €
+                              </Typography>
+                            </Box>
+                          )}
+                          {postalPrice > 0 && (
+                            <Box sx={styles.priceBadge}>
+                              <Typography variant="caption">Copie dans nos ateliers</Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                {item.prixSansCartePropriete} €
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </CardContent>
+                      <Box sx={styles.buttonContainer}>
+                        {numeroPrice > 0 && (
+                          <Button
+                            variant="outlined"
+                            onClick={() => handleOrderNow(item, 'numero')}
+                            startIcon={<ConfirmationNumberIcon />}
+                            sx={{
+                              ...styles.buttonSecondary,
+                              borderColor: '#1B5E20',
+                              color: '#1B5E20',
+                              '&:hover': {
+                                backgroundColor: '#1B5E20',
+                                color: '#fff',
+                              },
+                            }}
+                          >
+                            Commander par numéro <br />(chez le fabricant)
+                          </Button>
+                        )}
+                        {postalPrice > 0 && (
+                          <Button
+                            variant="outlined"
+                            onClick={() => handleOrderNow(item, 'postal')}
+                            startIcon={<LocalShippingIcon />}
+                            sx={{
+                              ...styles.buttonSecondary,
+                              borderColor: '#1B5E20',
+                              color: '#1B5E20',
+                              '&:hover': {
+                                backgroundColor: '#1B5E20',
+                                color: '#fff',
+                              },
+                            }}
+                          >
+                            Commander par envoie/renvoie dans nos ateliers
+                          </Button>
+                        )}
+                        <Button variant="text" onClick={() => handleViewProduct(item)} sx={{ mt: 1, textTransform: 'none' }}>
+                          Voir le produit
+                        </Button>
+                      </Box>
+                    </Card>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <InfoBox>
-                      <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 1 }}>
-                        Moyens de paiement
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
-                        Paiement par carte uniquement (Mastercard, Visa, American Express).
-                      </Typography>
-                    </InfoBox>
-                  </Grid>
-                </Grid>
-                {/* Bloc de commande */}
-                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {Number(product.prix) > 0 && (
-                    <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
-                      Commander par numéro chez le fabricant
-                    </StyledButton>
-                  )}
-                  {Number(product.prixSansCartePropriete) > 0 && (
-                    <StyledButton onClick={() => handleOrderNow('postal')} startIcon={<LocalShippingIcon />}>
-                      Commander, la reproduction sera effectuée dans notre atelier.
-                    </StyledButton>
-                  )}
-                </Box>
-              </CardContent>
+                );
+              })}
             </Grid>
-          </Grid>
-        </StyledCard>
-        {error && (
-          <Snackbar open={!!error} autoHideDuration={6000}>
-            <Alert severity="error">{error}</Alert>
-          </Snackbar>
-        )}
-      </Container>
-    </>
+          ) : (
+            <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Aucune clé trouvée.
+            </Typography>
+          )}
+        </Container>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+        <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="lg">
+          <DialogContent>
+            <Box
+              onWheel={handleWheel}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden',
+                maxHeight: '80vh',
+              }}
+            >
+              <img
+                src={modalImageSrc}
+                alt="Agrandissement de la clé"
+                style={{
+                  transform: `scale(${scale})`,
+                  transition: 'transform 0.2s',
+                  width: '100%',
+                  height: 'auto',
+                }}
+              />
+            </Box>
+          </DialogContent>
+        </Dialog>
+      </Box>
+    </HelmetProvider>
   );
 };
 
-export default ProductPage;
+export default CleDynamicPage;
