@@ -2,20 +2,15 @@
 import express from 'express';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import App from './src/App.js'; // Votre composant racine React
-import App from './App.js';
+import App from './App.js'; // Assurez-vous que cette ligne n'est présente qu'une seule fois
 
 const app = express();
 
-// Servir les fichiers statiques générés (JS, CSS, images, etc.)
 app.use(express.static('build'));
 
-// Pour toutes les requêtes, générer le HTML complet
 app.get('*', (req, res) => {
-  // Rendu de l'application en chaîne de caractères en utilisant React.createElement
+  // Utilisez React.createElement si vous ne voulez pas utiliser JSX directement
   const appHtml = ReactDOMServer.renderToString(React.createElement(App));
-  
-  // Créer le HTML complet à envoyer
   const html = `
     <!DOCTYPE html>
     <html lang="fr">
