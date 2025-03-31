@@ -18,7 +18,7 @@ sitemap += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
 routes.forEach(route => {
   sitemap += `  <url>\n`;
-  sitemap += `    <loc>https://votre-domaine.com${route.url}</loc>\n`;
+  sitemap += `    <loc>https://cleservice.com${route.url}</loc>\n`;
   sitemap += `    <changefreq>${route.changefreq}</changefreq>\n`;
   sitemap += `    <priority>${route.priority}</priority>\n`;
   sitemap += `  </url>\n`;
