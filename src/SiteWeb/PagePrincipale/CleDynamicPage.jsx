@@ -225,7 +225,7 @@ const CleDynamicPage = () => {
     }
   }, [adjustedBrandName, navigate]);
 
-  // Lors du clic sur "Voir le produit", si le nom est le produit cible, on redirige
+  // Lors du clic sur "Voir le produit", on redirige vers la page produit
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
       navigate("/cle-izis-cassee.php");
@@ -236,11 +236,12 @@ const CleDynamicPage = () => {
     }
   }, [navigate]);
 
-  const openImageModal = useCallback((item) => {
-    setModalImageSrc(getImageSrc(item.imageUrl));
-    setScale(1);
-    setModalOpen(true);
-  }, [getImageSrc]);
+  // La fonction openImageModal n'est plus utilisée, on peut éventuellement la supprimer.
+  // const openImageModal = useCallback((item) => {
+  //   setModalImageSrc(getImageSrc(item.imageUrl));
+  //   setScale(1);
+  //   setModalOpen(true);
+  // }, [getImageSrc]);
 
   const handleCloseSnackbar = useCallback((event, reason) => {
     if (reason === 'clickaway') return;
@@ -392,7 +393,8 @@ const CleDynamicPage = () => {
                 return (
                   <Grid key={item.id || index} item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
                     <Card sx={styles.card}>
-                      <Box onClick={() => openImageModal(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
+                      {/* Modification : redirection vers la page produit au clic sur l'image */}
+                      <Box onClick={() => handleViewProduct(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
                         {brandLogo && (
                           <Box sx={styles.brandLogoContainer}>
                             <img
