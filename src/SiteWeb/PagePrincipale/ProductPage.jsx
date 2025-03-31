@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Helmet } from 'react-helmet';
 import {
   Box,
   Typography,
@@ -188,6 +189,11 @@ const ProductPage = () => {
     setOpenImageModal(false);
   }, []);
 
+  // Fonction pour ouvrir la source de la page dans un nouvel onglet
+  const handleOpenSourcePage = () => {
+    window.open('https://www.votresite.com/cle-izis-cassee.php', '_blank');
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -246,6 +252,11 @@ const ProductPage = () => {
 
   return (
     <>
+      <Helmet>
+        <title>Clé Izis Cavers Reparation de clé – Votre solution en ligne</title>
+        <meta name="description" content="Découvrez la clé Izis Cavers Reparation de clé, réalisée avec soin par nos experts." />
+        <link rel="canonical" href="https://www.votresite.com/cle-izis-cassee.php" />
+      </Helmet>
       <Container sx={{ mt: 2, mb: 4 }}>
         <StyledCard>
           <Grid container spacing={2}>
@@ -449,6 +460,12 @@ const ProductPage = () => {
                       Commander, la reproduction sera effectuée dans notre atelier.
                     </StyledButton>
                   )}
+                </Box>
+                {/* Bouton pour mettre en avant la source de la page */}
+                <Box sx={{ mt: 4, textAlign: 'center' }}>
+                  <Button variant="outlined" onClick={handleOpenSourcePage}>
+                    Voir la source de cette page
+                  </Button>
                 </Box>
               </CardContent>
             </Grid>
