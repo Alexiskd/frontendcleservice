@@ -11,8 +11,8 @@ app.use(express.static('build'));
 
 // Pour toutes les requêtes, générer le HTML complet
 app.get('*', (req, res) => {
-  // Rendu de l'application en chaîne de caractères
-  const appHtml = ReactDOMServer.renderToString(<App />);
+  // Rendu de l'application en chaîne de caractères en utilisant React.createElement
+  const appHtml = ReactDOMServer.renderToString(React.createElement(App));
   
   // Créer le HTML complet à envoyer
   const html = `
