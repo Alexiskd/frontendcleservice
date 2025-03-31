@@ -2,7 +2,8 @@
 import express from 'express';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import App from './App.js'; // Assurez-vous que App.js est dans le même dossier
+import App from './App.js';
+ // Assurez-vous que App.js est dans le même dossier
 
 const app = express();
 
