@@ -143,6 +143,7 @@ const Coffrefort = () => {
     setSearchTerm(e.target.value);
   }, []);
 
+  // Filtrage en fonction du terme de recherche
   const filteredBrands = useMemo(() => {
     return brands.filter((brand) =>
       (brand.manufacturer || '')
@@ -150,6 +151,34 @@ const Coffrefort = () => {
         .includes(searchTerm.toLowerCase())
     );
   }, [brands, searchTerm]);
+
+  // Tri différencié :
+  // - Marques "coffre fort" triées en A-Z
+  // - Marques de reproduction de clé triées en Z-A
+  const sortedFilteredBrands = useMemo(() => {
+    const safeLockBrands = filteredBrands.filter((brand) => {
+      const name = brand.manufacturer.replace(/^CLES\s*/i, '');
+      return name.toUpperCase().includes("COFFRE FORT");
+    });
+    const keyBrands = filteredBrands.filter((brand) => {
+      const name = brand.manufacturer.replace(/^CLES\s*/i, '');
+      return !name.toUpperCase().includes("COFFRE FORT");
+    });
+
+    safeLockBrands.sort((a, b) => {
+      const nameA = a.manufacturer.replace(/^CLES\s*/i, '');
+      const nameB = b.manufacturer.replace(/^CLES\s*/i, '');
+      return nameA.localeCompare(nameB);
+    });
+
+    keyBrands.sort((a, b) => {
+      const nameA = a.manufacturer.replace(/^CLES\s*/i, '');
+      const nameB = b.manufacturer.replace(/^CLES\s*/i, '');
+      return nameB.localeCompare(nameA);
+    });
+
+    return [...safeLockBrands, ...keyBrands];
+  }, [filteredBrands]);
 
   const toggleInfo = useCallback(() => {
     setShowInfo((prev) => !prev);
@@ -167,8 +196,8 @@ const Coffrefort = () => {
     ? `Retrouvez les marques correspondant à "${searchTerm}" dans notre catalogue de clés.`
     : 'Découvrez notre catalogue exclusif regroupant les marques leaders dans le domaine des clés. Commandez votre double de clé en ligne rapidement et en toute sécurité avec Maison Bouvet.';
 
-  const seoKeywords = filteredBrands.length > 0
-    ? filteredBrands.map(b => b.manufacturer).join(', ')
+  const seoKeywords = sortedFilteredBrands.length > 0
+    ? sortedFilteredBrands.map(b => b.manufacturer).join(', ')
     : hardcodedBrands.map(b => b.manufacturer).join(', ');
 
   return (
@@ -224,14 +253,11 @@ const Coffrefort = () => {
 
       <Container sx={{ flexGrow: 1, mb: 8 }}>
         <Grid container spacing={3}>
-          {filteredBrands
-            .slice()
-            .reverse()
-            .map((brand) => (
-              <Grid item xs={12} sm={6} md={4} key={brand.id}>
-                <BrandCard brand={brand} />
-              </Grid>
-            ))}
+          {sortedFilteredBrands.map((brand) => (
+            <Grid item xs={12} sm={6} md={4} key={brand.id}>
+              <BrandCard brand={brand} />
+            </Grid>
+          ))}
         </Grid>
       </Container>
 
