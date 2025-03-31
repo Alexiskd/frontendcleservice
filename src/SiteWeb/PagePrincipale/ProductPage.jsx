@@ -20,7 +20,7 @@ import {
   DialogContent
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
@@ -90,7 +90,8 @@ const getDeliveryDelay = (typeReproduction) => {
 };
 
 const ProductPage = () => {
-  const { brandName, productName } = useParams();
+  const location = useLocation();
+  let { brandName, productName } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -98,6 +99,15 @@ const ProductPage = () => {
   // États pour le modal d'image agrandie
   const [openImageModal, setOpenImageModal] = useState(false);
   const [modalImage, setModalImage] = useState('');
+
+  // Si aucun nom de produit n'est fourni et que le chemin est '/cle-izis-cassee.php', on définit une valeur par défaut
+  if (!productName && location.pathname === '/cle-izis-cassee.php') {
+    productName = "Clé-Izis-Cavers-Reparation-de-clé";
+  }
+  // On peut aussi définir une marque par défaut si nécessaire
+  if (!brandName && location.pathname === '/cle-izis-cassee.php') {
+    brandName = "cle-izis-cavers";
+  }
 
   if (!productName) {
     return (
@@ -467,4 +477,3 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
-
