@@ -3,7 +3,6 @@ import { Helmet } from 'react-helmet';
 import { Box, CircularProgress } from '@mui/material';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
-import App from './App.js';
 
 import Header from "./appbar.jsx";
 import Footer from './PagePrincipale/footer.jsx';
