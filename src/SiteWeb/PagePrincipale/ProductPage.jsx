@@ -118,7 +118,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}
+          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
         );
         if (!response.ok) {
           throw new Error('Produit introuvable.');
@@ -144,9 +144,9 @@ const ProductPage = () => {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
         navigate(
-          /commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
+          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
             formattedProductName
-          )}?mode=${mode}
+          )}?mode=${mode}`
         );
       }
     },
@@ -156,7 +156,7 @@ const ProductPage = () => {
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-      navigate(/produit/${brandName}/${encodeURIComponent(formattedProductName)});
+      navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
     }
   }, [navigate, product, brandName]);
 
@@ -336,7 +336,7 @@ const ProductPage = () => {
                           <VpnKeyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}}
+                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -347,7 +347,7 @@ const ProductPage = () => {
                           <LabelIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Référence ébauche : ${product.referenceEbauche}}
+                          primary={`Référence ébauche : ${product.referenceEbauche}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -358,7 +358,7 @@ const ProductPage = () => {
                           <FileCopyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Mode de reproduction : ${product.typeReproduction}}
+                          primary={`Mode de reproduction : ${product.typeReproduction}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -369,7 +369,7 @@ const ProductPage = () => {
                           <FormatListNumberedIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Détails du numéro : ${product.descriptionNumero}}
+                          primary={`Détails du numéro : ${product.descriptionNumero}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -380,7 +380,7 @@ const ProductPage = () => {
                           <DescriptionIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Description du produit : ${product.descriptionProduit}}
+                          primary={`Description du produit : ${product.descriptionProduit}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
