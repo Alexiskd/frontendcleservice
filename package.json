@@ -11,7 +11,7 @@
     "preview": "vite preview --host --port $PORT",
     "typeorm": "typeorm",
     "sitemap": "(node sitemap-builder.cjs)",
-    "start": "node server.js",
+    "start": "vite preview --host --port $PORT",
     "build": "npm ci --legacy-peer-deps && npx vite build && node sitemap-generator.cjs"
   },
   "dependencies": {
