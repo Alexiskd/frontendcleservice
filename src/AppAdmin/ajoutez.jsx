@@ -82,7 +82,12 @@ const Ajoutez = () => {
     imageDataUrl: '',
     referenceEbauche: '',
     typeReproduction: 'copie',
-    descriptionProduit: '',
+    // Remplacement de la descriptionProduit par 5 inputs pour les meta SEO :
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: '',
+    metaRobots: '',
+    metaCanonical: '',
     descriptionNumero: '',
     estCleAPasse: false,
     prixCleAPasse: '',
@@ -134,6 +139,12 @@ const Ajoutez = () => {
   }, []);
 
   const handleEdit = (prod) => {
+    let metaData = { metaTitle: '', metaDescription: '', metaKeywords: '', metaRobots: '', metaCanonical: '' };
+    try {
+      metaData = JSON.parse(prod.descriptionProduit);
+    } catch (err) {
+      // Si la description n'est pas un JSON, on garde des valeurs vides
+    }
     setEditingProduct(prod);
     setForm({
       cleAvecCartePropriete: prod.cleAvecCartePropriete,
@@ -144,7 +155,12 @@ const Ajoutez = () => {
       imageDataUrl: prod.imageUrl,
       referenceEbauche: prod.referenceEbauche || '',
       typeReproduction: prod.typeReproduction,
-      descriptionProduit: prod.descriptionProduit || '',
+      // Affectation des meta récupérées
+      metaTitle: metaData.metaTitle || '',
+      metaDescription: metaData.metaDescription || '',
+      metaKeywords: metaData.metaKeywords || '',
+      metaRobots: metaData.metaRobots || '',
+      metaCanonical: metaData.metaCanonical || '',
       descriptionNumero: prod.descriptionNumero || '',
       estCleAPasse: prod.estCleAPasse,
       prixCleAPasse: prod.prixCleAPasse ? prod.prixCleAPasse.toString() : '',
@@ -164,7 +180,11 @@ const Ajoutez = () => {
       imageDataUrl: '',
       referenceEbauche: '',
       typeReproduction: 'copie',
-      descriptionProduit: '',
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: '',
+      metaRobots: '',
+      metaCanonical: '',
       descriptionNumero: '',
       estCleAPasse: false,
       prixCleAPasse: '',
@@ -182,6 +202,15 @@ const Ajoutez = () => {
       setError('Veuillez remplir tous les champs obligatoires et sélectionner une image.');
       return;
     }
+    // On regroupe les données SEO dans un objet JSON
+    const meta = {
+      metaTitle: form.metaTitle,
+      metaDescription: form.metaDescription,
+      metaKeywords: form.metaKeywords,
+      metaRobots: form.metaRobots,
+      metaCanonical: form.metaCanonical,
+    };
+
     const dataToSend = {
       nom: form.nom,
       marque: form.marque,
@@ -191,7 +220,8 @@ const Ajoutez = () => {
       imageUrl: form.imageDataUrl,
       referenceEbauche: form.referenceEbauche.trim() !== '' ? form.referenceEbauche : null,
       typeReproduction: form.typeReproduction,
-      descriptionProduit: form.descriptionProduit,
+      // On stocke le JSON des meta dans descriptionProduit
+      descriptionProduit: JSON.stringify(meta),
       descriptionNumero: form.descriptionNumero,
       estCleAPasse: form.estCleAPasse,
       ...(form.estCleAPasse && form.prixCleAPasse !== '' && { prixCleAPasse: Number(form.prixCleAPasse) }),
@@ -204,14 +234,14 @@ const Ajoutez = () => {
       setLoading(true);
       let response;
       if (editingProduct) {
-        response = await fetch(${BASE_URL}/produit/cles/update?nom=${encodeURIComponent(editingProduct.nom)}, {
+        response = await fetch(`${BASE_URL}/produit/cles/update?nom=${encodeURIComponent(editingProduct.nom)}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dataToSend),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          const errorMessage = errorData.message || errorData.error || Erreur ${response.status}: Une erreur est survenue lors de la modification.;
+          const errorMessage = errorData.message || errorData.error || `Erreur ${response.status}: Une erreur est survenue lors de la modification.`;
           setError(errorMessage);
           return;
         }
@@ -220,23 +250,21 @@ const Ajoutez = () => {
           prev.map((prod) => (prod.nom === editingProduct.nom ? updatedProduct : prod))
         );
       } else {
-        response = await fetch(${BASE_URL}/produit/cles/add, {
+        response = await fetch(`${BASE_URL}/produit/cles/add`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dataToSend),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          const errorMessage = errorData.message || errorData.error || Erreur ${response.status}: Une erreur est survenue lors de l'ajout.;
+          const errorMessage = errorData.message || errorData.error || `Erreur ${response.status}: Une erreur est survenue lors de l'ajout.`;
           setError(errorMessage);
           return;
         }
         const responseData = await response.json();
         setProducts((prev) => {
-          // On ajoute la nouvelle clé seulement si elle n'existe pas déjà
           if (!prev.some(prod => prod.id === responseData.id)) {
             const newProducts = [...prev, responseData];
-            // Tri décroissant pour afficher la dernière clé en premier
             newProducts.sort((a, b) => b.id - a.id);
             return newProducts;
           }
@@ -246,7 +274,7 @@ const Ajoutez = () => {
       }
       resetForm();
     } catch (err) {
-      setError(Erreur : ${err.message});
+      setError(`Erreur : ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -255,7 +283,7 @@ const Ajoutez = () => {
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const response = await fetch(${BASE_URL}/produit/cles/count);
+        const response = await fetch(`${BASE_URL}/produit/cles/count`);
         if (response.ok) {
           const data = await response.json();
           setTotalKeys(data.count);
@@ -272,15 +300,13 @@ const Ajoutez = () => {
   useEffect(() => {
     if (totalKeys !== null) {
       for (let i = 0; i < totalKeys; i++) {
-        fetch(${BASE_URL}/produit/cles/index/${i})
+        fetch(`${BASE_URL}/produit/cles/index/${i}`)
           .then((res) => (res.ok ? res.json() : null))
           .then((key) => {
             if (key) {
               setProducts((prev) => {
-                // Ajoute la clé seulement si elle n'existe pas déjà (vérification par id)
                 if (!prev.some(prod => prod.id === key.id)) {
                   const newProducts = [...prev, key];
-                  // Trie en ordre décroissant pour que la dernière clé apparaisse en premier
                   newProducts.sort((a, b) => b.id - a.id);
                   return newProducts;
                 }
@@ -289,7 +315,7 @@ const Ajoutez = () => {
             }
           })
           .catch((err) =>
-            console.error(Erreur dans fetchKeyByIndex pour index ${i} :, err)
+            console.error(`Erreur dans fetchKeyByIndex pour index ${i} :`, err)
           );
       }
     }
@@ -316,7 +342,7 @@ const Ajoutez = () => {
         sx={{
           mb: 4,
           p: { xs: 2, sm: 3 },
-          border: 1px solid ${lightGreen},
+          border: `1px solid ${lightGreen}`,
           borderRadius: 2,
           backgroundColor: '#f1f8e9',
         }}
@@ -357,46 +383,80 @@ const Ajoutez = () => {
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
+          {/* Section Meta SEO */}
           <Grid item xs={12}>
+            <Typography variant="subtitle1" sx={{ color: primaryGreen, mb: 1 }}>
+              Meta SEO pour la page produit :
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
             <TextField
-              label="Description du produit"
-              name="descriptionProduit"
-              value={form.descriptionProduit}
+              label="Meta Title"
+              name="metaTitle"
+              value={form.metaTitle}
               onChange={handleInputChange}
               fullWidth
-              multiline
-              rows={3}
               variant="outlined"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Prix (€)"
-              name="prix"
-              type="number"
-              value={form.prix}
+              label="Meta Description"
+              name="metaDescription"
+              value={form.metaDescription}
               onChange={handleInputChange}
-              required
               fullWidth
-              inputProps={{ min: 0 }}
               variant="outlined"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Prix Sans Carte Propriété (€)"
-              name="prixSansCartePropriete"
-              type="number"
-              value={form.prixSansCartePropriete}
+              label="Meta Keywords"
+              name="metaKeywords"
+              value={form.metaKeywords}
               onChange={handleInputChange}
               fullWidth
-              inputProps={{ min: 0 }}
               variant="outlined"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Robots"
+              name="metaRobots"
+              value={form.metaRobots}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Canonical"
+              name="metaCanonical"
+              value={form.metaCanonical}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          {form.typeReproduction === 'numero' && (
+            <Grid item xs={12}>
+              <TextField
+                label="Description du numéro"
+                name="descriptionNumero"
+                value={form.descriptionNumero}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+              />
+            </Grid>
+          )}
           <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
             <FormControlLabel
               control={
@@ -428,19 +488,6 @@ const Ajoutez = () => {
               <option value="ia">IA</option>
             </TextField>
           </Grid>
-          {form.typeReproduction === 'numero' && (
-            <Grid item xs={12}>
-              <TextField
-                label="Description du numéro"
-                name="descriptionNumero"
-                value={form.descriptionNumero}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
-              />
-            </Grid>
-          )}
           <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
             <FormControlLabel
               control={
@@ -636,11 +683,23 @@ const Ajoutez = () => {
                     Description numéro : {prod.descriptionNumero}
                   </Typography>
                 )}
-                {prod.descriptionProduit && (
-                  <Typography variant="body2" color="text.secondary">
-                    Description produit : {prod.descriptionProduit}
-                  </Typography>
-                )}
+                {/* Affichage de la meta SEO si possible */}
+                {prod.descriptionProduit && (() => {
+                  try {
+                    const meta = JSON.parse(prod.descriptionProduit);
+                    return (
+                      <Typography variant="body2" color="text.secondary">
+                        Meta Title : {meta.metaTitle}
+                      </Typography>
+                    );
+                  } catch (err) {
+                    return (
+                      <Typography variant="body2" color="text.secondary">
+                        Description produit : {prod.descriptionProduit}
+                      </Typography>
+                    );
+                  }
+                })()}
                 <Typography variant="body2" color="text.secondary">
                   Clé à passe : {prod.estCleAPasse ? "Oui" : "Non"}
                 </Typography>
@@ -664,8 +723,8 @@ const Ajoutez = () => {
                 </Button>
                 <Button
                   onClick={() => {
-                    if (window.confirm(Voulez-vous vraiment supprimer la clé "${prod.nom}" ?)) {
-                      fetch(${BASE_URL}/produit/cles/delete?nom=${encodeURIComponent(prod.nom)}, { method: 'DELETE' })
+                    if (window.confirm(`Voulez-vous vraiment supprimer la clé "${prod.nom}" ?`)) {
+                      fetch(`${BASE_URL}/produit/cles/delete?nom=${encodeURIComponent(prod.nom)}`, { method: 'DELETE' })
                         .then((res) => {
                           if (res.ok) {
                             setProducts((prev) => prev.filter((p) => p.nom !== prod.nom));
