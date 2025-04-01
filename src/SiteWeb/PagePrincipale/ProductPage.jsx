@@ -461,12 +461,8 @@ const ProductPage = () => {
                     </StyledButton>
                   )}
                 </Box>
-                {/* Bouton pour mettre en avant la source de la page */}
-                <Box sx={{ mt: 4, textAlign: 'center' }}>
-                  <Button variant="outlined" onClick={handleOpenSourcePage}>
-                    Voir la source de cette page
-                  </Button>
-                </Box>
+                
+                
               </CardContent>
             </Grid>
           </Grid>
