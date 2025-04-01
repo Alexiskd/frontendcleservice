@@ -82,7 +82,7 @@ const Ajoutez = () => {
     imageDataUrl: '',
     referenceEbauche: '',
     typeReproduction: 'copie',
-    descriptionProduit: '', // Champ où l'utilisateur saisit 5 éléments (une par ligne)
+    descriptionProduit: '',
     descriptionNumero: '',
     estCleAPasse: false,
     prixCleAPasse: '',
@@ -144,9 +144,7 @@ const Ajoutez = () => {
       imageDataUrl: prod.imageUrl,
       referenceEbauche: prod.referenceEbauche || '',
       typeReproduction: prod.typeReproduction,
-      // Pour la description, on part du principe qu'elle est déjà stockée en JSON,
-      // et on la convertit en texte avec des sauts de ligne
-      descriptionProduit: prod.descriptionProduit ? Object.values(JSON.parse(prod.descriptionProduit)).join('\n') : '',
+      descriptionProduit: prod.descriptionProduit || '',
       descriptionNumero: prod.descriptionNumero || '',
       estCleAPasse: prod.estCleAPasse,
       prixCleAPasse: prod.prixCleAPasse ? prod.prixCleAPasse.toString() : '',
@@ -184,18 +182,6 @@ const Ajoutez = () => {
       setError('Veuillez remplir tous les champs obligatoires et sélectionner une image.');
       return;
     }
-
-    // Transformation de la description produit en JSON pour le SEO
-    // On attend 5 éléments, séparés par des retours à la ligne
-    const descriptionLines = form.descriptionProduit.split('\n').filter(line => line.trim() !== '');
-    const descriptionMeta = {
-      meta1: descriptionLines[0] || '',
-      meta2: descriptionLines[1] || '',
-      meta3: descriptionLines[2] || '',
-      meta4: descriptionLines[3] || '',
-      meta5: descriptionLines[4] || '',
-    };
-
     const dataToSend = {
       nom: form.nom,
       marque: form.marque,
@@ -205,8 +191,7 @@ const Ajoutez = () => {
       imageUrl: form.imageDataUrl,
       referenceEbauche: form.referenceEbauche.trim() !== '' ? form.referenceEbauche : null,
       typeReproduction: form.typeReproduction,
-      // Envoi de la description produit sous forme de JSON
-      descriptionProduit: JSON.stringify(descriptionMeta),
+      descriptionProduit: form.descriptionProduit,
       descriptionNumero: form.descriptionNumero,
       estCleAPasse: form.estCleAPasse,
       ...(form.estCleAPasse && form.prixCleAPasse !== '' && { prixCleAPasse: Number(form.prixCleAPasse) }),
@@ -219,14 +204,14 @@ const Ajoutez = () => {
       setLoading(true);
       let response;
       if (editingProduct) {
-        response = await fetch(`${BASE_URL}/produit/cles/update?nom=${encodeURIComponent(editingProduct.nom)}`, {
+        response = await fetch(${BASE_URL}/produit/cles/update?nom=${encodeURIComponent(editingProduct.nom)}, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dataToSend),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          const errorMessage = errorData.message || errorData.error || `Erreur ${response.status}: Une erreur est survenue lors de la modification.`;
+          const errorMessage = errorData.message || errorData.error || Erreur ${response.status}: Une erreur est survenue lors de la modification.;
           setError(errorMessage);
           return;
         }
@@ -235,21 +220,23 @@ const Ajoutez = () => {
           prev.map((prod) => (prod.nom === editingProduct.nom ? updatedProduct : prod))
         );
       } else {
-        response = await fetch(`${BASE_URL}/produit/cles/add`, {
+        response = await fetch(${BASE_URL}/produit/cles/add, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dataToSend),
         });
         if (!response.ok) {
           const errorData = await response.json();
-          const errorMessage = errorData.message || errorData.error || `Erreur ${response.status}: Une erreur est survenue lors de l'ajout.`;
+          const errorMessage = errorData.message || errorData.error || Erreur ${response.status}: Une erreur est survenue lors de l'ajout.;
           setError(errorMessage);
           return;
         }
         const responseData = await response.json();
         setProducts((prev) => {
+          // On ajoute la nouvelle clé seulement si elle n'existe pas déjà
           if (!prev.some(prod => prod.id === responseData.id)) {
             const newProducts = [...prev, responseData];
+            // Tri décroissant pour afficher la dernière clé en premier
             newProducts.sort((a, b) => b.id - a.id);
             return newProducts;
           }
@@ -259,7 +246,7 @@ const Ajoutez = () => {
       }
       resetForm();
     } catch (err) {
-      setError(`Erreur : ${err.message}`);
+      setError(Erreur : ${err.message});
     } finally {
       setLoading(false);
     }
@@ -268,7 +255,7 @@ const Ajoutez = () => {
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/produit/cles/count`);
+        const response = await fetch(${BASE_URL}/produit/cles/count);
         if (response.ok) {
           const data = await response.json();
           setTotalKeys(data.count);
@@ -285,13 +272,15 @@ const Ajoutez = () => {
   useEffect(() => {
     if (totalKeys !== null) {
       for (let i = 0; i < totalKeys; i++) {
-        fetch(`${BASE_URL}/produit/cles/index/${i}`)
+        fetch(${BASE_URL}/produit/cles/index/${i})
           .then((res) => (res.ok ? res.json() : null))
           .then((key) => {
             if (key) {
               setProducts((prev) => {
+                // Ajoute la clé seulement si elle n'existe pas déjà (vérification par id)
                 if (!prev.some(prod => prod.id === key.id)) {
                   const newProducts = [...prev, key];
+                  // Trie en ordre décroissant pour que la dernière clé apparaisse en premier
                   newProducts.sort((a, b) => b.id - a.id);
                   return newProducts;
                 }
@@ -300,7 +289,7 @@ const Ajoutez = () => {
             }
           })
           .catch((err) =>
-            console.error(`Erreur dans fetchKeyByIndex pour index ${i} :`, err)
+            console.error(Erreur dans fetchKeyByIndex pour index ${i} :, err)
           );
       }
     }
@@ -327,7 +316,7 @@ const Ajoutez = () => {
         sx={{
           mb: 4,
           p: { xs: 2, sm: 3 },
-          border: `1px solid ${lightGreen}`,
+          border: 1px solid ${lightGreen},
           borderRadius: 2,
           backgroundColor: '#f1f8e9',
         }}
@@ -370,7 +359,7 @@ const Ajoutez = () => {
           </Grid>
           <Grid item xs={12}>
             <TextField
-              label="Description du produit (5 éléments, une par ligne pour les meta SEO)"
+              label="Description du produit"
               name="descriptionProduit"
               value={form.descriptionProduit}
               onChange={handleInputChange}
@@ -378,7 +367,6 @@ const Ajoutez = () => {
               multiline
               rows={3}
               variant="outlined"
-              helperText="Saisissez 5 éléments séparés par des retours à la ligne"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
@@ -676,8 +664,8 @@ const Ajoutez = () => {
                 </Button>
                 <Button
                   onClick={() => {
-                    if (window.confirm(`Voulez-vous vraiment supprimer la clé "${prod.nom}" ?`)) {
-                      fetch(`${BASE_URL}/produit/cles/delete?nom=${encodeURIComponent(prod.nom)}`, { method: 'DELETE' })
+                    if (window.confirm(Voulez-vous vraiment supprimer la clé "${prod.nom}" ?)) {
+                      fetch(${BASE_URL}/produit/cles/delete?nom=${encodeURIComponent(prod.nom)}, { method: 'DELETE' })
                         .then((res) => {
                           if (res.ok) {
                             setProducts((prev) => prev.filter((p) => p.nom !== prod.nom));
