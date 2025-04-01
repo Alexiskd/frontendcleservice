@@ -1,5 +1,5 @@
-# Fichier robots.txt pour https://frontendcleservice.onrender.com
+# Fichier robots.txt pour https://www.cleservice.com
 User-agent: *
 Allow: /
 
-Sitemap: https://frontendcleservice.onrender.com/sitemap.xml
+Sitemap: https://www.cleservice.com/sitemap.xml
