@@ -12,7 +12,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Helmet } from 'react-helmet';
-import badgeImage from './téléchargement.jpg';
+import badgeImage from './badges.jpeg';
 
 
 const Badgeuu = () => {
