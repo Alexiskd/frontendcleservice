@@ -2,4 +2,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://frontendcleservice.onrender.com/sitemap.xml
+Sitemap: https://www.cleservice.com/sitemap.xml
