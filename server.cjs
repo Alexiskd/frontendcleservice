@@ -1,5 +1,4 @@
 import express from 'express';
-import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -8,9 +7,9 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(join(__dirname, 'dist')));
 
-// Autres configurations et routes...
+// Autres routes et configurations...
 
 app.listen(3000, () => {
   console.log('Server running on port 3000');
