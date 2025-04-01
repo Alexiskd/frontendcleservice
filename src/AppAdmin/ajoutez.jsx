@@ -82,7 +82,12 @@ const Ajoutez = () => {
     imageDataUrl: '',
     referenceEbauche: '',
     typeReproduction: 'copie',
-    descriptionProduit: '', // Champ où l'utilisateur saisit 5 éléments (une par ligne)
+    // Remplacement du champ descriptionProduit par 5 champs distincts pour le SEO
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: '',
+    metaAuthor: '',
+    metaRobots: '',
     descriptionNumero: '',
     estCleAPasse: false,
     prixCleAPasse: '',
@@ -134,6 +139,8 @@ const Ajoutez = () => {
   }, []);
 
   const handleEdit = (prod) => {
+    // Transformation de la description SEO JSON en 5 champs individuels
+    const metaData = prod.descriptionProduit ? JSON.parse(prod.descriptionProduit) : {};
     setEditingProduct(prod);
     setForm({
       cleAvecCartePropriete: prod.cleAvecCartePropriete,
@@ -144,9 +151,11 @@ const Ajoutez = () => {
       imageDataUrl: prod.imageUrl,
       referenceEbauche: prod.referenceEbauche || '',
       typeReproduction: prod.typeReproduction,
-      // Pour la description, on part du principe qu'elle est déjà stockée en JSON,
-      // et on la convertit en texte avec des sauts de ligne
-      descriptionProduit: prod.descriptionProduit ? Object.values(JSON.parse(prod.descriptionProduit)).join('\n') : '',
+      metaTitle: metaData.metaTitle || '',
+      metaDescription: metaData.metaDescription || '',
+      metaKeywords: metaData.metaKeywords || '',
+      metaAuthor: metaData.metaAuthor || '',
+      metaRobots: metaData.metaRobots || '',
       descriptionNumero: prod.descriptionNumero || '',
       estCleAPasse: prod.estCleAPasse,
       prixCleAPasse: prod.prixCleAPasse ? prod.prixCleAPasse.toString() : '',
@@ -166,7 +175,11 @@ const Ajoutez = () => {
       imageDataUrl: '',
       referenceEbauche: '',
       typeReproduction: 'copie',
-      descriptionProduit: '',
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: '',
+      metaAuthor: '',
+      metaRobots: '',
       descriptionNumero: '',
       estCleAPasse: false,
       prixCleAPasse: '',
@@ -185,15 +198,13 @@ const Ajoutez = () => {
       return;
     }
 
-    // Transformation de la description produit en JSON pour le SEO
-    // On attend 5 éléments, séparés par des retours à la ligne
-    const descriptionLines = form.descriptionProduit.split('\n').filter(line => line.trim() !== '');
+    // Création de l'objet de meta données pour le SEO
     const descriptionMeta = {
-      meta1: descriptionLines[0] || '',
-      meta2: descriptionLines[1] || '',
-      meta3: descriptionLines[2] || '',
-      meta4: descriptionLines[3] || '',
-      meta5: descriptionLines[4] || '',
+      metaTitle: form.metaTitle,
+      metaDescription: form.metaDescription,
+      metaKeywords: form.metaKeywords,
+      metaAuthor: form.metaAuthor,
+      metaRobots: form.metaRobots,
     };
 
     const dataToSend = {
@@ -205,7 +216,7 @@ const Ajoutez = () => {
       imageUrl: form.imageDataUrl,
       referenceEbauche: form.referenceEbauche.trim() !== '' ? form.referenceEbauche : null,
       typeReproduction: form.typeReproduction,
-      // Envoi de la description produit sous forme de JSON
+      // Envoi de la description produit sous forme de JSON (informations SEO)
       descriptionProduit: JSON.stringify(descriptionMeta),
       descriptionNumero: form.descriptionNumero,
       estCleAPasse: form.estCleAPasse,
@@ -312,11 +323,7 @@ const Ajoutez = () => {
   const displayedProducts = filteredProducts.slice(0, displayCount);
 
   return (
-    <Container
-      maxWidth={false}
-      disableGutters
-      sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}
-    >
+    <Container maxWidth={false} disableGutters sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}>
       <Typography variant="h4" align="center" gutterBottom sx={{ color: primaryGreen }}>
         {editingProduct ? "Modifier l'article" : "Ajouter un article"}
       </Typography>
@@ -368,47 +375,81 @@ const Ajoutez = () => {
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
+          {/* Section Informations SEO */}
           <Grid item xs={12}>
-            <TextField
-              label="Description du produit (5 éléments, une par ligne pour les meta SEO)"
-              name="descriptionProduit"
-              value={form.descriptionProduit}
-              onChange={handleInputChange}
-              fullWidth
-              multiline
-              rows={3}
-              variant="outlined"
-              helperText="Saisissez 5 éléments séparés par des retours à la ligne"
-              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
-            />
+            <Typography variant="subtitle1" sx={{ color: primaryGreen, mb: 1 }}>
+              Informations SEO
+            </Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Prix (€)"
-              name="prix"
-              type="number"
-              value={form.prix}
+              label="Meta Title"
+              name="metaTitle"
+              value={form.metaTitle}
               onChange={handleInputChange}
-              required
               fullWidth
-              inputProps={{ min: 0 }}
               variant="outlined"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Prix Sans Carte Propriété (€)"
-              name="prixSansCartePropriete"
-              type="number"
-              value={form.prixSansCartePropriete}
+              label="Meta Description"
+              name="metaDescription"
+              value={form.metaDescription}
               onChange={handleInputChange}
               fullWidth
-              inputProps={{ min: 0 }}
               variant="outlined"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Keywords"
+              name="metaKeywords"
+              value={form.metaKeywords}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Author"
+              name="metaAuthor"
+              value={form.metaAuthor}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Robots"
+              name="metaRobots"
+              value={form.metaRobots}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              helperText="Ex: index, follow"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          {form.typeReproduction === 'numero' && (
+            <Grid item xs={12}>
+              <TextField
+                label="Description du numéro"
+                name="descriptionNumero"
+                value={form.descriptionNumero}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+              />
+            </Grid>
+          )}
           <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
             <FormControlLabel
               control={
@@ -439,32 +480,6 @@ const Ajoutez = () => {
               <option value="numero">Numéro</option>
               <option value="ia">IA</option>
             </TextField>
-          </Grid>
-          {form.typeReproduction === 'numero' && (
-            <Grid item xs={12}>
-              <TextField
-                label="Description du numéro"
-                name="descriptionNumero"
-                value={form.descriptionNumero}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
-              />
-            </Grid>
-          )}
-          <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  name="estCleAPasse"
-                  checked={form.estCleAPasse}
-                  onChange={handleInputChange}
-                  sx={{ color: primaryGreen, '&.Mui-checked': { color: primaryGreen } }}
-                />
-              }
-              label="Clé à passe"
-            />
           </Grid>
           {form.estCleAPasse && (
             <Grid item xs={12} sm={6}>
