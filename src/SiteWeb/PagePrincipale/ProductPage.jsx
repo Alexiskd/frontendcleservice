@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Helmet } from 'react-helmet';
 import {
   Box,
   Typography,
@@ -101,10 +100,11 @@ const ProductPage = () => {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [modalImage, setModalImage] = useState('');
 
-  // Gestion des URL par défaut pour cle-izis-cassee.php
+  // Si aucun nom de produit n'est fourni et que le chemin est '/cle-izis-cassee.php', on définit une valeur par défaut
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
+  // On peut aussi définir une marque par défaut si nécessaire
   if (!brandName && location.pathname === '/cle-izis-cassee.php') {
     brandName = "cle-izis-cavers";
   }
@@ -133,7 +133,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}
+          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
         );
         if (!response.ok) {
           throw new Error('Produit introuvable.');
@@ -159,9 +159,9 @@ const ProductPage = () => {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
         navigate(
-          /commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
+          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
             formattedProductName
-          )}?mode=${mode}
+          )}?mode=${mode}`
         );
       }
     },
@@ -171,10 +171,11 @@ const ProductPage = () => {
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-      navigate(/produit/${brandName}/${encodeURIComponent(formattedProductName)});
+      navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
     }
   }, [navigate, product, brandName]);
 
+  // Ouvre le modal d'image agrandie
   const handleOpenImageModal = useCallback(() => {
     if (product && product.imageUrl) {
       setModalImage(product.imageUrl);
@@ -182,13 +183,10 @@ const ProductPage = () => {
     }
   }, [product]);
 
+  // Ferme le modal
   const handleCloseImageModal = useCallback(() => {
     setOpenImageModal(false);
   }, []);
-
-  const handleOpenSourcePage = () => {
-    window.open('https://www.cleservice.com/cle-izis-cassee.php', '_blank');
-  };
 
   if (loading) {
     return (
@@ -218,13 +216,13 @@ const ProductPage = () => {
     );
   }
 
-  // Détection d'une clé de coffre‑fort
+  // Vérification si c'est une clé de coffre‑fort
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Détermination du prix principal (hors clé de passe)
+  // Détermination du prix principal (sauf clé de passe)
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -232,6 +230,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
+  // Texte de procédé pour la section principale
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -239,84 +238,14 @@ const ProductPage = () => {
       ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale)."
       : "";
 
+  // Texte de la cellule droite du tableau clé de passe
   const cleAPasseText =
     Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier')
       ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
       : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
 
-  // Création d'une URL canonique pour le produit
-  const canonicalUrl = https://www.cleservice.com/produit/${brandName}/${encodeURIComponent(
-    product.nom.trim().replace(/\s+/g, '-')
-  )};
-
-  // Génération de mots-clés à partir des infos du produit
-  const keywords = [
-    'clé',
-    'reproduction clé',
-    product.nom,
-    product.marque || '',
-    'service clé',
-    'Clé Service',
-    'clé de rechange'
-  ].join(', ');
-
-  // Contenu descriptif pour les meta tags
-  const metaDescription =
-    product.descriptionProduit && product.descriptionProduit.trim() !== ''
-      ? product.descriptionProduit
-      : Découvrez ${product.nom}${product.marque ? ' de ' + product.marque : ''} sur Clé Service – la solution en ligne pour la reproduction de clés de qualité.;
-
-  // JSON‑LD pour le balisage schema.org
-  const jsonLd = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": product.nom,
-    "image": product.imageUrl || "https://www.cleservice.com/default-product.jpg",
-    "description": metaDescription,
-    "brand": {
-      "@type": "Brand",
-      "name": product.marque || "Clé Service"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": canonicalUrl,
-      "priceCurrency": "EUR",
-      "price": mainPrice || "0",
-      "availability": "https://schema.org/InStock"
-    }
-  };
-
   return (
     <>
-      <Helmet>
-        {/* Titre dynamique */}
-        <title>{${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service}</title>
-        {/* Meta description */}
-        <meta name="description" content={metaDescription} />
-        {/* Mots-clés */}
-        <meta name="keywords" content={keywords} />
-        {/* Robots */}
-        <meta name="robots" content="index, follow" />
-        {/* Lien canonique */}
-        <link rel="canonical" href={canonicalUrl} />
-
-        {/* Open Graph */}
-        <meta property="og:title" content={${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:type" content="product" />
-        {product.imageUrl && <meta property="og:image" content={product.imageUrl} />}
-
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service} />
-        <meta name="twitter:description" content={metaDescription} />
-        {product.imageUrl && <meta name="twitter:image" content={product.imageUrl} />}
-
-        {/* JSON-LD Schema.org */}
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-      </Helmet>
-
       <Container sx={{ mt: 2, mb: 4 }}>
         <StyledCard>
           <Grid container spacing={2}>
@@ -350,6 +279,7 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
+                {/* Nom du produit */}
                 <Typography
                   variant="h4"
                   sx={{
@@ -362,14 +292,23 @@ const ProductPage = () => {
                 >
                   {product.nom}
                 </Typography>
-                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'nowrap', mb: 2 }}>
+                {/* Marque et prix */}
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ flexWrap: 'nowrap', mb: 2 }}
+                >
                   {product.marque && (
                     <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
                       {product.marque}
                     </Typography>
                   )}
                   {mainPrice && (
-                    <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}
+                    >
                       {mainPrice} €
                     </Typography>
                   )}
@@ -380,6 +319,7 @@ const ProductPage = () => {
                   </Typography>
                 )}
                 <Divider sx={{ my: 2 }} />
+                {/* Processus de fabrication */}
                 <InfoBox>
                   <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
                     Processus de fabrication
@@ -388,6 +328,7 @@ const ProductPage = () => {
                     {processText}
                   </Typography>
                 </InfoBox>
+                {/* Autre moyen de reproduction */}
                 <InfoBox>
                   <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
                     Autre moyen de reproduction
@@ -396,6 +337,7 @@ const ProductPage = () => {
                     Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
                   </Typography>
                 </InfoBox>
+                {/* Tableau pour clé de passe */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
                     <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
@@ -422,7 +364,7 @@ const ProductPage = () => {
                           <VpnKeyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}}
+                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -433,7 +375,7 @@ const ProductPage = () => {
                           <LabelIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Référence ébauche : ${product.referenceEbauche}}
+                          primary={`Référence ébauche : ${product.referenceEbauche}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -444,7 +386,7 @@ const ProductPage = () => {
                           <FileCopyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Mode de reproduction : ${product.typeReproduction}}
+                          primary={`Mode de reproduction : ${product.typeReproduction}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -455,7 +397,7 @@ const ProductPage = () => {
                           <FormatListNumberedIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Détails du numéro : ${product.descriptionNumero}}
+                          primary={`Détails du numéro : ${product.descriptionNumero}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -466,7 +408,7 @@ const ProductPage = () => {
                           <DescriptionIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={Description du produit : ${product.descriptionProduit}}
+                          primary={`Description du produit : ${product.descriptionProduit}`}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -495,6 +437,7 @@ const ProductPage = () => {
                     </InfoBox>
                   </Grid>
                 </Grid>
+                {/* Bloc de commande */}
                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Number(product.prix) > 0 && (
                     <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
@@ -517,6 +460,7 @@ const ProductPage = () => {
           </Snackbar>
         )}
       </Container>
+      {/* Dialog affichant l'image agrandie */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
         <DialogContent>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
