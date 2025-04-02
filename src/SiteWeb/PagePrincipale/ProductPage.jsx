@@ -261,6 +261,7 @@ const ProductPage = () => {
           </Grid>
         </Grid>
       </StyledCard>
+      {/* Modal affichant l'image agrandie */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
         <DialogContent>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
