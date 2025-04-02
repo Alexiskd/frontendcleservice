@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -40,7 +40,7 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", on redirige
+  // Redirection spéciale pour une clé spécifique
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
@@ -58,7 +58,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Si le paramètre ressemble à un slug produit, rediriger vers la page produit
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
@@ -73,18 +73,15 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (pour les URL non slug)
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
   const adjustedBrandName = actualBrandName ? actualBrandName.toUpperCase() : "";
 
-  // Définition des balises SEO
   const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
   const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
-  // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
     if (imageUrl.startsWith('data:')) return imageUrl;
@@ -92,7 +89,6 @@ const CleDynamicPage = () => {
     return imageUrl;
   }, []);
 
-  // Génération des données structurées Schema.org (ItemList)
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -106,10 +102,7 @@ const CleDynamicPage = () => {
         "name": item.nom,
         "description": item.descriptionNumero || "Clé de reproduction",
         "image": getImageSrc(item.imageUrl),
-        "brand": {
-          "@type": "Brand",
-          "name": item.marque
-        },
+        "brand": { "@type": "Brand", "name": item.marque },
         "offers": {
           "@type": "Offer",
           "price": item.prix,
@@ -121,7 +114,6 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandName, keys, getImageSrc]);
 
-  // Récupération du logo pour la marque
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
     if (!actualBrandName) return;
@@ -130,21 +122,15 @@ const CleDynamicPage = () => {
         if (res.ok) return res.blob();
         throw new Error(`Logo non trouvé pour ${actualBrandName}`);
       })
-      .then((blob) => {
-        const logoUrl = URL.createObjectURL(blob);
-        setBrandLogo(logoUrl);
-      })
+      .then((blob) => setBrandLogo(URL.createObjectURL(blob)))
       .catch((error) => {
         console.error("Erreur lors du chargement du logo:", error);
         setBrandLogo(null);
       });
   }, [actualBrandName, brandFull]);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => window.scrollTo(0, 0), []);
 
-  // Chargement initial des clés via preloadKeysData
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -157,9 +143,8 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
     preloadKeysData(adjustedBrandName)
-      .then((data) => setKeys(data))
+      .then(setKeys)
       .catch((err) => {
-        console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
         setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
@@ -168,7 +153,6 @@ const CleDynamicPage = () => {
       .finally(() => setLoading(false));
   }, [adjustedBrandName, brandFull]);
 
-  // Préchargement des images des clés
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
@@ -176,58 +160,29 @@ const CleDynamicPage = () => {
     });
   }, [keys, getImageSrc]);
 
-  const handleSearchChange = useCallback((event) => {
-    setSearchTerm(event.target.value);
-  }, []);
+  const handleSearchChange = useCallback((event) => setSearchTerm(event.target.value), []);
 
-  // Filtrage et inversion des clés pour afficher les dernières en premier
   const filteredKeys = useMemo(() => (
-    keys.filter((item) =>
-      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    ).slice().reverse()
+    keys.filter((item) => item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())).reverse()
   ), [keys, debouncedSearchTerm]);
 
-  // Tri des clés : celles copiées chez le fabricant (prix > 0) sont déplacées à la fin
-  const sortedKeys = useMemo(() => {
-    return [...filteredKeys].sort((a, b) => {
-      const aIsManufacturer = Number(a.prix) > 0;
-      const bIsManufacturer = Number(b.prix) > 0;
-      if (aIsManufacturer && !bIsManufacturer) return 1;
-      if (!aIsManufacturer && bIsManufacturer) return -1;
-      return 0;
-    });
-  }, [filteredKeys]);
+  const sortedKeys = useMemo(() => [...filteredKeys].sort((a, b) => {
+    const aIsManufacturer = Number(a.prix) > 0;
+    const bIsManufacturer = Number(b.prix) > 0;
+    return aIsManufacturer === bIsManufacturer ? 0 : aIsManufacturer ? 1 : -1;
+  }), [filteredKeys]);
 
-  // Correction de handleOrderNow avec les modifications
-  const handleOrderNow = useCallback((item, mode) => {
-    try {
-      // Utiliser la référence disponible (referenceEbauche ou reference)
-      const reference = item.referenceEbauche || item.reference;
-      if (!reference) {
-        throw new Error("Référence introuvable pour cet article");
-      }
-      // Formater le nom et la marque
-      const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      // Utiliser item.marque pour être sûr d'avoir la bonne valeur (ou fallback sur adjustedBrandName)
-      const formattedBrand = (item.marque || adjustedBrandName)
-        .trim()
-        .replace(/\s+/g, '-')
-        .toUpperCase();
-      // Construction de l'URL en fonction de votre configuration de routes
-      const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
-      console.log("Navigation vers", url);
+  const handleOrderNow = useCallback((mode) => {
+    if (product) {
+      const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
+      const formattedName = product.nom.trim().replace(/\s+/g, '-');
+      const url = `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       navigate(url);
-    } catch (error) {
-      console.error('Erreur lors de la navigation vers la commande:', error);
-      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
     }
-  }, [adjustedBrandName, navigate]);
+  }, [brandFull, navigate, product]);
 
-  // Lors du clic sur "Voir le produit", si le nom est le produit cible, on redirige
   const handleViewProduct = useCallback((item) => {
-    if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
+    if (normalizeString(item.nom) === normalizeString("Clé Izis Cavers Reparation de clé")) {
       navigate("/cle-izis-cassee.php");
     } else {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
@@ -236,137 +191,36 @@ const CleDynamicPage = () => {
     }
   }, [navigate]);
 
-  const openImageModal = useCallback((item) => {
-    setModalImageSrc(getImageSrc(item.imageUrl));
-    setScale(1);
-    setModalOpen(true);
-  }, [getImageSrc]);
-
-  const handleCloseSnackbar = useCallback((event, reason) => {
+  const handleCloseSnackbar = useCallback((_, reason) => {
     if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   }, []);
 
-  const handleWheel = useCallback((event) => {
-    event.preventDefault();
-    setScale((prevScale) => {
-      let newScale = prevScale + (event.deltaY < 0 ? 0.1 : -0.1);
-      newScale = Math.max(0.5, Math.min(newScale, 3));
-      return newScale;
-    });
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    setScale((s) => Math.max(0.5, Math.min(s + (e.deltaY < 0 ? 0.1 : -0.1), 3)));
   }, []);
 
-  const styles = useMemo(() => ({
-    page: {
-      backgroundColor: '#fafafa',
-      minHeight: '100vh',
-      paddingBottom: '24px',
-    },
-    searchContainer: {
-      marginTop: { xs: '20px', sm: '40px' }
-    },
-    gridContainer: {
-      padding: '16px 0',
-    },
-    card: {
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      minHeight: '400px',
-      width: '100%',
-      flex: 1,
-    },
-    cardMedia: {
-      height: 180,
-      objectFit: 'contain',
-      backgroundColor: '#fff',
-      borderTopLeftRadius: '12px',
-      borderTopRightRadius: '12px',
-    },
-    cardContent: {
-      flexGrow: 1,
-      padding: { xs: '8px', sm: '16px' },
-      fontFamily: 'Montserrat, sans-serif',
-      textAlign: 'left',
-    },
-    productName: {
-      fontSize: '1.2rem',
-      fontWeight: 700,
-      marginBottom: 0,
-      color: '#333',
-      cursor: 'pointer',
-    },
-    brandName: {
-      fontSize: '0.9rem',
-      color: '#777',
-      marginBottom: '8px',
-    },
-    pricesContainer: {
-      display: 'flex',
-      gap: '8px',
-      marginTop: '12px',
-    },
-    priceBadge: {
-      backgroundColor: '#e8f5e9',
-      padding: '6px 12px',
-      borderRadius: '8px',
-      textAlign: 'center',
-      color: '#1B5E20',
-    },
-    buttonSecondary: {
-      borderRadius: '50px',
-      padding: '8px 16px',
-      fontFamily: 'Montserrat, sans-serif',
-      textTransform: 'none',
-      fontWeight: 600,
-      fontSize: '0.75rem',
-      boxShadow: 'none',
-      marginTop: '8px',
-    },
-    buttonContainer: {
-      padding: { xs: '8px', sm: '16px' },
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      mt: 'auto',
-    },
-    brandLogoContainer: {
-      position: 'absolute',
-      top: 8,
-      left: 8,
-      width: 32,
-      height: 32,
-      borderRadius: '50%',
-      overflow: 'hidden',
-      backgroundColor: '#fff',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-      zIndex: 2,
-    },
-  }), []);
+  const handleOpenImageModal = useCallback((item) => {
+    if (item.imageUrl) {
+      setModalImageSrc(getImageSrc(item.imageUrl));
+      setOpenImageModal(true);
+    }
+  }, [getImageSrc]);
+
+  const handleCloseImageModal = useCallback(() => {
+    setOpenImageModal(false);
+  }, []);
 
   return (
     <HelmetProvider>
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
-        />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://votre-site.com" />
-        <script type="application/ld+json">
-          {JSON.stringify(jsonLdData)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(jsonLdData)}</script>
       </Helmet>
-      <Box sx={styles.page}>
-        <Container sx={styles.searchContainer}>
+      <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', paddingBottom: '24px' }}>
+        <Container sx={{ marginTop: { xs: '20px', sm: '40px' } }}>
           <TextField
             label="Tapez le numéro de votre clé"
             variant="outlined"
@@ -385,30 +239,21 @@ const CleDynamicPage = () => {
               {error}
             </Typography>
           ) : sortedKeys.length > 0 ? (
-            <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
+            <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={{ padding: '16px 0' }}>
               {sortedKeys.map((item, index) => {
                 const numeroPrice = Number(item.prix);
                 const postalPrice = Number(item.prixSansCartePropriete);
                 return (
                   <Grid key={item.id || index} item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
-                    <Card sx={styles.card}>
-                      <Box onClick={() => openImageModal(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
-                        {brandLogo && (
-                          <Box sx={styles.brandLogoContainer}>
-                            <img
-                              src={brandLogo}
-                              alt={item.marque}
-                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                              onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
-                            />
-                          </Box>
-                        )}
+                    <Card sx={{ backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0px 4px 8px rgba(0,0,0,0.1)', transition: 'transform 0.2s, box-shadow 0.2s', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '400px', width: '100%', flex: 1 }}>
+                      <Box sx={{ position: 'relative', cursor: 'pointer' }}>
                         <CardMedia
                           component="img"
                           image={getImageSrc(item.imageUrl)}
                           alt={item.nom}
-                          sx={styles.cardMedia}
-                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
+                          sx={{ height: 180, objectFit: 'contain', backgroundColor: '#fff', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.1)' } }}
+                          onClick={() => handleOpenImageModal(item)}
+                          onError={(e) => console.error("Erreur lors du chargement de l'image:", e)}
                         />
                         <Skeleton
                           variant="rectangular"
@@ -423,47 +268,47 @@ const CleDynamicPage = () => {
                           }}
                         />
                       </Box>
-                      <CardContent sx={styles.cardContent}>
-                        <Typography sx={styles.productName} onClick={() => handleViewProduct(item)}>
+                      <CardContent sx={{ flexGrow: 1, padding: { xs: '8px', sm: '16px' }, fontFamily: 'Montserrat, sans-serif', textAlign: 'left' }}>
+                        <Typography sx={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: 0, color: '#333', cursor: 'pointer' }}
+                          onClick={() => handleViewProduct(item)}>
                           {item.nom}
                         </Typography>
-                        <Typography sx={styles.brandName}>{item.marque}</Typography>
-                        <Box sx={styles.pricesContainer}>
+                        <Typography sx={{ fontSize: '0.9rem', color: '#777', marginBottom: '8px' }}>{item.marque}</Typography>
+                        <Box sx={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                           {numeroPrice > 0 && (
-                            <Box sx={styles.priceBadge}>
+                            <Box sx={{ backgroundColor: '#e8f5e9', padding: '6px 12px', borderRadius: '8px', textAlign: 'center', color: '#1B5E20' }}>
                               <Typography variant="caption">Copie chez le fabricant</Typography>
-                              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                {item.prix} €
-                              </Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 700 }}>{item.prix} €</Typography>
                             </Box>
                           )}
                           {postalPrice > 0 && (
-                            <Box sx={styles.priceBadge}>
+                            <Box sx={{ backgroundColor: '#e8f5e9', padding: '6px 12px', borderRadius: '8px', textAlign: 'center', color: '#1B5E20' }}>
                               <Typography variant="caption">Copie dans nos ateliers</Typography>
-                              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                {item.prixSansCartePropriete} €
-                              </Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 700 }}>{item.prixSansCartePropriete} €</Typography>
                             </Box>
                           )}
                         </Box>
                       </CardContent>
-                      <Box sx={styles.buttonContainer}>
+                      <Box sx={{ padding: { xs: '8px', sm: '16px' }, display: 'flex', flexDirection: 'column', gap: '8px', mt: 'auto' }}>
                         {numeroPrice > 0 && (
                           <Button
                             variant="outlined"
                             onClick={() => handleOrderNow(item, 'numero')}
                             startIcon={<ConfirmationNumberIcon />}
                             sx={{
-                              ...styles.buttonSecondary,
+                              borderRadius: '50px',
+                              padding: '8px 16px',
+                              fontFamily: 'Montserrat, sans-serif',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              boxShadow: 'none',
                               borderColor: '#1B5E20',
                               color: '#1B5E20',
-                              '&:hover': {
-                                backgroundColor: '#1B5E20',
-                                color: '#fff',
-                              },
+                              '&:hover': { backgroundColor: '#1B5E20', color: '#fff' },
                             }}
                           >
-                            Commander par numéro <br />(chez le fabricant)
+                            Commander par numéro (chez le fabricant)
                           </Button>
                         )}
                         {postalPrice > 0 && (
@@ -472,13 +317,16 @@ const CleDynamicPage = () => {
                             onClick={() => handleOrderNow(item, 'postal')}
                             startIcon={<LocalShippingIcon />}
                             sx={{
-                              ...styles.buttonSecondary,
+                              borderRadius: '50px',
+                              padding: '8px 16px',
+                              fontFamily: 'Montserrat, sans-serif',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              boxShadow: 'none',
                               borderColor: '#1B5E20',
                               color: '#1B5E20',
-                              '&:hover': {
-                                backgroundColor: '#1B5E20',
-                                color: '#fff',
-                              },
+                              '&:hover': { backgroundColor: '#1B5E20', color: '#fff' },
                             }}
                           >
                             Commander par envoie/renvoie dans nos ateliers
@@ -499,45 +347,30 @@ const CleDynamicPage = () => {
             </Typography>
           )}
         </Container>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-        <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="lg">
+        <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
           <DialogContent>
-            <Box
-              onWheel={handleWheel}
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                overflow: 'hidden',
-                maxHeight: '80vh',
-              }}
-            >
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <img
-                src={modalImageSrc}
-                alt="Agrandissement de la clé"
-                style={{
-                  transform: `scale(${scale})`,
-                  transition: 'transform 0.2s',
-                  width: '100%',
-                  height: 'auto',
-                }}
+                src={modalImage}
+                alt="Image agrandie"
+                style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
               />
             </Box>
           </DialogContent>
         </Dialog>
+        <Snackbar
+          open={Boolean(error)}
+          autoHideDuration={6000}
+          onClose={() => setError(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+            {error}
+          </Alert>
+        </Snackbar>
       </Box>
     </HelmetProvider>
   );
 };
 
 export default CleDynamicPage;
-
