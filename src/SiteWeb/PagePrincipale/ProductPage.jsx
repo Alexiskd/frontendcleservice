@@ -122,7 +122,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
+          https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}
         );
         if (!response.ok) {
           throw new Error('Produit introuvable.');
@@ -147,7 +147,9 @@ const ProductPage = () => {
       const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
       navigate(
-        `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedProductName)}?mode=${mode}`
+        /commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
+          formattedProductName
+        )}?mode=${mode}
       );
     }
   }, [navigate, product, brandName]);
@@ -155,7 +157,7 @@ const ProductPage = () => {
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-      navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
+      navigate(/produit/${brandName}/${encodeURIComponent(formattedProductName)});
     }
   }, [navigate, product, brandName]);
 
@@ -236,13 +238,7 @@ const ProductPage = () => {
                   component="img"
                   image={product.imageUrl}
                   alt={product.nom}
-                  sx={{
-                    width: '80%',
-                    maxWidth: 150,
-                    objectFit: 'contain',
-                    transition: 'transform 0.3s',
-                    '&:hover': { transform: 'scale(1.1)' }
-                  }}
+                  sx={{ width: '80%', maxWidth: 150, objectFit: 'contain', transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.1)' } }}
                 />
               </Box>
             </Grid>
@@ -256,36 +252,13 @@ const ProductPage = () => {
               >
                 {product.nom}
               </Typography>
-              {/* Le reste du contenu reste inchangé */}
+              {/* Other content remains unchanged */}
             </CardContent>
           </Grid>
         </Grid>
       </StyledCard>
-      {/* Modal affichant l'image agrandie */}
-      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
-        <DialogContent>
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img
-              src={modalImage}
-              alt="Image agrandie"
-              style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
-            />
-          </Box>
-        </DialogContent>
-      </Dialog>
-      <Snackbar
-        open={Boolean(error)}
-        autoHideDuration={6000}
-        onClose={() => setError(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };
 
 export default ProductPage;
-
