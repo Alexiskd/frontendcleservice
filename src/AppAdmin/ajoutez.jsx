@@ -82,7 +82,7 @@ const Ajoutez = () => {
     imageDataUrl: '',
     referenceEbauche: '',
     typeReproduction: 'copie',
-    // Remplacement de la descriptionProduit par 5 inputs pour les meta SEO :
+    // Cinq champs séparés pour le SEO
     metaTitle: '',
     metaDescription: '',
     metaKeywords: '',
@@ -139,7 +139,13 @@ const Ajoutez = () => {
   }, []);
 
   const handleEdit = (prod) => {
-    let metaData = { metaTitle: '', metaDescription: '', metaKeywords: '', metaRobots: '', metaCanonical: '' };
+    let metaData = {
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: '',
+      metaRobots: '',
+      metaCanonical: '',
+    };
     try {
       metaData = JSON.parse(prod.descriptionProduit);
     } catch (err) {
@@ -155,7 +161,6 @@ const Ajoutez = () => {
       imageDataUrl: prod.imageUrl,
       referenceEbauche: prod.referenceEbauche || '',
       typeReproduction: prod.typeReproduction,
-      // Affectation des meta récupérées
       metaTitle: metaData.metaTitle || '',
       metaDescription: metaData.metaDescription || '',
       metaKeywords: metaData.metaKeywords || '',
@@ -202,7 +207,7 @@ const Ajoutez = () => {
       setError('Veuillez remplir tous les champs obligatoires et sélectionner une image.');
       return;
     }
-    // On regroupe les données SEO dans un objet JSON
+    // Regroupement des 5 métas dans un objet JSON
     const meta = {
       metaTitle: form.metaTitle,
       metaDescription: form.metaDescription,
@@ -220,7 +225,7 @@ const Ajoutez = () => {
       imageUrl: form.imageDataUrl,
       referenceEbauche: form.referenceEbauche.trim() !== '' ? form.referenceEbauche : null,
       typeReproduction: form.typeReproduction,
-      // On stocke le JSON des meta dans descriptionProduit
+      // Stockage du JSON des meta dans descriptionProduit
       descriptionProduit: JSON.stringify(meta),
       descriptionNumero: form.descriptionNumero,
       estCleAPasse: form.estCleAPasse,
@@ -683,14 +688,28 @@ const Ajoutez = () => {
                     Description numéro : {prod.descriptionNumero}
                   </Typography>
                 )}
-                {/* Affichage de la meta SEO si possible */}
+                {/* Affichage de chaque élément meta séparément */}
                 {prod.descriptionProduit && (() => {
                   try {
                     const meta = JSON.parse(prod.descriptionProduit);
                     return (
-                      <Typography variant="body2" color="text.secondary">
-                        Meta Title : {meta.metaTitle}
-                      </Typography>
+                      <>
+                        <Typography variant="body2" color="text.secondary">
+                          Meta Title : {meta.metaTitle || '-'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Meta Description : {meta.metaDescription || '-'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Meta Keywords : {meta.metaKeywords || '-'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Meta Robots : {meta.metaRobots || '-'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Meta Canonical : {meta.metaCanonical || '-'}
+                        </Typography>
+                      </>
                     );
                   } catch (err) {
                     return (
