@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import { Helmet } from 'react-helmet';
 import {
   Box,
@@ -413,17 +413,7 @@ const ProductPage = () => {
                         />
                       </ListItem>
                     )}
-                    {product.descriptionProduit && product.descriptionProduit.trim() !== '' && (
-                      <ListItem disableGutters>
-                        <ListItemIcon>
-                          <DescriptionIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`Description du produit : ${product.descriptionProduit}`}
-                          primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
-                        />
-                      </ListItem>
-                    )}
+                    {/* La section de description du produit a été supprimée */}
                   </List>
                 </Box>
                 <Grid container spacing={2}>
@@ -461,8 +451,6 @@ const ProductPage = () => {
                     </StyledButton>
                   )}
                 </Box>
-                
-                
               </CardContent>
             </Grid>
           </Grid>
