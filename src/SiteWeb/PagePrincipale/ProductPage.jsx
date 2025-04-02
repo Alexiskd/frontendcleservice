@@ -133,7 +133,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
+          https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}
         );
         if (!response.ok) {
           throw new Error('Produit introuvable.');
@@ -159,9 +159,9 @@ const ProductPage = () => {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
         navigate(
-          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
+          /commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
             formattedProductName
-          )}?mode=${mode}`
+          )}?mode=${mode}
         );
       }
     },
@@ -171,7 +171,7 @@ const ProductPage = () => {
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-      navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
+      navigate(/produit/${brandName}/${encodeURIComponent(formattedProductName)});
     }
   }, [navigate, product, brandName]);
 
@@ -245,9 +245,9 @@ const ProductPage = () => {
       : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
 
   // Création d'une URL canonique pour le produit
-  const canonicalUrl = `https://www.cleservice.com/produit/${brandName}/${encodeURIComponent(
+  const canonicalUrl = https://www.cleservice.com/produit/${brandName}/${encodeURIComponent(
     product.nom.trim().replace(/\s+/g, '-')
-  )}`;
+  )};
 
   // Génération de mots-clés à partir des infos du produit
   const keywords = [
@@ -264,7 +264,7 @@ const ProductPage = () => {
   const metaDescription =
     product.descriptionProduit && product.descriptionProduit.trim() !== ''
       ? product.descriptionProduit
-      : `Découvrez ${product.nom}${product.marque ? ' de ' + product.marque : ''} sur Clé Service – la solution en ligne pour la reproduction de clés de qualité.`;
+      : Découvrez ${product.nom}${product.marque ? ' de ' + product.marque : ''} sur Clé Service – la solution en ligne pour la reproduction de clés de qualité.;
 
   // JSON‑LD pour le balisage schema.org
   const jsonLd = {
@@ -290,7 +290,7 @@ const ProductPage = () => {
     <>
       <Helmet>
         {/* Titre dynamique */}
-        <title>{`${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service`}</title>
+        <title>{${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service}</title>
         {/* Meta description */}
         <meta name="description" content={metaDescription} />
         {/* Mots-clés */}
@@ -301,7 +301,7 @@ const ProductPage = () => {
         <link rel="canonical" href={canonicalUrl} />
 
         {/* Open Graph */}
-        <meta property="og:title" content={`${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service`} />
+        <meta property="og:title" content={${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="product" />
@@ -309,7 +309,7 @@ const ProductPage = () => {
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service`} />
+        <meta name="twitter:title" content={${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service} />
         <meta name="twitter:description" content={metaDescription} />
         {product.imageUrl && <meta name="twitter:image" content={product.imageUrl} />}
 
@@ -422,7 +422,7 @@ const ProductPage = () => {
                           <VpnKeyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}`}
+                          primary={Carte de propriété : ${product.cleAvecCartePropriete ? 'Oui' : 'Non'}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -433,7 +433,7 @@ const ProductPage = () => {
                           <LabelIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Référence ébauche : ${product.referenceEbauche}`}
+                          primary={Référence ébauche : ${product.referenceEbauche}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -444,7 +444,7 @@ const ProductPage = () => {
                           <FileCopyIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Mode de reproduction : ${product.typeReproduction}`}
+                          primary={Mode de reproduction : ${product.typeReproduction}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -455,7 +455,7 @@ const ProductPage = () => {
                           <FormatListNumberedIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Détails du numéro : ${product.descriptionNumero}`}
+                          primary={Détails du numéro : ${product.descriptionNumero}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -466,7 +466,7 @@ const ProductPage = () => {
                           <DescriptionIcon color="action" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={`Description du produit : ${product.descriptionProduit}`}
+                          primary={Description du produit : ${product.descriptionProduit}}
                           primaryTypographyProps={{ fontFamily: 'Bento, sans-serif' }}
                         />
                       </ListItem>
@@ -533,4 +533,3 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
-
