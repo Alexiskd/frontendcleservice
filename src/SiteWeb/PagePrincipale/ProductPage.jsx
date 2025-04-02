@@ -223,87 +223,66 @@ const ProductPage = () => {
       : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
 
   return (
-    <HelmetProvider>
-      <Helmet>
-        <title>{`${brandName} – Produit`}</title>
-        <meta name="description" content={processText} />
-        <script type="application/ld+json">{JSON.stringify({})}</script>
-      </Helmet>
-      <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', paddingBottom: '24px' }}>
-        <Container sx={{ marginTop: { xs: '20px', sm: '40px' } }}>
-          <TextField
-            label="Tapez le numéro de votre clé"
-            variant="outlined"
-            fullWidth
-            // Vous pouvez ajouter une logique de recherche ici si nécessaire
-          />
-        </Container>
-        <Container maxWidth="xl">
-          {loading ? (
-            <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Chargement...
-            </Typography>
-          ) : (
-            <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={{ padding: '16px 0' }}>
-              <Grid item xs={12} md={4}>
-                {product.imageUrl && (
-                  <Box
-                    sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 2, cursor: 'pointer' }}
-                    onClick={handleOpenImageModal}
-                  >
-                    <CardMedia
-                      component="img"
-                      image={product.imageUrl}
-                      alt={product.nom}
-                      sx={{
-                        width: '80%',
-                        maxWidth: 150,
-                        objectFit: 'contain',
-                        transition: 'transform 0.3s',
-                        '&:hover': { transform: 'scale(1.1)' }
-                      }}
-                    />
-                  </Box>
-                )}
-              </Grid>
-              <Grid item xs={12} md={8}>
-                <CardContent>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontFamily: 'Playfair Display, serif', color: '#1B5E20', mb: 1, cursor: 'pointer' }}
-                    onClick={handleViewProduct}
-                  >
-                    {product.nom}
-                  </Typography>
-                  {/* Vous pouvez ajouter ici d'autres contenus, comme les prix, descriptions, etc. */}
-                </CardContent>
-              </Grid>
+    <Container sx={{ mt: 2, mb: 4 }}>
+      <StyledCard>
+        <Grid container spacing={2}>
+          {product.imageUrl && (
+            <Grid item xs={12} md={4}>
+              <Box
+                sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 2, cursor: 'pointer' }}
+                onClick={handleOpenImageModal}
+              >
+                <CardMedia
+                  component="img"
+                  image={product.imageUrl}
+                  alt={product.nom}
+                  sx={{
+                    width: '80%',
+                    maxWidth: 150,
+                    objectFit: 'contain',
+                    transition: 'transform 0.3s',
+                    '&:hover': { transform: 'scale(1.1)' }
+                  }}
+                />
+              </Box>
             </Grid>
           )}
-        </Container>
-        <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
-          <DialogContent>
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <img
-                src={modalImage}
-                alt="Image agrandie"
-                style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
-              />
-            </Box>
-          </DialogContent>
-        </Dialog>
-        <Snackbar
-          open={Boolean(error)}
-          autoHideDuration={6000}
-          onClose={() => setError(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
-            {error}
-          </Alert>
-        </Snackbar>
-      </Box>
-    </HelmetProvider>
+          <Grid item xs={12} md={8}>
+            <CardContent>
+              <Typography
+                variant="h4"
+                sx={{ fontFamily: 'Playfair Display, serif', color: '#1B5E20', mb: 1, cursor: 'pointer' }}
+                onClick={handleViewProduct}
+              >
+                {product.nom}
+              </Typography>
+              {/* Le reste du contenu reste inchangé */}
+            </CardContent>
+          </Grid>
+        </Grid>
+      </StyledCard>
+      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
+        <DialogContent>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <img
+              src={modalImage}
+              alt="Image agrandie"
+              style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
+            />
+          </Box>
+        </DialogContent>
+      </Dialog>
+      <Snackbar
+        open={Boolean(error)}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 
