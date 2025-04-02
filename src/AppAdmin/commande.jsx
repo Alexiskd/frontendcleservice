@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import io from 'socket.io-client';
 import {
   Container,
@@ -202,9 +202,11 @@ const Commande = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const margin = 15;
 
+    // En-tête avec fond vert
     doc.setFillColor(27, 94, 32);
     doc.rect(0, margin, 210, 40, 'F');
 
+    // Ajout du logo
     const logoWidth = 32, logoHeight = 32;
     doc.addImage(logo, 'PNG', margin, margin, logoWidth, logoHeight);
     const leftTextX = margin + logoWidth + 5;
@@ -224,6 +226,7 @@ const Commande = () => {
       { lineHeightFactor: 1.5 }
     );
 
+    // Coordonnées du client (droite)
     const rightX = 210 - margin;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -241,24 +244,30 @@ const Commande = () => {
     });
 
     let currentY = margin + 45;
-    const articleText =
+
+    // Calcul des valeurs à afficher
+    const produit =
       commande.cle && commande.cle.length
-        ? Array.isArray(commande.cle)
-          ? commande.cle.join(', ')
-          : commande.cle
-        : 'Article';
-    const reference =
-      commande.numeroCle && commande.numeroCle.length
-        ? Array.isArray(commande.numeroCle)
-          ? commande.numeroCle.join(', ')
-          : commande.numeroCle
-        : 'N/A';
+        ? (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle)
+        : 'Produit';
     const quantite = commande.quantity ? commande.quantity.toString() : "1";
-    const prixTTC = parseFloat(commande.prix);
-    const tauxTVA = 0.20;
-    const prixHT = prixTTC / (1 + tauxTVA);
-    const tableHead = [['Article', 'Référence', 'Quantité', 'Sous-total']];
-    const tableBody = [[articleText, reference, quantite, prixHT.toFixed(2) + ' €']];
+    const prixProduit = parseFloat(commande.prix);
+    const fraisLivraison = commande.fraisLivraison
+      ? parseFloat(commande.fraisLivraison)
+      : 0.0;
+    const unitPrice =
+      parseFloat(quantite) > 0 ? prixProduit / parseFloat(quantite) : prixProduit;
+    const totalTTC = prixProduit + fraisLivraison;
+
+    // Nouveau tableau de résumé
+    const tableHead = [['Produit', 'Quantité', 'Prix Unitaire', 'Frais de port', 'Total TTC']];
+    const tableBody = [[
+        produit,
+        quantite,
+        unitPrice.toFixed(2) + ' €',
+        fraisLivraison.toFixed(2) + ' €',
+        totalTTC.toFixed(2) + ' €'
+    ]];
 
     doc.autoTable({
       startY: currentY,
@@ -271,36 +280,18 @@ const Commande = () => {
     });
     currentY = doc.lastAutoTable.finalY + 10;
 
-    const fraisLivraison = 0.0,
-      totalTTC = prixTTC,
-      montantTVA = prixTTC - prixHT;
-    const rightAlignX = 210 - margin;
-
+    // Mode de règlement affiché toujours en CB
     doc.setFontSize(12);
     doc.setTextColor(27, 94, 32);
-    doc.text('Sous-total', rightAlignX - 80, currentY);
-    doc.text(prixHT.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.text('Frais de livraison', rightAlignX - 80, currentY);
-    doc.text(fraisLivraison.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total TTC', rightAlignX - 80, currentY);
-    doc.text(totalTTC.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('TVA', rightAlignX - 80, currentY);
-    doc.text(montantTVA.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 15;
+    doc.text('Mode de règlement : Carte Bancaire (CB)', margin, currentY);
+    currentY += 10;
 
-    doc.setFontSize(10);
-    doc.setTextColor(27, 94, 32);
+    // Nouvelles conditions de vente pour une vente en ligne
     const conditions =
-      "CONDITIONS GÉNÉRALES DE VENTE: La pose ayant été reconnue satisfaisante, notre installation est payable au monteur, comptant. En cas de retard de paiement, indemnité forfaitaire de 40€ sera due pour frais de recouvrement et taux de pénalité de retard sera appliqué (3 fois le taux d’intérêt légal). Nos coordonnées bancaires : IBAN : FR76 1820 6004 1744 1936 2200 145 - BIC : AGRIFRPP882";
+      "CONDITIONS GÉNÉRALES DE VENTE EN LIGNE : Les produits commandés sur notre site sont vendus exclusivement en ligne et payables par carte bancaire (CB). La commande est confirmée dès réception du paiement. En cas d'annulation, des frais pourront être appliqués conformément à notre politique. Nos coordonnées bancaires : IBAN : FR76 1820 6004 1744 1936 2200 145 - BIC : AGRIFRPP882";
     const conditionsLines = doc.splitTextToSize(conditions, 180);
     doc.text(conditionsLines, 105, currentY, { align: 'center' });
     currentY += conditionsLines.length * 5;
-    doc.text("Bonne journée.", 105, currentY, { align: 'center' });
 
     return doc;
   };
@@ -553,11 +544,7 @@ const Commande = () => {
                 <Button variant="contained" color="info" onClick={() => printInvoice(commande)}>
                   Imprimer Facture
                 </Button>
-                <Button
-                  variant="contained"
-                  color="warning"
-                  onClick={() => openEditDialogForCommande(commande)}
-                >
+                <Button variant="contained" color="warning" onClick={() => openEditDialogForCommande(commande)}>
                   Modifier la commande
                 </Button>
                 <Button
