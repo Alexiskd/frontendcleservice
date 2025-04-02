@@ -74,6 +74,7 @@ const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => 
 
 const Ajoutez = () => {
   const [form, setForm] = useState({
+    // Infos sur la clé
     cleAvecCartePropriete: false,
     prix: '',
     prixSansCartePropriete: '',
@@ -82,18 +83,18 @@ const Ajoutez = () => {
     imageDataUrl: '',
     referenceEbauche: '',
     typeReproduction: 'copie',
-    // Cinq champs séparés pour le SEO
-    metaTitle: '',
-    metaDescription: '',
-    metaKeywords: '',
-    metaRobots: '',
-    metaCanonical: '',
     descriptionNumero: '',
     estCleAPasse: false,
     prixCleAPasse: '',
     besoinPhoto: false,
     besoinNumeroCle: false,
     besoinNumeroCarte: false,
+    // Infos SEO
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: '',
+    metaRobots: '',
+    metaCanonical: '',
   });
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -153,6 +154,7 @@ const Ajoutez = () => {
     }
     setEditingProduct(prod);
     setForm({
+      // Infos sur la clé
       cleAvecCartePropriete: prod.cleAvecCartePropriete,
       prix: prod.prix.toString(),
       prixSansCartePropriete: prod.prixSansCartePropriete ? prod.prixSansCartePropriete.toString() : '',
@@ -161,22 +163,24 @@ const Ajoutez = () => {
       imageDataUrl: prod.imageUrl,
       referenceEbauche: prod.referenceEbauche || '',
       typeReproduction: prod.typeReproduction,
-      metaTitle: metaData.metaTitle || '',
-      metaDescription: metaData.metaDescription || '',
-      metaKeywords: metaData.metaKeywords || '',
-      metaRobots: metaData.metaRobots || '',
-      metaCanonical: metaData.metaCanonical || '',
       descriptionNumero: prod.descriptionNumero || '',
       estCleAPasse: prod.estCleAPasse,
       prixCleAPasse: prod.prixCleAPasse ? prod.prixCleAPasse.toString() : '',
       besoinPhoto: prod.besoinPhoto || false,
       besoinNumeroCle: prod.besoinNumeroCle || false,
       besoinNumeroCarte: prod.besoinNumeroCarte || false,
+      // Infos SEO
+      metaTitle: metaData.metaTitle || '',
+      metaDescription: metaData.metaDescription || '',
+      metaKeywords: metaData.metaKeywords || '',
+      metaRobots: metaData.metaRobots || '',
+      metaCanonical: metaData.metaCanonical || '',
     });
   };
 
   const resetForm = () => {
     setForm({
+      // Infos sur la clé
       cleAvecCartePropriete: false,
       prix: '',
       prixSansCartePropriete: '',
@@ -185,17 +189,18 @@ const Ajoutez = () => {
       imageDataUrl: '',
       referenceEbauche: '',
       typeReproduction: 'copie',
-      metaTitle: '',
-      metaDescription: '',
-      metaKeywords: '',
-      metaRobots: '',
-      metaCanonical: '',
       descriptionNumero: '',
       estCleAPasse: false,
       prixCleAPasse: '',
       besoinPhoto: false,
       besoinNumeroCle: false,
       besoinNumeroCarte: false,
+      // Infos SEO
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: '',
+      metaRobots: '',
+      metaCanonical: '',
     });
     setEditingProduct(null);
   };
@@ -207,7 +212,7 @@ const Ajoutez = () => {
       setError('Veuillez remplir tous les champs obligatoires et sélectionner une image.');
       return;
     }
-    // Regroupement des 5 métas dans un objet JSON
+    // Regroupement des infos SEO dans un objet JSON
     const meta = {
       metaTitle: form.metaTitle,
       metaDescription: form.metaDescription,
@@ -225,7 +230,7 @@ const Ajoutez = () => {
       imageUrl: form.imageDataUrl,
       referenceEbauche: form.referenceEbauche.trim() !== '' ? form.referenceEbauche : null,
       typeReproduction: form.typeReproduction,
-      // Stockage du JSON des meta dans descriptionProduit
+      // Stockage du JSON des infos SEO dans descriptionProduit
       descriptionProduit: JSON.stringify(meta),
       descriptionNumero: form.descriptionNumero,
       estCleAPasse: form.estCleAPasse,
@@ -332,11 +337,7 @@ const Ajoutez = () => {
   const displayedProducts = filteredProducts.slice(0, displayCount);
 
   return (
-    <Container
-      maxWidth={false}
-      disableGutters
-      sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}
-    >
+    <Container maxWidth={false} disableGutters sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}>
       <Typography variant="h4" align="center" gutterBottom sx={{ color: primaryGreen }}>
         {editingProduct ? "Modifier l'article" : "Ajouter un article"}
       </Typography>
@@ -353,6 +354,12 @@ const Ajoutez = () => {
         }}
       >
         <Grid container spacing={2}>
+          {/* Section Infos sur la clé */}
+          <Grid item xs={12}>
+            <Typography variant="h6" sx={{ color: primaryGreen, mb: 2 }}>
+              Informations sur la clé
+            </Typography>
+          </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               label="Nom"
@@ -388,66 +395,50 @@ const Ajoutez = () => {
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
-          {/* Section Meta SEO */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" sx={{ color: primaryGreen, mb: 1 }}>
-              Meta SEO pour la page produit :
-            </Typography>
-          </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Meta Title"
-              name="metaTitle"
-              value={form.metaTitle}
+              label="Prix (€)"
+              name="prix"
+              type="number"
+              value={form.prix}
               onChange={handleInputChange}
+              required
               fullWidth
+              inputProps={{ min: 0 }}
               variant="outlined"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Meta Description"
-              name="metaDescription"
-              value={form.metaDescription}
+              label="Prix Sans Carte Propriété (€)"
+              name="prixSansCartePropriete"
+              type="number"
+              value={form.prixSansCartePropriete}
               onChange={handleInputChange}
               fullWidth
+              inputProps={{ min: 0 }}
               variant="outlined"
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Meta Keywords"
-              name="metaKeywords"
-              value={form.metaKeywords}
+              select
+              label="Type de reproduction"
+              name="typeReproduction"
+              value={form.typeReproduction}
               onChange={handleInputChange}
+              required
               fullWidth
               variant="outlined"
+              SelectProps={{ native: true }}
               sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Meta Robots"
-              name="metaRobots"
-              value={form.metaRobots}
-              onChange={handleInputChange}
-              fullWidth
-              variant="outlined"
-              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Meta Canonical"
-              name="metaCanonical"
-              value={form.metaCanonical}
-              onChange={handleInputChange}
-              fullWidth
-              variant="outlined"
-              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
-            />
+            >
+              <option value="copie">Copie</option>
+              <option value="numero">Numéro</option>
+              <option value="ia">IA</option>
+            </TextField>
           </Grid>
           {form.typeReproduction === 'numero' && (
             <Grid item xs={12}>
@@ -474,24 +465,6 @@ const Ajoutez = () => {
               }
               label="Clé avec carte de propriété"
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              select
-              label="Type de reproduction"
-              name="typeReproduction"
-              value={form.typeReproduction}
-              onChange={handleInputChange}
-              required
-              fullWidth
-              variant="outlined"
-              SelectProps={{ native: true }}
-              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
-            >
-              <option value="copie">Copie</option>
-              <option value="numero">Numéro</option>
-              <option value="ia">IA</option>
-            </TextField>
           </Grid>
           <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
             <FormControlLabel
@@ -559,6 +532,7 @@ const Ajoutez = () => {
               label="Exiger un numéro de carte"
             />
           </Grid>
+          {/* Section Téléchargement image */}
           <Grid item xs={12}>
             <Button
               variant="contained"
@@ -587,6 +561,68 @@ const Ajoutez = () => {
                 />
               </Box>
             )}
+          </Grid>
+
+          {/* Section Infos SEO */}
+          <Grid item xs={12}>
+            <Typography variant="h6" sx={{ color: primaryGreen, mt: 3, mb: 2 }}>
+              Informations SEO
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Title"
+              name="metaTitle"
+              value={form.metaTitle}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Description"
+              name="metaDescription"
+              value={form.metaDescription}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Keywords"
+              name="metaKeywords"
+              value={form.metaKeywords}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Robots"
+              name="metaRobots"
+              value={form.metaRobots}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Meta Canonical"
+              name="metaCanonical"
+              value={form.metaCanonical}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderColor: primaryGreen } }}
+            />
           </Grid>
           {error && (
             <Grid item xs={12}>
@@ -688,7 +724,7 @@ const Ajoutez = () => {
                     Description numéro : {prod.descriptionNumero}
                   </Typography>
                 )}
-                {/* Affichage de chaque élément meta séparément */}
+                {/* Affichage des infos SEO séparément */}
                 {prod.descriptionProduit && (() => {
                   try {
                     const meta = JSON.parse(prod.descriptionProduit);
