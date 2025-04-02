@@ -69,8 +69,6 @@ const ProductPage = () => {
 
                 <Divider sx={{ my: 2 }} />
 
-                {/* Infobox inchangées */}
-
                 <Box sx={{ mb: 2 }}>
                   <List>
                     {product.cleAvecCartePropriete !== null && (
