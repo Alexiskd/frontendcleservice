@@ -288,7 +288,8 @@ const CleDynamicPage = () => {
       marginBottom: 0,
       color: '#333',
       cursor: 'pointer',
-      fontFamily: 'Georgia, serif'  // Utilisation d'une police serif pour un rendu luxueux
+      // Rétablissement de l'ancienne police
+      fontFamily: 'Montserrat, sans-serif'
     },
     brandName: {
       fontSize: '0.9rem',
@@ -308,7 +309,7 @@ const CleDynamicPage = () => {
       color: '#1B5E20',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center' // Assure que le titre et le prix sont bien alignés
+      alignItems: 'center'
     },
     buttonSecondary: {
       borderRadius: '50px',
