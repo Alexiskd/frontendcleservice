@@ -291,16 +291,12 @@ const ProductPage = () => {
       <Helmet>
         {/* Titre dynamique */}
         <title>{`${product.nom}${product.marque ? ' – ' + product.marque : ''} | Clé Service`}</title>
-
         {/* Meta description */}
         <meta name="description" content={metaDescription} />
-
         {/* Mots-clés */}
         <meta name="keywords" content={keywords} />
-
         {/* Robots */}
         <meta name="robots" content="index, follow" />
-
         {/* Lien canonique */}
         <link rel="canonical" href={canonicalUrl} />
 
@@ -318,9 +314,7 @@ const ProductPage = () => {
         {product.imageUrl && <meta name="twitter:image" content={product.imageUrl} />}
 
         {/* JSON-LD Schema.org */}
-        <script type="application/ld+json">
-          {JSON.stringify(jsonLd)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
       <Container sx={{ mt: 2, mb: 4 }}>
@@ -368,22 +362,14 @@ const ProductPage = () => {
                 >
                   {product.nom}
                 </Typography>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ flexWrap: 'nowrap', mb: 2 }}
-                >
+                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'nowrap', mb: 2 }}>
                   {product.marque && (
                     <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
                       {product.marque}
                     </Typography>
                   )}
                   {mainPrice && (
-                    <Typography
-                      variant="h5"
-                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}
-                    >
+                    <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}>
                       {mainPrice} €
                     </Typography>
                   )}
