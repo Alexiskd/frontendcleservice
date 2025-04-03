@@ -44,36 +44,40 @@ function formatBrandName(name) {
 }
 
 const CleDynamicPage = () => {
-  // Récupération des paramètres pour supporter anciens et nouveaux liens
+  // Récupération des paramètres pour supporter les anciens et nouveaux liens
   const { brandFull, brandName } = useParams();
   const navigate = useNavigate();
 
-  // Combine brandFull et brandName et retire l'extension ".php"
+  // Combine les paramètres : si brandFull n'est pas défini, on utilise brandName.
+  // On retire également l'extension ".php" si présente.
   let rawParam = (brandFull || brandName || "").replace('.php', '');
   
-  // Si le paramètre commence par "cle-coffre-fort-" ou "clé-coffre-fort-", on retire ce préfixe
-  const lowerRaw = rawParam.toLowerCase();
-  if (lowerRaw.startsWith("cle-coffre-fort-")) {
+  // Si le paramètre commence par "cle-coffre-fort-" ou "clé-coffre-fort-", on retire ce préfixe.
+  const lowerRawParam = rawParam.toLowerCase();
+  if (lowerRawParam.startsWith("cle-coffre-fort-")) {
     rawParam = rawParam.substring("cle-coffre-fort-".length);
-  } else if (lowerRaw.startsWith("clé-coffre-fort-")) {
+  } else if (lowerRawParam.startsWith("clé-coffre-fort-")) {
     rawParam = rawParam.substring("clé-coffre-fort-".length);
   }
   
-  // Mapping pour les anciens liens (rétrocompatibilité)
+  // Mapping pour les anciens liens
   const legacyBrandMap = {
     "cle-izis-cassee": "Clé Izis Cavers Reparation de clé",
     "clé-izis-cassee": "Clé Izis Cavers Reparation de clé",
   };
-  // Si le mapping existe, on l'utilise ; sinon, on garde la valeur brute
+  
+  // Si rawParam correspond à une clé du mapping, on l'utilise ; sinon on garde rawParam
   const currentBrandParam = legacyBrandMap[rawParam.toLowerCase()] || rawParam;
+  
+  // Formater le nom de la marque
   const adjustedBrandName = formatBrandName(currentBrandParam);
 
-  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", rediriger vers l'ancien lien
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
   if (currentBrandParam && normalizeString(currentBrandParam) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
 
-  // Balises SEO
+  // Définition des balises SEO
   const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
   const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
@@ -113,7 +117,7 @@ const CleDynamicPage = () => {
     return imageUrl;
   }, []);
 
-  // Données structurées Schema.org
+  // Génération des données structurées Schema.org (ItemList)
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -142,14 +146,14 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandName, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque (uniquement pour les URL non slug)
+  // Récupération du logo pour la marque (uniquement si ce n'est pas un slug produit)
   useEffect(() => {
     if (/^\d+-/.test(currentBrandParam)) return;
-    if (!currentBrandParam) return;
-    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(currentBrandParam)}`)
+    if (!actualBrandName) return;
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(`Logo non trouvé pour ${currentBrandParam}`);
+        throw new Error(`Logo non trouvé pour ${actualBrandName}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -159,7 +163,7 @@ const CleDynamicPage = () => {
         console.error("Erreur lors du chargement du logo:", error);
         setBrandLogo(null);
       });
-  }, [currentBrandParam]);
+  }, [actualBrandName, currentBrandParam]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
