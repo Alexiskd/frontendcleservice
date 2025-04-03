@@ -36,8 +36,15 @@ function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
+function formatBrandName(name) {
+  if (!name) return "";
+  const lower = name.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
 const CleDynamicPage = () => {
-  const { brandFull } = useParams();
+  const { brandFull, brandName } = useParams();
   const navigate = useNavigate();
 
   // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
@@ -60,14 +67,14 @@ const CleDynamicPage = () => {
 
   // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
-    if (/^\d+-/.test(brandFull)) {
+    if (brandFull && /^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
-        navigate(/produit/${brand}/${encodeURIComponent(productName)});
+        navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
-        navigate(/produit/${encodeURIComponent(brandFull)});
+        navigate(`/produit/${encodeURIComponent(brandFull)}`);
       }
       return;
     }
@@ -78,26 +85,26 @@ const CleDynamicPage = () => {
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  const adjustedBrandName = actualBrandName ? actualBrandName.toUpperCase() : "";
+  const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
 
-  // Définition des balises SEO
-  const pageTitle = ${adjustedBrandName} – Clés et reproductions de qualité;
-  const pageDescription = Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.;
+  // Balises SEO
+  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
     if (imageUrl.startsWith('data:')) return imageUrl;
-    if (!imageUrl.startsWith('http')) return https://cl-back.onrender.com/${imageUrl};
+    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
     return imageUrl;
   }, []);
 
-  // Génération des données structurées Schema.org (ItemList)
+  // Données structurées Schema.org
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": ${adjustedBrandName} – Catalogue de clés,
-    "description": Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.,
+    "name": `${adjustedBrandName} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -121,14 +128,14 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandName, keys, getImageSrc]);
 
-  // Récupération du logo pour la marque
+  // Chargement du logo pour la marque (uniquement pour les URL non slug)
   useEffect(() => {
-    if (/^\d+-/.test(brandFull)) return;
+    if (brandFull && /^\d+-/.test(brandFull)) return;
     if (!actualBrandName) return;
-    fetch(https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)})
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(Logo non trouvé pour ${actualBrandName});
+        throw new Error(`Logo non trouvé pour ${actualBrandName}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -146,7 +153,7 @@ const CleDynamicPage = () => {
 
   // Chargement initial des clés via preloadKeysData
   useEffect(() => {
-    if (/^\d+-/.test(brandFull)) {
+    if (brandFull && /^\d+-/.test(brandFull)) {
       setLoading(false);
       return;
     }
@@ -161,14 +168,13 @@ const CleDynamicPage = () => {
       .catch((err) => {
         console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
-        setSnackbarMessage(Erreur: ${err.message});
+        setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
   }, [adjustedBrandName, brandFull]);
 
-  // Préchargement des images des clés
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
@@ -180,14 +186,12 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage et inversion des clés pour afficher les dernières en premier
   const filteredKeys = useMemo(() => (
     keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     ).slice().reverse()
   ), [keys, debouncedSearchTerm]);
 
-  // Tri des clés : celles copiées chez le fabricant (prix > 0) sont déplacées à la fin
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
@@ -198,36 +202,32 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  // Fonction handleOrderNow mise à jour avec fallback sur item.id
   const handleOrderNow = useCallback((item, mode) => {
     try {
-      // Utiliser la référence disponible : referenceEbauche, reference ou id
       const reference = item.referenceEbauche || item.reference || item.id;
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      // La marque est obtenue depuis le paramètre brandFull (converti en minuscules et avec des tirets)
       const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const url = /commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode};
+      const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
       console.error('Erreur lors de la navigation vers la commande:', error);
-      setSnackbarMessage(Erreur lors de la commande: ${error.message});
+      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
   }, [brandFull, navigate]);
 
-  // Lors du clic sur "Voir le produit", on redirige vers la page produit
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
       navigate("/cle-izis-cassee.php");
     } else {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-      navigate(/produit/${formattedBrand}/${encodeURIComponent(formattedName)});
+      navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
     }
   }, [navigate]);
 
@@ -342,10 +342,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content={${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique}
-        />
+        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -375,112 +372,108 @@ const CleDynamicPage = () => {
             </Typography>
           ) : sortedKeys.length > 0 ? (
             <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
-              {sortedKeys.map((item, index) => {
-                const numeroPrice = Number(item.prix);
-                const postalPrice = Number(item.prixSansCartePropriete);
-                return (
-                  <Grid key={item.id || index} item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
-                    <Card sx={styles.card}>
-                      <Box onClick={() => handleViewProduct(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
-                        {brandLogo && (
-                          <Box sx={styles.brandLogoContainer}>
-                            <img
-                              src={brandLogo}
-                              alt={item.marque}
-                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                              onError={(e) => console.error(Erreur de chargement du logo pour ${item.marque}:, e)}
-                            />
+              {sortedKeys.map((item, index) => (
+                <Grid key={item.id || index} item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
+                  <Card sx={styles.card}>
+                    <Box onClick={() => handleViewProduct(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
+                      {brandLogo && (
+                        <Box sx={styles.brandLogoContainer}>
+                          <img
+                            src={brandLogo}
+                            alt={item.marque}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                            onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
+                          />
+                        </Box>
+                      )}
+                      <CardMedia
+                        component="img"
+                        image={getImageSrc(item.imageUrl)}
+                        alt={item.nom}
+                        sx={styles.cardMedia}
+                        onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
+                      />
+                      <Skeleton
+                        variant="rectangular"
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: 180,
+                          borderTopLeftRadius: '12px',
+                          borderTopRightRadius: '12px',
+                        }}
+                      />
+                    </Box>
+                    <CardContent sx={styles.cardContent}>
+                      <Typography sx={styles.productName} onClick={() => handleViewProduct(item)}>
+                        {item.nom}
+                      </Typography>
+                      <Typography sx={styles.brandName}>{item.marque}</Typography>
+                      <Box sx={styles.pricesContainer}>
+                        {Number(item.prix) > 0 && (
+                          <Box sx={styles.priceBadge}>
+                            <Typography variant="caption">Copie fabricant</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                              {item.prix} €
+                            </Typography>
                           </Box>
                         )}
-                        <CardMedia
-                          component="img"
-                          image={getImageSrc(item.imageUrl)}
-                          alt={item.nom}
-                          sx={styles.cardMedia}
-                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
-                        />
-                        <Skeleton
-                          variant="rectangular"
+                        {Number(item.prixSansCartePropriete) > 0 && (
+                          <Box sx={styles.priceBadge}>
+                            <Typography variant="caption">Copie atelier</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                              {item.prixSansCartePropriete} €
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </CardContent>
+                    <Box sx={styles.buttonContainer}>
+                      {Number(item.prix) > 0 && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => handleOrderNow(item, 'numero')}
+                          startIcon={<ConfirmationNumberIcon />}
                           sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: 180,
-                            borderTopLeftRadius: '12px',
-                            borderTopRightRadius: '12px',
+                            ...styles.buttonSecondary,
+                            borderColor: '#1B5E20',
+                            color: '#1B5E20',
+                            '&:hover': {
+                              backgroundColor: '#1B5E20',
+                              color: '#fff',
+                            },
                           }}
-                        />
-                      </Box>
-                      <CardContent sx={styles.cardContent}>
-                        <Typography sx={styles.productName} onClick={() => handleViewProduct(item)}>
-                          {item.nom}
-                        </Typography>
-                        <Typography sx={styles.brandName}>{item.marque}</Typography>
-                        <Box sx={styles.pricesContainer}>
-                          {numeroPrice > 0 && (
-                            <Box sx={styles.priceBadge}>
-                              <Typography variant="caption">Copie chez le fabricant</Typography>
-                              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                {item.prix} €
-                              </Typography>
-                            </Box>
-                          )}
-                          {postalPrice > 0 && (
-                            <Box sx={styles.priceBadge}>
-                              <Typography variant="caption">Copie dans nos ateliers</Typography>
-                              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                {item.prixSansCartePropriete} €
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                      </CardContent>
-                      <Box sx={styles.buttonContainer}>
-                        {numeroPrice > 0 && (
-                          <Button
-                            variant="outlined"
-                            onClick={() => handleOrderNow(item, 'numero')}
-                            startIcon={<ConfirmationNumberIcon />}
-                            sx={{
-                              ...styles.buttonSecondary,
-                              borderColor: '#1B5E20',
-                              color: '#1B5E20',
-                              '&:hover': {
-                                backgroundColor: '#1B5E20',
-                                color: '#fff',
-                              },
-                            }}
-                          >
-                            Commander par numéro <br />(chez le fabricant)
-                          </Button>
-                        )}
-                        {postalPrice > 0 && (
-                          <Button
-                            variant="outlined"
-                            onClick={() => handleOrderNow(item, 'postal')}
-                            startIcon={<LocalShippingIcon />}
-                            sx={{
-                              ...styles.buttonSecondary,
-                              borderColor: '#1B5E20',
-                              color: '#1B5E20',
-                              '&:hover': {
-                                backgroundColor: '#1B5E20',
-                                color: '#fff',
-                              },
-                            }}
-                          >
-                            Commander par envoie/renvoie dans nos ateliers
-                          </Button>
-                        )}
-                        <Button variant="text" onClick={() => handleViewProduct(item)} sx={{ mt: 1, textTransform: 'none' }}>
-                          Voir le produit
+                        >
+                          Commander par numéro
                         </Button>
-                      </Box>
-                    </Card>
-                  </Grid>
-                );
-              })}
+                      )}
+                      {Number(item.prixSansCartePropriete) > 0 && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => handleOrderNow(item, 'postal')}
+                          startIcon={<LocalShippingIcon />}
+                          sx={{
+                            ...styles.buttonSecondary,
+                            borderColor: '#1B5E20',
+                            color: '#1B5E20',
+                            '&:hover': {
+                              backgroundColor: '#1B5E20',
+                              color: '#fff',
+                            },
+                          }}
+                        >
+                          Commander en atelier
+                        </Button>
+                      )}
+                      <Button variant="text" onClick={() => handleViewProduct(item)} sx={{ mt: 1, textTransform: 'none' }}>
+                        Voir le produit
+                      </Button>
+                    </Box>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
           ) : (
             <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -500,21 +493,12 @@ const CleDynamicPage = () => {
         </Snackbar>
         <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="lg">
           <DialogContent>
-            <Box
-              onWheel={handleWheel}
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                overflow: 'hidden',
-                maxHeight: '80vh',
-              }}
-            >
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} onWheel={handleWheel}>
               <img
                 src={modalImageSrc}
                 alt="Agrandissement de la clé"
                 style={{
-                  transform: scale(${scale}),
+                  transform: `scale(${scale})`,
                   transition: 'transform 0.2s',
                   width: '100%',
                   height: 'auto',
