@@ -99,7 +99,7 @@ const App = () => {
     import("./PagePrincipale/conditiongene.jsx");
   }, []);
 
-  // Préchargement des données pour les pages utilisateurs
+  // Préchargement des données hors admin
   useEffect(() => {
     if (!location.pathname.startsWith('/app')) {
       preloadBrandsData()
@@ -173,8 +173,8 @@ const App = () => {
                 {/* Nouvelles routes pour les URL dynamiques de clé coffre-fort */}
                 <Route path="/cle-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
                 <Route path="/clé-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
-                {/* Catch-all pour CleDynamicPage */}
-                <Route path="/:brandFull" element={<CleDynamicPage />} />
+                {/* Catch-all pour les URL se terminant par .php */}
+                <Route path="/:brandFull(.+\\.php)" element={<CleDynamicPage />} />
                 {/* Routes Admin protégées */}
                 <Route
                   path="/app/admin/*"
