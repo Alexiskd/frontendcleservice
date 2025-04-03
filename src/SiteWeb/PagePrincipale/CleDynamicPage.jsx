@@ -21,7 +21,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 
-// Hook de debounce pour la saisie utilisateur
+// --- Utilitaires ---
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -31,24 +31,22 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// Fonction de normalisation pour comparer les chaînes de caractères
 function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
+// --- Composante CleDynamicPage ---
 const CleDynamicPage = () => {
-  // Désormais, on récupère à la fois "brandFull" et "brandName"
   const { brandFull, brandName } = useParams();
   const navigate = useNavigate();
 
-  // Pour la redirection spécifique, on utilise le paramètre existant (brandName si présent)
+  // Utilise brandName s'il est présent, sinon brandFull
   const currentParam = brandName || brandFull;
   if (currentParam && normalizeString(currentParam) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
@@ -67,7 +65,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
     const param = brandFull || brandName;
     if (/^\d+-/.test(param)) {
@@ -83,14 +81,22 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, brandName, navigate]);
 
-  // Extraction et normalisation du nom de la marque
-  // Pour les URL de type cle-coffre-fort-:brandName.php, le paramètre "brandName" sera présent et utilisé
+  // --- Extraction du nom de la marque ---
+  // Pour les URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension si présente
   const suffix = '_1_reproduction_cle.html';
-  const actualBrandName = brandName
-    ? brandName
-    : (brandFull && brandFull.endsWith(suffix)
-      ? brandFull.slice(0, -suffix.length)
-      : brandFull);
+  let actualBrandName = "";
+  if (brandName) {
+    actualBrandName = brandName;
+  } else if (brandFull) {
+    if (/^cle[-_ ]coffre[-_ ]fort[-_ ]/i.test(brandFull)) {
+      actualBrandName = brandFull.replace(/^cle[-_ ]coffre[-_ ]fort[-_ ]/i, "");
+      actualBrandName = actualBrandName.replace(/\.php$/i, "");
+    } else if (brandFull.endsWith(suffix)) {
+      actualBrandName = brandFull.slice(0, -suffix.length);
+    } else {
+      actualBrandName = brandFull;
+    }
+  }
   const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
 
   // Balises SEO
@@ -210,7 +216,6 @@ const CleDynamicPage = () => {
     });
   }, [filteredKeys]);
 
-  // Mise à jour dans handleOrderNow : on utilise (brandName || brandFull) pour formater le nom de la marque
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
