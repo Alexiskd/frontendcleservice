@@ -21,7 +21,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 
-// --- Utilitaires identiques ---
+// --- Utilitaires ---
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -73,6 +73,7 @@ const CleDynamicPage = () => {
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
+        console.log("Navigation produit (slug):", brand, productName);
         navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
         navigate(`/produit/${encodeURIComponent(param)}`);
@@ -82,16 +83,14 @@ const CleDynamicPage = () => {
   }, [brandFull, brandName, navigate]);
 
   // --- Extraction du nom de la marque ---
-  // Pour les URL du type "cle-coffre-fort-corbin.php", on retire le préfixe
+  // Pour les URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension (.php) si présente
   const suffix = '_1_reproduction_cle.html';
   let actualBrandName = "";
   if (brandName) {
     actualBrandName = brandName;
   } else if (brandFull) {
-    // Si brandFull commence par "cle-coffre-fort-" (ou variantes avec tiret, underscore ou espace)
     if (/^cle[-_ ]coffre[-_ ]fort[-_ ]/i.test(brandFull)) {
       actualBrandName = brandFull.replace(/^cle[-_ ]coffre[-_ ]fort[-_ ]/i, "");
-      // Retire l'extension .php s'il est présent
       actualBrandName = actualBrandName.replace(/\.php$/i, "");
     } else if (brandFull.endsWith(suffix)) {
       actualBrandName = brandFull.slice(0, -suffix.length);
@@ -100,6 +99,9 @@ const CleDynamicPage = () => {
     }
   }
   const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
+  
+  // Log de débogage pour vérifier la marque extraite
+  console.log("Marque ajustée :", adjustedBrandName);
 
   // Balises SEO
   const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
@@ -180,7 +182,10 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
     preloadKeysData(adjustedBrandName)
-      .then((data) => setKeys(data))
+      .then((data) => {
+        console.log("Clés chargées :", data);
+        setKeys(data);
+      })
       .catch((err) => {
         console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
@@ -191,6 +196,7 @@ const CleDynamicPage = () => {
       .finally(() => setLoading(false));
   }, [adjustedBrandName, brandFull, brandName]);
 
+  // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
