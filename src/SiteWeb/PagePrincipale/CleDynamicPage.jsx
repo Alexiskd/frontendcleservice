@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
@@ -21,7 +22,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 
-// --- Utilitaires ---
+// Hook de debounce pour la saisie utilisateur
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -31,27 +32,24 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
+// Fonction de normalisation pour comparer les chaînes de caractères
 function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-// --- Composante CleDynamicPage ---
 const CleDynamicPage = () => {
-  const { brandFull, brandName } = useParams();
+  const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Utilise brandName s'il est présent, sinon brandFull
-  const currentParam = brandName || brandFull;
-  if (
-    currentParam &&
-    normalizeString(currentParam) === normalizeString("Clé Izis Cavers Reparation de clé")
-  ) {
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
 
@@ -68,43 +66,27 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
-    const param = brandFull || brandName;
-    if (/^\d+-/.test(param)) {
-      const parts = param.split("-");
+    if (/^\d+-/.test(brandFull)) {
+      const parts = brandFull.split("-");
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
-        console.log("Navigation produit (slug):", brand, productName);
         navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
-        navigate(`/produit/${encodeURIComponent(param)}`);
+        navigate(`/produit/${encodeURIComponent(brandFull)}`);
       }
       return;
     }
-  }, [brandFull, brandName, navigate]);
+  }, [brandFull, navigate]);
 
-  // --- Extraction du nom de la marque ---
-  // Pour les URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension (.php) si présente
+  // Extraction et normalisation du nom de la marque (pour les URL non slug)
   const suffix = '_1_reproduction_cle.html';
-  let actualBrandName = "";
-  if (brandName) {
-    actualBrandName = brandName;
-  } else if (brandFull) {
-    if (/^cle[-_ ]coffre[-_ ]fort[-_ ]/i.test(brandFull)) {
-      actualBrandName = brandFull.replace(/^cle[-_ ]coffre[-_ ]fort[-_ ]/i, "");
-      actualBrandName = actualBrandName.replace(/\.php$/i, "");
-    } else if (brandFull.endsWith(suffix)) {
-      actualBrandName = brandFull.slice(0, -suffix.length);
-    } else {
-      actualBrandName = brandFull;
-    }
-  }
+  const actualBrandName = brandFull && brandFull.endsWith(suffix)
+    ? brandFull.slice(0, -suffix.length)
+    : brandFull;
   const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
-
-  // Log de débogage pour vérifier la marque extraite
-  console.log("Marque ajustée :", adjustedBrandName);
 
   // Balises SEO
   const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
@@ -149,8 +131,7 @@ const CleDynamicPage = () => {
 
   // Chargement du logo pour la marque (uniquement pour les URL non slug)
   useEffect(() => {
-    const param = brandFull || brandName;
-    if (/^\d+-/.test(param)) return;
+    if (/^\d+-/.test(brandFull)) return;
     if (!actualBrandName) return;
     fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
       .then((res) => {
@@ -165,7 +146,7 @@ const CleDynamicPage = () => {
         console.error("Erreur lors du chargement du logo:", error);
         setBrandLogo(null);
       });
-  }, [actualBrandName, brandFull, brandName]);
+  }, [actualBrandName, brandFull]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -173,8 +154,7 @@ const CleDynamicPage = () => {
 
   // Chargement initial des clés via preloadKeysData
   useEffect(() => {
-    const param = brandFull || brandName;
-    if (/^\d+-/.test(param)) {
+    if (/^\d+-/.test(brandFull)) {
       setLoading(false);
       return;
     }
@@ -185,10 +165,7 @@ const CleDynamicPage = () => {
     }
     setLoading(true);
     preloadKeysData(adjustedBrandName)
-      .then((data) => {
-        console.log("Clés chargées :", data);
-        setKeys(data);
-      })
+      .then((data) => setKeys(data))
       .catch((err) => {
         console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
@@ -197,9 +174,8 @@ const CleDynamicPage = () => {
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
-  }, [adjustedBrandName, brandFull, brandName]);
+  }, [adjustedBrandName, brandFull]);
 
-  // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
@@ -233,7 +209,7 @@ const CleDynamicPage = () => {
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      const formattedBrand = (brandName || brandFull).toLowerCase().replace(/\s+/g, '-');
+      const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
@@ -244,7 +220,7 @@ const CleDynamicPage = () => {
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  }, [brandName, brandFull, navigate]);
+  }, [brandFull, navigate]);
 
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
@@ -541,3 +517,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
