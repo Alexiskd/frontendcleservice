@@ -48,23 +48,31 @@ const CleDynamicPage = () => {
   const { brandFull, brandName } = useParams();
   const navigate = useNavigate();
 
-  // Combine les paramètres : si brandFull n'est pas défini, on utilise brandName
-  // Et on retire l'extension .php si présente
-  const rawBrandParam = (brandFull || brandName || "").replace('.php', '');
+  // Combine les paramètres : si brandFull n'est pas défini, on utilise brandName.
+  // On retire également l'extension ".php" si présente.
+  let rawParam = (brandFull || brandName || "").replace('.php', '');
+  
+  // Si le paramètre commence par "cle-coffre-fort-" ou "clé-coffre-fort-", on retire ce préfixe.
+  const lowerRawParam = rawParam.toLowerCase();
+  if (lowerRawParam.startsWith("cle-coffre-fort-")) {
+    rawParam = rawParam.substring("cle-coffre-fort-".length);
+  } else if (lowerRawParam.startsWith("clé-coffre-fort-")) {
+    rawParam = rawParam.substring("clé-coffre-fort-".length);
+  }
+  
   // Mapping pour les anciens liens
   const legacyBrandMap = {
     "cle-izis-cassee": "Clé Izis Cavers Reparation de clé",
     "clé-izis-cassee": "Clé Izis Cavers Reparation de clé",
   };
-  // Utiliser la valeur du mapping si elle existe, sinon la valeur brute
-  const currentBrandParam = legacyBrandMap[rawBrandParam] || rawBrandParam;
-  // Si la valeur provient du mapping, on la garde telle quelle ; sinon on la formate
-  const adjustedBrandName = legacyBrandMap[rawBrandParam]
-    ? legacyBrandMap[rawBrandParam]
-    : formatBrandName(currentBrandParam);
+  
+  // Si rawParam correspond à une clé du mapping, on l'utilise ; sinon on garde rawParam
+  const currentBrandParam = legacyBrandMap[rawParam.toLowerCase()] || rawParam;
+  
+  // Formater le nom de la marque
+  const adjustedBrandName = formatBrandName(currentBrandParam);
 
-  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", 
-  // on peut rediriger vers l'ancien lien (si nécessaire)
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
   if (currentBrandParam && normalizeString(currentBrandParam) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
