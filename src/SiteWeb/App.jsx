@@ -1,6 +1,9 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Helmet } from 'react-helmet';
-import { Box, CircularProgress } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+} from '@mui/material';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -159,20 +162,22 @@ const App = () => {
                 <Route path="/contact.php" element={<Contact />} />
                 <Route path="/commande-success" element={<PaymentSuccess />} />
                 <Route path="/commande-cancel" element={<PaymentCancel />} />
-                <Route path="/:brandFull" element={<CleDynamicPage />} />
                 <Route path="/devis.php" element={<Devis />} />
                 <Route path="/qui.php" element={<AboutUs />} />
-                <Route path="/commander/:brandName/cle/:referenceEbauche/:articleName" element={<CommandePage />} />
                 <Route path="/commande-panier" element={<CommandePagePanier />} />
                 <Route path="/upload-multiple" element={<MultiImageUploader />} />
                 <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
                 <Route path="/mentions-legales" element={<MentionsLegales />} />
                 <Route path="/conditions-generales" element={<ConditionsGeneralesDeVente />} />
-                {/* Nouvelle route produit avec 3 paramètres */}
+                {/* Route produit */}
                 <Route path="/produit/:brandName/:productName" element={<ProductPage />} />
-                {/* Nouvelle route '/cle-izis-cassee.php' affichant la composante ProductPage */}
+                {/* Ancien lien toujours fonctionnel */}
                 <Route path="/cle-izis-cassee.php" element={<ProductPage />} />
-                
+                {/* Nouvelles routes pour les URL dynamiques de clé coffre-fort */}
+                <Route path="/cle-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
+                <Route path="/clé-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
+                {/* Catch-all pour CleDynamicPage */}
+                <Route path="/:brandFull" element={<CleDynamicPage />} />
                 {/* Routes Admin protégées */}
                 <Route
                   path="/app/admin/*"
