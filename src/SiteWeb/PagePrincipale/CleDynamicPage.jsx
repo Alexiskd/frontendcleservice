@@ -44,13 +44,38 @@ function formatBrandName(name) {
 }
 
 const CleDynamicPage = () => {
-  const { brandFull } = useParams();
+  // Récupération des paramètres pour supporter anciens et nouveaux liens
+  const { brandFull, brandName } = useParams();
   const navigate = useNavigate();
 
-  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
-  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
+  // Combine brandFull et brandName et retire l'extension ".php"
+  let rawParam = (brandFull || brandName || "").replace('.php', '');
+  
+  // Si le paramètre commence par "cle-coffre-fort-" ou "clé-coffre-fort-", on retire ce préfixe
+  const lowerRaw = rawParam.toLowerCase();
+  if (lowerRaw.startsWith("cle-coffre-fort-")) {
+    rawParam = rawParam.substring("cle-coffre-fort-".length);
+  } else if (lowerRaw.startsWith("clé-coffre-fort-")) {
+    rawParam = rawParam.substring("clé-coffre-fort-".length);
+  }
+  
+  // Mapping pour les anciens liens (rétrocompatibilité)
+  const legacyBrandMap = {
+    "cle-izis-cassee": "Clé Izis Cavers Reparation de clé",
+    "clé-izis-cassee": "Clé Izis Cavers Reparation de clé",
+  };
+  // Si le mapping existe, on l'utilise ; sinon, on garde la valeur brute
+  const currentBrandParam = legacyBrandMap[rawParam.toLowerCase()] || rawParam;
+  const adjustedBrandName = formatBrandName(currentBrandParam);
+
+  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", rediriger vers l'ancien lien
+  if (currentBrandParam && normalizeString(currentBrandParam) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
+
+  // Balises SEO
+  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -67,29 +92,18 @@ const CleDynamicPage = () => {
 
   // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
-    if (/^\d+-/.test(brandFull)) {
-      const parts = brandFull.split("-");
+    if (currentBrandParam && /^\d+-/.test(currentBrandParam)) {
+      const parts = currentBrandParam.split("-");
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
         navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
-        navigate(`/produit/${encodeURIComponent(brandFull)}`);
+        navigate(`/produit/${encodeURIComponent(currentBrandParam)}`);
       }
       return;
     }
-  }, [brandFull, navigate]);
-
-  // Extraction et normalisation du nom de la marque (pour les URL non slug)
-  const suffix = '_1_reproduction_cle.html';
-  const actualBrandName = brandFull && brandFull.endsWith(suffix)
-    ? brandFull.slice(0, -suffix.length)
-    : brandFull;
-  const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
-
-  // Balises SEO
-  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  }, [currentBrandParam, navigate]);
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
@@ -130,12 +144,12 @@ const CleDynamicPage = () => {
 
   // Chargement du logo pour la marque (uniquement pour les URL non slug)
   useEffect(() => {
-    if (/^\d+-/.test(brandFull)) return;
-    if (!actualBrandName) return;
-    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
+    if (/^\d+-/.test(currentBrandParam)) return;
+    if (!currentBrandParam) return;
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(currentBrandParam)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(`Logo non trouvé pour ${actualBrandName}`);
+        throw new Error(`Logo non trouvé pour ${currentBrandParam}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -145,7 +159,7 @@ const CleDynamicPage = () => {
         console.error("Erreur lors du chargement du logo:", error);
         setBrandLogo(null);
       });
-  }, [actualBrandName, brandFull]);
+  }, [currentBrandParam]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -153,7 +167,7 @@ const CleDynamicPage = () => {
 
   // Chargement initial des clés via preloadKeysData
   useEffect(() => {
-    if (/^\d+-/.test(brandFull)) {
+    if (currentBrandParam && /^\d+-/.test(currentBrandParam)) {
       setLoading(false);
       return;
     }
@@ -173,7 +187,7 @@ const CleDynamicPage = () => {
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
-  }, [adjustedBrandName, brandFull]);
+  }, [adjustedBrandName, currentBrandParam]);
 
   useEffect(() => {
     keys.forEach((item) => {
@@ -208,7 +222,7 @@ const CleDynamicPage = () => {
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
+      const formattedBrand = currentBrandParam.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
@@ -219,7 +233,7 @@ const CleDynamicPage = () => {
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  }, [brandFull, navigate]);
+  }, [currentBrandParam, navigate]);
 
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
@@ -342,10 +356,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
-        />
+        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
