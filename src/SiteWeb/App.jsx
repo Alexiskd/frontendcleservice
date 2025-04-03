@@ -44,12 +44,12 @@ const PolitiqueConfidentialite = lazy(() => import('./PagePrincipale/politique.j
 const MentionsLegales = lazy(() => import('./PagePrincipale/mentionlegal.jsx'));
 const ConditionsGeneralesDeVente = lazy(() => import('./PagePrincipale/conditiongene.jsx'));
 
-const AppContainer = styled.div
+const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   background-color: #f9fafb;
-;
+`;
 
 const ProtectedRouteWrapper = ({ children }) => {
   const isAuthenticated = () => !!localStorage.getItem('token');
@@ -111,10 +111,10 @@ const App = () => {
           brandsData.forEach((brand) => {
             preloadKeysData(brand.nom)
               .then((keysData) => {
-                console.log(Clés préchargées pour ${brand.nom} :, keysData);
+                console.log(`Clés préchargées pour ${brand.nom} :`, keysData);
               })
               .catch((err) =>
-                console.error(Erreur lors du préchargement des clés pour ${brand.nom} :, err)
+                console.error(`Erreur lors du préchargement des clés pour ${brand.nom} :`, err)
               );
           });
         })
