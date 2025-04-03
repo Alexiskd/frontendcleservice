@@ -150,7 +150,6 @@ const Commande = () => {
     window.open(fullPdfUrl, '_blank');
   };
 
-  // Ouverture du formulaire d'édition avec les données existantes
   const openEditDialogForCommande = (commande) => {
     setEditFormData({
       id: commande.id,
@@ -223,7 +222,7 @@ const Commande = () => {
       { lineHeightFactor: 1.5 }
     );
 
-    // Coordonnées du client (affichées à droite)
+    // Coordonnées du client (droite)
     const rightX = 210 - margin;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -242,8 +241,18 @@ const Commande = () => {
 
     let currentY = margin + 45;
 
-    // Pour la facture, nous affichons le "Nom du produit" en priorité :
-    // Si le champ numeroCle existe, il sera utilisé, sinon produitCommande ou cle.
+    // Calcul des montants
+    const prixProduit = parseFloat(commande.prix);
+    let fraisLivraison = 0.0;
+    let fraisAffichage = "0.00 €";
+    if (commande.shippingMethod === 'expedition') {
+      fraisLivraison = 8;
+      fraisAffichage = "-8.00 €";
+    }
+    const totalTTC = prixProduit - fraisLivraison;
+
+    // Détermination du nom du produit
+    // On priorise le champ numeroCle s'il est renseigné, sinon produitCommande ou cle
     const produit = commande.numeroCle || commande.produitCommande ||
       (commande.cle && commande.cle.length
         ? (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle)
@@ -251,10 +260,7 @@ const Commande = () => {
     const marque = commande.marque || '';
     const produitAffiche = marque ? `${produit} (${marque})` : produit;
     const quantite = commande.quantity ? commande.quantity.toString() : "1";
-    const prixProduit = parseFloat(commande.prix);
-    const fraisLivraison = commande.fraisLivraison ? parseFloat(commande.fraisLivraison) : 0.0;
     const unitPrice = parseFloat(quantite) > 0 ? prixProduit / parseFloat(quantite) : prixProduit;
-    const totalTTC = prixProduit + fraisLivraison;
 
     // Tableau récapitulatif moderne
     const tableHead = [['Nom du produit', 'Quantité', 'Prix Unitaire', 'Frais de port', 'Total TTC']];
@@ -262,7 +268,7 @@ const Commande = () => {
       produitAffiche,
       quantite,
       unitPrice.toFixed(2) + ' €',
-      fraisLivraison.toFixed(2) + ' €',
+      fraisAffichage,
       totalTTC.toFixed(2) + ' €'
     ]];
 
@@ -277,10 +283,14 @@ const Commande = () => {
     });
     currentY = doc.lastAutoTable.finalY + 10;
 
-    // Affichage des modes d'envoi et de récupération dans la facture
+    // Affichage des modes d'envoi et de récupération
     doc.setFontSize(10);
     doc.setTextColor(27, 94, 32);
-    doc.text(`Mode d'envoi : ${commande.deliveryType || (commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné')}`, margin, currentY);
+    doc.text(
+      `Mode d'envoi : ${commande.deliveryType || (commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné')}`,
+      margin,
+      currentY
+    );
     currentY += 7;
     const recuperation = commande.shippingMethod === 'expedition' ? 'Expédition' : 'En magasin';
     doc.text(`Mode de récupération : ${recuperation}`, margin, currentY);
@@ -325,7 +335,6 @@ const Commande = () => {
     window.open(doc.output('bloburl'), '_blank');
   };
 
-  // Tri des commandes dans l'ordre décroissant
   const sortedCommandes = [...commandes].sort((a, b) => b.id.localeCompare(a.id));
 
   return (
