@@ -1,9 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  Box,
-  CircularProgress,
-} from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -74,7 +71,7 @@ const App = () => {
   const handleCloseTutorial = () => setShowTutorial(false);
   const isAppRoute = location.pathname.startsWith('/app');
 
-  // Préchargement immédiat des modules lazy (sans keysearch.jsx)
+  // Préchargement immédiat des modules lazy
   useEffect(() => {
     import("./PagePrincipale/CleDynamicPage.jsx");
     import("../AppAdmin/barreadmin.jsx");
@@ -102,7 +99,7 @@ const App = () => {
     import("./PagePrincipale/conditiongene.jsx");
   }, []);
 
-  // Préchargement des données hors admin
+  // Préchargement des données pour les pages utilisateurs
   useEffect(() => {
     if (!location.pathname.startsWith('/app')) {
       preloadBrandsData()
@@ -127,7 +124,7 @@ const App = () => {
       <DataProvider>
         <>
           <Helmet>
-            {/* Métadonnées */}
+            {/* Vous pouvez ajouter ici vos métadonnées */}
           </Helmet>
           <noscript>
             <div style={{ padding: '1rem', textAlign: 'center', background: '#f8d7da', color: '#721c24' }}>
@@ -215,4 +212,3 @@ const App = () => {
 };
 
 export default App;
-
