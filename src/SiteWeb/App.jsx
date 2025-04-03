@@ -1,6 +1,9 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Helmet } from 'react-helmet';
-import { Box, CircularProgress } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+} from '@mui/material';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -71,7 +74,7 @@ const App = () => {
   const handleCloseTutorial = () => setShowTutorial(false);
   const isAppRoute = location.pathname.startsWith('/app');
 
-  // Préchargement immédiat des modules lazy
+  // Préchargement immédiat des modules lazy (sans keysearch.jsx)
   useEffect(() => {
     import("./PagePrincipale/CleDynamicPage.jsx");
     import("../AppAdmin/barreadmin.jsx");
@@ -124,7 +127,7 @@ const App = () => {
       <DataProvider>
         <>
           <Helmet>
-            {/* Vous pouvez ajouter ici vos métadonnées */}
+            {/* Métadonnées */}
           </Helmet>
           <noscript>
             <div style={{ padding: '1rem', textAlign: 'center', background: '#f8d7da', color: '#721c24' }}>
@@ -173,8 +176,8 @@ const App = () => {
                 {/* Nouvelles routes pour les URL dynamiques de clé coffre-fort */}
                 <Route path="/cle-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
                 <Route path="/clé-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
-                {/* Catch-all pour les URL se terminant par .php */}
-                <Route path="/:brandFull(.+\\.php)" element={<CleDynamicPage />} />
+                {/* Catch-all pour CleDynamicPage */}
+                <Route path="/:brandFull" element={<CleDynamicPage />} />
                 {/* Routes Admin protégées */}
                 <Route
                   path="/app/admin/*"
