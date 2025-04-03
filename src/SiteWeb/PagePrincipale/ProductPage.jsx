@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; 
+import React, { useState, useEffect, useCallback } from 'react';  
 import { Helmet } from 'react-helmet';
 import {
   Box,
@@ -30,6 +30,7 @@ import FileCopyIcon from '@mui/icons-material/FileCopy';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import DescriptionIcon from '@mui/icons-material/Description';
 
+// Styled components pour le style "Bento"
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
   boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
@@ -77,6 +78,7 @@ const PricingCellNoBorder = styled(Grid)(({ theme }) => ({
   borderBottom: '1px solid #1B5E20',
 }));
 
+// Fonction utilitaire pour déterminer le délai de livraison en fonction du mode de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -101,15 +103,13 @@ const ProductPage = () => {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [modalImage, setModalImage] = useState('');
 
-  // Si aucun nom de produit n'est fourni et que le chemin est '/cle-izis-cassee.php', on définit une valeur par défaut
+  // Valeurs par défaut si l'URL correspond à '/cle-izis-cassee.php'
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
-  // On peut aussi définir une marque par défaut si nécessaire
   if (!brandName && location.pathname === '/cle-izis-cassee.php') {
     brandName = "cle-izis-cavers";
   }
-
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
@@ -120,6 +120,7 @@ const ProductPage = () => {
     );
   }
 
+  // Nettoyage du nom de produit
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -154,21 +155,21 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName]);
 
+  // Redirige vers la page de commande selon le mode choisi
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
         navigate(
-          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(
-            formattedProductName
-          )}?mode=${mode}`
+          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedProductName)}?mode=${mode}`
         );
       }
     },
     [navigate, product, brandName]
   );
 
+  // Redirige vers la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -176,7 +177,7 @@ const ProductPage = () => {
     }
   }, [navigate, product, brandName]);
 
-  // Ouvre le modal d'image agrandie
+  // Modal d'image agrandie
   const handleOpenImageModal = useCallback(() => {
     if (product && product.imageUrl) {
       setModalImage(product.imageUrl);
@@ -184,15 +185,9 @@ const ProductPage = () => {
     }
   }, [product]);
 
-  // Ferme le modal
   const handleCloseImageModal = useCallback(() => {
     setOpenImageModal(false);
   }, []);
-
-  // Fonction pour ouvrir la source de la page dans un nouvel onglet
-  const handleOpenSourcePage = () => {
-    window.open('https://www.votresite.com/cle-izis-cassee.php', '_blank');
-  };
 
   if (loading) {
     return (
@@ -201,7 +196,6 @@ const ProductPage = () => {
       </Box>
     );
   }
-
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
@@ -211,7 +205,6 @@ const ProductPage = () => {
       </Container>
     );
   }
-
   if (!product) {
     return (
       <Container sx={{ mt: 4 }}>
@@ -222,13 +215,13 @@ const ProductPage = () => {
     );
   }
 
-  // Vérification si c'est une clé de coffre‑fort
+  // Détermine si le produit est une clé de coffre‑fort
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Détermination du prix principal (sauf clé de passe)
+  // Prix principal
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -236,26 +229,26 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte de procédé pour la section principale
+  // Texte de procédé pour la reproduction
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
       : Number(product.prixSansCartePropriete) > 0
-      ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale)."
+      ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
       : "";
 
-  // Texte de la cellule droite du tableau clé de passe
+  // Texte pour clé à passe
   const cleAPasseText =
     Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier')
       ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
-      : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
+      : "Reproduction par numéro clé de passe : votre clé est un passe qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer la clé en amont.";
 
   return (
     <>
       <Helmet>
-        <title>Clé Izis Cavers Reparation de clé – Votre solution en ligne</title>
-        <meta name="description" content="Découvrez la clé Izis Cavers Reparation de clé, réalisée avec soin par nos experts." />
-        <link rel="canonical" href="https://www.votresite.com/cle-izis-cassee.php" />
+        <title>{product.nom} – Clé Izis Cavers Réparation de clé</title>
+        <meta name="description" content={`Découvrez ${product.nom} de ${brandName}. Réparation et reproduction de clé en ligne.`} />
+        <link rel="canonical" href={`https://www.votresite.com/cle-izis-cassee.php`} />
       </Helmet>
       <Container sx={{ mt: 2, mb: 4 }}>
         <StyledCard>
@@ -290,7 +283,7 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                {/* Nom du produit */}
+                {/* Nom du produit en premier */}
                 <Typography
                   variant="h4"
                   sx={{
@@ -303,7 +296,6 @@ const ProductPage = () => {
                 >
                   {product.nom}
                 </Typography>
-                {/* Marque et prix */}
                 <Box
                   display="flex"
                   justifyContent="space-between"
@@ -345,10 +337,10 @@ const ProductPage = () => {
                     Autre moyen de reproduction
                   </Typography>
                   <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
-                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
+                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. Simple et rapide.
                   </Typography>
                 </InfoBox>
-                {/* Tableau pour clé de passe */}
+                {/* Section Clé de passe */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
                     <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
@@ -356,7 +348,7 @@ const ProductPage = () => {
                     </Typography>
                     <PricingGrid container>
                       <PricingCell item xs={12} sm={4}>
-                        Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
+                        Copie fabricant d'une clé de passe
                       </PricingCell>
                       <PricingCell item xs={12} sm={4}>
                         {product.prixCleAPasse} €
@@ -367,6 +359,7 @@ const ProductPage = () => {
                     </PricingGrid>
                   </InfoBox>
                 )}
+                {/* Liste d'informations complémentaires */}
                 <Box sx={{ mb: 2 }}>
                   <List>
                     {product.cleAvecCartePropriete !== null && (
@@ -413,7 +406,6 @@ const ProductPage = () => {
                         />
                       </ListItem>
                     )}
-                    {/* La section de description du produit a été supprimée */}
                   </List>
                 </Box>
                 <Grid container spacing={2}>
@@ -447,7 +439,7 @@ const ProductPage = () => {
                   )}
                   {Number(product.prixSansCartePropriete) > 0 && (
                     <StyledButton onClick={() => handleOrderNow('postal')} startIcon={<LocalShippingIcon />}>
-                      Commander, la reproduction sera effectuée dans notre atelier.
+                      Commander – reproduction dans notre atelier
                     </StyledButton>
                   )}
                 </Box>
@@ -455,13 +447,11 @@ const ProductPage = () => {
             </Grid>
           </Grid>
         </StyledCard>
-        {error && (
-          <Snackbar open={!!error} autoHideDuration={6000}>
-            <Alert severity="error">{error}</Alert>
-          </Snackbar>
-        )}
+        <Snackbar open={!!error} autoHideDuration={6000}>
+          <Alert severity="error">{error}</Alert>
+        </Snackbar>
       </Container>
-      {/* Dialog affichant l'image agrandie */}
+      {/* Modal d'image agrandie */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
         <DialogContent>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
