@@ -243,7 +243,7 @@ const Commande = () => {
 
     let currentY = margin + 45;
 
-    // Affichage du produit commandé
+    // Affichage du produit commandé et de la clé enregistrée dans "numeroCle"
     const produit =
       commande.produitCommande ||
       (commande.cle && commande.cle.length
@@ -278,28 +278,37 @@ const Commande = () => {
     });
     currentY = doc.lastAutoTable.finalY + 10;
 
-    // Détails complémentaires de la commande
+    // Affichage du numéro de clé dans la facture
     doc.setFontSize(10);
     doc.setTextColor(27, 94, 32);
+    doc.text(
+      `Numéro de clé : ${commande.numeroCle ? (Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle) : 'Non renseigné'}`,
+      margin,
+      currentY
+    );
+    currentY += 10;
+
+    // Détails complémentaires de la commande
+    doc.setFontSize(10);
     doc.text("Détails de la commande :", margin, currentY);
     currentY += 7;
     doc.setFontSize(8);
-    doc.text(`Numéro de commande: ${commande.numeroCommande}`, margin, currentY);
+    doc.text(`Numéro de commande : ${commande.numeroCommande}`, margin, currentY);
     currentY += 6;
-    doc.text(`Statut: ${commande.status}`, margin, currentY);
+    doc.text(`Statut : ${commande.status}`, margin, currentY);
     currentY += 6;
     doc.text(
-      `Type de livraison: ${commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné'}`,
+      `Type de livraison : ${commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné'}`,
       margin,
       currentY
     );
     currentY += 6;
-    doc.text(`Méthode d'expédition: ${commande.shippingMethod || 'Non renseigné'}`, margin, currentY);
+    doc.text(`Méthode d'expédition : ${commande.shippingMethod || 'Non renseigné'}`, margin, currentY);
     currentY += 6;
-    doc.text(`Delivery Type: ${commande.deliveryType || 'Non renseigné'}`, margin, currentY);
+    doc.text(`Delivery Type : ${commande.deliveryType || 'Non renseigné'}`, margin, currentY);
     currentY += 6;
     doc.text(
-      `Numéros de clé: ${commande.numeroCle ? (Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle) : 'Non renseigné'}`,
+      `Numéros de clé : ${commande.numeroCle ? (Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle) : 'Non renseigné'}`,
       margin,
       currentY
     );
@@ -391,9 +400,16 @@ const Commande = () => {
                   )}
                 </Box>
 
+                {/* Affichage du numéro de clé enregistré */}
+                {commande.numeroCle && (
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    Numéro de clé : {Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle}
+                  </Typography>
+                )}
+
                 <Divider sx={{ mb: 2 }} />
 
-                {/* Informations client */}
+                {/* Affichage des informations client */}
                 <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
                   Informations Client :
                 </Typography>
@@ -453,29 +469,7 @@ const Commande = () => {
                   </Box>
                 </Box>
 
-                {/* Section Détails complémentaires de la commande */}
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700' }}>
-                    Détails de la commande :
-                  </Typography>
-                  <Typography variant="body2">
-                    Type de livraison : {commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné'}
-                  </Typography>
-                  <Typography variant="body2">
-                    Méthode d'expédition : {commande.shippingMethod || 'Non renseigné'}
-                  </Typography>
-                  <Typography variant="body2">
-                    Delivery Type : {commande.deliveryType || 'Non renseigné'}
-                  </Typography>
-                  <Typography variant="body2">
-                    Statut : {commande.status}
-                  </Typography>
-                  <Typography variant="body2">
-                    Numéros de clé : {commande.numeroCle ? (Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle) : 'Non renseigné'}
-                  </Typography>
-                </Box>
-
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mt: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
                   Prix : {commande.prix ? `${parseFloat(commande.prix).toFixed(2)} € TTC` : '-'}
                 </Typography>
 
