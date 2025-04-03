@@ -243,9 +243,9 @@ const Commande = () => {
 
     let currentY = margin + 45;
 
-    // Affichage du produit commandé et de la clé enregistrée dans "numeroCle"
-    const produit =
-      commande.produitCommande ||
+    // Affichage du produit commandé
+    // On utilise le contenu de "numeroCle" s'il est renseigné, sinon on bascule sur "produitCommande" ou "cle"
+    const produit = commande.numeroCle || commande.produitCommande || 
       (commande.cle && commande.cle.length
         ? (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle)
         : 'Produit');
@@ -257,8 +257,8 @@ const Commande = () => {
     const unitPrice = parseFloat(quantite) > 0 ? prixProduit / parseFloat(quantite) : prixProduit;
     const totalTTC = prixProduit + fraisLivraison;
 
-    // Tableau récapitulatif
-    const tableHead = [['Produit', 'Quantité', 'Prix Unitaire', 'Frais de port', 'Total TTC']];
+    // Tableau récapitulatif avec "Nom du produit" en première colonne
+    const tableHead = [['Nom du produit', 'Quantité', 'Prix Unitaire', 'Frais de port', 'Total TTC']];
     const tableBody = [[
       produitAffiche,
       quantite,
@@ -278,18 +278,9 @@ const Commande = () => {
     });
     currentY = doc.lastAutoTable.finalY + 10;
 
-    // Affichage du numéro de clé dans la facture
+    // Autres détails complémentaires de la commande
     doc.setFontSize(10);
     doc.setTextColor(27, 94, 32);
-    doc.text(
-      `Numéro de clé : ${commande.numeroCle ? (Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle) : 'Non renseigné'}`,
-      margin,
-      currentY
-    );
-    currentY += 10;
-
-    // Détails complémentaires de la commande
-    doc.setFontSize(10);
     doc.text("Détails de la commande :", margin, currentY);
     currentY += 7;
     doc.setFontSize(8);
@@ -306,12 +297,6 @@ const Commande = () => {
     doc.text(`Méthode d'expédition : ${commande.shippingMethod || 'Non renseigné'}`, margin, currentY);
     currentY += 6;
     doc.text(`Delivery Type : ${commande.deliveryType || 'Non renseigné'}`, margin, currentY);
-    currentY += 6;
-    doc.text(
-      `Numéros de clé : ${commande.numeroCle ? (Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle) : 'Non renseigné'}`,
-      margin,
-      currentY
-    );
     currentY += 10;
 
     // Mode de règlement et conditions de vente
@@ -382,16 +367,19 @@ const Commande = () => {
               }}
             >
               <CardContent sx={{ backgroundColor: 'white' }}>
-                {/* Affichage du produit commandé */}
+                {/* Affichage du nom du produit */}
                 <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
-                  Produit Commandé :
+                  Nom du produit :
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Typography variant="body2">
-                    {`${commande.produitCommande 
-                        ? commande.produitCommande 
-                        : (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle || 'Non renseigné')
-                      }${commande.marque ? ` (${commande.marque})` : ''}`}
+                    {commande.numeroCle ||
+                      (commande.produitCommande
+                        ? commande.produitCommande
+                        : (Array.isArray(commande.cle)
+                            ? commande.cle.join(', ')
+                            : commande.cle || 'Non renseigné'))}
+                    {commande.marque ? ` (${commande.marque})` : ''}
                   </Typography>
                   {commande.isCleAPasse && (
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
@@ -400,16 +388,9 @@ const Commande = () => {
                   )}
                 </Box>
 
-                {/* Affichage du numéro de clé enregistré */}
-                {commande.numeroCle && (
-                  <Typography variant="body2" sx={{ mb: 2 }}>
-                    Numéro de clé : {Array.isArray(commande.numeroCle) ? commande.numeroCle.join(', ') : commande.numeroCle}
-                  </Typography>
-                )}
-
                 <Divider sx={{ mb: 2 }} />
 
-                {/* Affichage des informations client */}
+                {/* Informations client */}
                 <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
                   Informations Client :
                 </Typography>
@@ -754,4 +735,3 @@ const Commande = () => {
 };
 
 export default Commande;
-
