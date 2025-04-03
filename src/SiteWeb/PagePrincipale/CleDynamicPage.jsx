@@ -21,7 +21,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
 
-// --- Utilitaires ---
+// --- Utilitaires identiques ---
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -82,14 +82,16 @@ const CleDynamicPage = () => {
   }, [brandFull, brandName, navigate]);
 
   // --- Extraction du nom de la marque ---
-  // Pour les URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension si présente
+  // Pour les URL du type "cle-coffre-fort-corbin.php", on retire le préfixe
   const suffix = '_1_reproduction_cle.html';
   let actualBrandName = "";
   if (brandName) {
     actualBrandName = brandName;
   } else if (brandFull) {
+    // Si brandFull commence par "cle-coffre-fort-" (ou variantes avec tiret, underscore ou espace)
     if (/^cle[-_ ]coffre[-_ ]fort[-_ ]/i.test(brandFull)) {
       actualBrandName = brandFull.replace(/^cle[-_ ]coffre[-_ ]fort[-_ ]/i, "");
+      // Retire l'extension .php s'il est présent
       actualBrandName = actualBrandName.replace(/\.php$/i, "");
     } else if (brandFull.endsWith(suffix)) {
       actualBrandName = brandFull.slice(0, -suffix.length);
