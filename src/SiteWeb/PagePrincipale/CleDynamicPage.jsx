@@ -19,7 +19,6 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-
 // --- Utilitaires ---
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -31,7 +30,11 @@ function useDebounce(value, delay) {
 }
 
 function normalizeString(str) {
-  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return str
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function formatBrandName(name) {
@@ -102,7 +105,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Gestion du cas où le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
     const param = brandFull || brandName;
     if (/^\d+-/.test(param)) {
@@ -118,7 +121,8 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, brandName, navigate]);
 
-  // Extraction du nom de la marque (pour une URL comme "cle-coffre-fort-corbin.php")
+  // --- Extraction du nom de la marque ---
+  // Pour une URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension (.php) si présente
   const suffix = '_1_reproduction_cle.html';
   let actualBrandName = "";
   if (brandName) {
@@ -247,7 +251,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrez les clés en fonction du terme de recherche (si saisi)
+  // Filtrage des clés par terme de recherche
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -255,7 +259,7 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Optionnel : Si vous souhaitez trier les clés (ici par prix, par exemple)
+  // Tri (optionnel) – ici, par exemple, on trie selon un critère de fabricant
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
