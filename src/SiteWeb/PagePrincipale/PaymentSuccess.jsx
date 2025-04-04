@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { Typography, CircularProgress, Container, Button, Paper } from '@mui/material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
@@ -157,7 +157,7 @@ const PaymentSuccess = () => {
               Votre paiement a été accepté et la commande est validée. Un email contenant les informations de livraison vous a été envoyé.
             </Typography>
             {order && (
-              <Button variant="contained" color="primary" onClick={() => navigate('/')}>
+              <Button variant="contained" color="primary" onClick={() => navigate('/')} sx={{ mt: 2 }}>
                 Retour à l'accueil
               </Button>
             )}
