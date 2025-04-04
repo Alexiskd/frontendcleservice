@@ -5,7 +5,6 @@ import {
   Typography,
   Container,
   Card,
-  CardMedia,
   CardContent,
   Button,
   TextField,
@@ -31,18 +30,54 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// Normalisation d'une chaîne
+// Fonction de normalisation pour comparer les chaînes de caractères
 function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// Formatage pour l'affichage : première lettre en majuscule
+// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
+// Composant pour afficher une image avec Skeleton conditionnel
+const ImageWithSkeleton = ({ src, alt, sx, ...props }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <Box sx={{ position: 'relative', ...sx }}>
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          display: loaded ? 'block' : 'none'
+        }}
+        onLoad={() => setLoaded(true)}
+        {...props}
+      />
+      {!loaded && (
+        <Skeleton
+          variant="rectangular"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            borderTopLeftRadius: sx?.borderTopLeftRadius,
+            borderTopRightRadius: sx?.borderTopRightRadius,
+          }}
+        />
+      )}
+    </Box>
+  );
+};
+
+// Composante CleDynamicPage
 const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
@@ -80,21 +115,17 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction du nom de la marque en retirant le suffixe si présent
+  // Extraction et normalisation du nom de la marque (pour les URL non slug)
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-
-  // Pour l'affichage, on souhaite la forme "Abus", et pour l'API on utilise "ABUS"
-  const adjustedBrandNameDisplay = actualBrandName ? formatBrandName(actualBrandName) : "";
-  const adjustedBrandNameAPI = actualBrandName ? actualBrandName.toUpperCase() : "";
-  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
-  console.log("Marque (API) :", adjustedBrandNameAPI);
+  const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
+  console.log("Marque ajustée :", adjustedBrandName);
 
   // Balises SEO
-  const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
@@ -108,8 +139,8 @@ const CleDynamicPage = () => {
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `${adjustedBrandNameDisplay} – Catalogue de clés`,
-    "description": `Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.`,
+    "name": `${adjustedBrandName} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -131,9 +162,9 @@ const CleDynamicPage = () => {
         }
       }
     }))
-  }), [adjustedBrandNameDisplay, keys, getImageSrc]);
+  }), [adjustedBrandName, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque
+  // Chargement du logo pour la marque (pour les URL non slug)
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
     if (!actualBrandName) return;
@@ -156,19 +187,19 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des clés depuis le backend en utilisant le nom en MAJUSCULES pour l'API
+  // Récupération complète des clés de la marque depuis le backend
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
       return;
     }
-    if (!adjustedBrandNameAPI) {
+    if (!adjustedBrandName) {
       setError("La marque n'a pas été fournie.");
       setLoading(false);
       return;
     }
     setLoading(true);
-    preloadKeysData(adjustedBrandNameAPI)
+    preloadKeysData(adjustedBrandName)
       .then((data) => {
         console.log("Clés chargées :", data);
         setKeys(data);
@@ -181,7 +212,7 @@ const CleDynamicPage = () => {
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
-  }, [adjustedBrandNameAPI, brandFull]);
+  }, [adjustedBrandName, brandFull]);
 
   // Préchargement des images
   useEffect(() => {
@@ -195,7 +226,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche (sans inverser l'ordre)
+  // Filtrage des clés par terme de recherche
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -203,9 +234,15 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Conserver l'ordre du backend
+  // Tri (optionnel) – ici, on trie selon un critère (exemple : présence d'un prix positif)
   const sortedKeys = useMemo(() => {
-    return [...filteredKeys];
+    return [...filteredKeys].sort((a, b) => {
+      const aIsManufacturer = Number(a.prix) > 0;
+      const bIsManufacturer = Number(b.prix) > 0;
+      if (aIsManufacturer && !bIsManufacturer) return 1;
+      if (!aIsManufacturer && bIsManufacturer) return -1;
+      return 0;
+    });
   }, [filteredKeys]);
 
   const handleOrderNow = useCallback((item, mode) => {
@@ -246,7 +283,8 @@ const CleDynamicPage = () => {
     event.preventDefault();
     setScale((prevScale) => {
       let newScale = prevScale + (event.deltaY < 0 ? 0.1 : -0.1);
-      return Math.max(0.5, Math.min(newScale, 3));
+      newScale = Math.max(0.5, Math.min(newScale, 3));
+      return newScale;
     });
   }, []);
 
@@ -391,29 +429,13 @@ const CleDynamicPage = () => {
                           />
                         </Box>
                       )}
-                      {/* Utilisation conditionnelle du Skeleton */}
-                      {loading ? (
-                        <Skeleton
-                          variant="rectangular"
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: 180,
-                            borderTopLeftRadius: '12px',
-                            borderTopRightRadius: '12px',
-                          }}
-                        />
-                      ) : (
-                        <CardMedia
-                          component="img"
-                          image={getImageSrc(item.imageUrl)}
-                          alt={item.nom}
-                          sx={styles.cardMedia}
-                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
-                        />
-                      )}
+                      {/* Utilisation du composant ImageWithSkeleton pour un affichage correct de l'image */}
+                      <ImageWithSkeleton
+                        src={getImageSrc(item.imageUrl)}
+                        alt={item.nom}
+                        sx={styles.cardMedia}
+                        onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
+                      />
                     </Box>
                     <CardContent sx={styles.cardContent}>
                       <Typography sx={styles.productName} onClick={() => handleViewProduct(item)}>
@@ -522,4 +544,5 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
 
