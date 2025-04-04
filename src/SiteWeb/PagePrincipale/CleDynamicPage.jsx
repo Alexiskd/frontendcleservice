@@ -5,7 +5,6 @@ import {
   Typography,
   Container,
   Card,
-  CardMedia,
   CardContent,
   Button,
   TextField,
@@ -40,6 +39,41 @@ function formatBrandName(name) {
   const lower = name.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
+
+// --- Composant pour afficher une image avec Skeleton conditionnel ---
+const ImageWithSkeleton = ({ src, alt, sx, ...props }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <Box sx={{ position: 'relative', ...sx }}>
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          display: loaded ? 'block' : 'none'
+        }}
+        onLoad={() => setLoaded(true)}
+        {...props}
+      />
+      {!loaded && (
+        <Skeleton
+          variant="rectangular"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            borderTopLeftRadius: sx.borderTopLeftRadius,
+            borderTopRightRadius: sx.borderTopRightRadius,
+          }}
+        />
+      )}
+    </Box>
+  );
+};
 
 // --- Composante CleDynamicPage ---
 const CleDynamicPage = () => {
@@ -414,24 +448,11 @@ const CleDynamicPage = () => {
                           />
                         </Box>
                       )}
-                      <CardMedia
-                        component="img"
-                        image={getImageSrc(item.imageUrl)}
+                      <ImageWithSkeleton
+                        src={getImageSrc(item.imageUrl)}
                         alt={item.nom}
                         sx={styles.cardMedia}
                         onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
-                      />
-                      <Skeleton
-                        variant="rectangular"
-                        sx={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: 180,
-                          borderTopLeftRadius: '12px',
-                          borderTopRightRadius: '12px',
-                        }}
                       />
                     </Box>
                     <CardContent sx={styles.cardContent}>
