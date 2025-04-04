@@ -80,7 +80,7 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (pour les URL non slug)
+  // Extraction du nom de la marque depuis l'URL (en retirant le suffixe si présent)
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
@@ -152,7 +152,7 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération complète des clés de la marque depuis le backend
+  // Récupération des clés via preloadKeysData
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -179,6 +179,23 @@ const CleDynamicPage = () => {
       .finally(() => setLoading(false));
   }, [adjustedBrandName, brandFull]);
 
+  // Ajout manuel du produit "DFES CL2 ZEBI" si la marque est "Dfes" et qu'aucune clé n'est renvoyée
+  useEffect(() => {
+    if (adjustedBrandName === "Dfes" && keys.length === 0) {
+      setKeys([
+        {
+          id: 'dfes-cl2-zebi',
+          nom: 'DFES CL2 ZEBI',
+          marque: 'DFES',
+          prix: 150,
+          prixSansCartePropriete: 0,
+          descriptionNumero: 'Produit DFES CL2 ZEBI',
+          imageUrl: 'https://example.com/dfes-cl2-zebi.jpg'
+        }
+      ]);
+    }
+  }, [adjustedBrandName, keys]);
+
   // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
@@ -199,7 +216,7 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Tri (optionnel) – ici, on conserve l'ordre du backend
+  // On conserve l'ordre reçu du backend (ou ajouté manuellement)
   const sortedKeys = useMemo(() => {
     return [...filteredKeys];
   }, [filteredKeys]);
@@ -489,7 +506,11 @@ const CleDynamicPage = () => {
           onClose={handleCloseSnackbar}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}>
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbarSeverity}
+            sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}
+          >
             {snackbarMessage}
           </Alert>
         </Snackbar>
