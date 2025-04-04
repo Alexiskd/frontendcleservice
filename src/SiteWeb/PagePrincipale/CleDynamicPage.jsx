@@ -5,6 +5,7 @@ import {
   Typography,
   Container,
   Card,
+  CardMedia,
   CardContent,
   Button,
   TextField,
@@ -18,8 +19,9 @@ import {
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import { preloadKeysData } from '../brandsApi';
 
-// --- Utilitaires ---
+// Hook de debounce pour la saisie utilisateur
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -29,66 +31,24 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
+// Fonction de normalisation pour comparer les chaînes de caractères
 function normalizeString(str) {
-  return str
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-// --- Composant pour afficher une image avec Skeleton conditionnel ---
-const ImageWithSkeleton = ({ src, alt, sx, ...props }) => {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <Box sx={{ position: 'relative', ...sx }}>
-      <img
-        src={src}
-        alt={alt}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          display: loaded ? 'block' : 'none'
-        }}
-        onLoad={() => setLoaded(true)}
-        {...props}
-      />
-      {!loaded && (
-        <Skeleton
-          variant="rectangular"
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            borderTopLeftRadius: sx?.borderTopLeftRadius,
-            borderTopRightRadius: sx?.borderTopRightRadius,
-          }}
-        />
-      )}
-    </Box>
-  );
-};
-
-// --- Composante CleDynamicPage ---
 const CleDynamicPage = () => {
-  const { brandFull, brandName } = useParams();
+  const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Utilise brandName s'il est présent, sinon brandFull
-  const currentParam = brandName || brandFull;
-  if (
-    currentParam &&
-    normalizeString(currentParam) === normalizeString("Clé Izis Cavers Reparation de clé")
-  ) {
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
 
@@ -105,40 +65,27 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
-    const param = brandFull || brandName;
-    if (/^\d+-/.test(param)) {
-      const parts = param.split("-");
+    if (/^\d+-/.test(brandFull)) {
+      const parts = brandFull.split("-");
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
-        console.log("Navigation produit (slug):", brand, productName);
         navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
-        navigate(`/produit/${encodeURIComponent(param)}`);
+        navigate(`/produit/${encodeURIComponent(brandFull)}`);
       }
+      return;
     }
-  }, [brandFull, brandName, navigate]);
+  }, [brandFull, navigate]);
 
-  // --- Extraction du nom de la marque ---
-  // Pour une URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension (.php) si présente
+  // Extraction et normalisation du nom de la marque (pour les URL non slug)
   const suffix = '_1_reproduction_cle.html';
-  let actualBrandName = "";
-  if (brandName) {
-    actualBrandName = brandName;
-  } else if (brandFull) {
-    if (/^cle[-_ ]coffre[-_ ]fort[-_ ]/i.test(brandFull)) {
-      actualBrandName = brandFull.replace(/^cle[-_ ]coffre[-_ ]fort[-_ ]/i, "");
-      actualBrandName = actualBrandName.replace(/\.php$/i, "");
-    } else if (brandFull.endsWith(suffix)) {
-      actualBrandName = brandFull.slice(0, -suffix.length);
-    } else {
-      actualBrandName = brandFull;
-    }
-  }
+  const actualBrandName = brandFull && brandFull.endsWith(suffix)
+    ? brandFull.slice(0, -suffix.length)
+    : brandFull;
   const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
-  console.log("Marque ajustée :", adjustedBrandName);
 
   // Balises SEO
   const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
@@ -181,10 +128,9 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandName, keys, getImageSrc]);
 
-  // Récupération du logo pour la marque (pour les URL non slug)
+  // Chargement du logo pour la marque (uniquement pour les URL non slug)
   useEffect(() => {
-    const param = brandFull || brandName;
-    if (/^\d+-/.test(param)) return;
+    if (/^\d+-/.test(brandFull)) return;
     if (!actualBrandName) return;
     fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
       .then((res) => {
@@ -199,16 +145,15 @@ const CleDynamicPage = () => {
         console.error("Erreur lors du chargement du logo:", error);
         setBrandLogo(null);
       });
-  }, [actualBrandName, brandFull, brandName]);
+  }, [actualBrandName, brandFull]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération complète des clés de la marque depuis le backend
+  // Chargement initial des clés via preloadKeysData
   useEffect(() => {
-    const param = brandFull || brandName;
-    if (/^\d+-/.test(param)) {
+    if (/^\d+-/.test(brandFull)) {
       setLoading(false);
       return;
     }
@@ -218,28 +163,18 @@ const CleDynamicPage = () => {
       return;
     }
     setLoading(true);
-    fetch(`https://cl-back.onrender.com/brands/keys/${encodeURIComponent(adjustedBrandName)}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Erreur lors du chargement des clés");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Clés chargées :", data);
-        setKeys(data);
-      })
+    preloadKeysData(adjustedBrandName)
+      .then((data) => setKeys(data))
       .catch((err) => {
-        console.error("Erreur lors du chargement des clés:", err);
+        console.error('Erreur lors du chargement des clés:', err);
         setError(err.message);
         setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
-  }, [adjustedBrandName, brandFull, brandName]);
+  }, [adjustedBrandName, brandFull]);
 
-  // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
@@ -251,15 +186,12 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche
-  const filteredKeys = useMemo(() => {
-    if (!debouncedSearchTerm) return keys;
-    return keys.filter((item) =>
+  const filteredKeys = useMemo(() => (
+    keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    );
-  }, [keys, debouncedSearchTerm]);
+    ).slice().reverse()
+  ), [keys, debouncedSearchTerm]);
 
-  // Tri (optionnel) – ici, par exemple, on trie selon un critère de fabricant
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
@@ -276,20 +208,18 @@ const CleDynamicPage = () => {
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      const formattedBrand = (brandName || brandFull)
-        .toLowerCase()
-        .replace(/\s+/g, '-');
+      const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
-      console.error("Erreur lors de la navigation vers la commande:", error);
+      console.error('Erreur lors de la navigation vers la commande:', error);
       setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
-      setSnackbarSeverity("error");
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  }, [brandName, brandFull, navigate]);
+  }, [brandFull, navigate]);
 
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
@@ -319,13 +249,13 @@ const CleDynamicPage = () => {
     page: {
       backgroundColor: '#fafafa',
       minHeight: '100vh',
-      paddingBottom: '24px'
+      paddingBottom: '24px',
     },
     searchContainer: {
       marginTop: { xs: '20px', sm: '40px' }
     },
     gridContainer: {
-      padding: '16px 0'
+      padding: '16px 0',
     },
     card: {
       backgroundColor: '#fff',
@@ -337,44 +267,44 @@ const CleDynamicPage = () => {
       height: '100%',
       minHeight: '400px',
       width: '100%',
-      flex: 1
+      flex: 1,
     },
     cardMedia: {
       height: 180,
       objectFit: 'contain',
       backgroundColor: '#fff',
       borderTopLeftRadius: '12px',
-      borderTopRightRadius: '12px'
+      borderTopRightRadius: '12px',
     },
     cardContent: {
       flexGrow: 1,
       padding: { xs: '8px', sm: '16px' },
       fontFamily: 'Montserrat, sans-serif',
-      textAlign: 'left'
+      textAlign: 'left',
     },
     productName: {
       fontSize: '1.2rem',
       fontWeight: 700,
       marginBottom: 0,
       color: '#333',
-      cursor: 'pointer'
+      cursor: 'pointer',
     },
     brandName: {
       fontSize: '0.9rem',
       color: '#777',
-      marginBottom: '8px'
+      marginBottom: '8px',
     },
     pricesContainer: {
       display: 'flex',
       gap: '8px',
-      marginTop: '12px'
+      marginTop: '12px',
     },
     priceBadge: {
       backgroundColor: '#e8f5e9',
       padding: '6px 12px',
       borderRadius: '8px',
       textAlign: 'center',
-      color: '#1B5E20'
+      color: '#1B5E20',
     },
     buttonSecondary: {
       borderRadius: '50px',
@@ -384,14 +314,14 @@ const CleDynamicPage = () => {
       fontWeight: 600,
       fontSize: '0.75rem',
       boxShadow: 'none',
-      marginTop: '8px'
+      marginTop: '8px',
     },
     buttonContainer: {
       padding: { xs: '8px', sm: '16px' },
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
-      mt: 'auto'
+      mt: 'auto',
     },
     brandLogoContainer: {
       position: 'absolute',
@@ -403,8 +333,8 @@ const CleDynamicPage = () => {
       overflow: 'hidden',
       backgroundColor: '#fff',
       boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-      zIndex: 2
-    }
+      zIndex: 2,
+    },
   }), []);
 
   return (
@@ -412,7 +342,10 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
+        <meta
+          name="keywords"
+          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
+        />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -456,11 +389,24 @@ const CleDynamicPage = () => {
                           />
                         </Box>
                       )}
-                      <ImageWithSkeleton
-                        src={getImageSrc(item.imageUrl)}
+                      <CardMedia
+                        component="img"
+                        image={getImageSrc(item.imageUrl)}
                         alt={item.nom}
                         sx={styles.cardMedia}
                         onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
+                      />
+                      <Skeleton
+                        variant="rectangular"
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: 180,
+                          borderTopLeftRadius: '12px',
+                          borderTopRightRadius: '12px',
+                        }}
                       />
                     </Box>
                     <CardContent sx={styles.cardContent}>
@@ -499,8 +445,8 @@ const CleDynamicPage = () => {
                             color: '#1B5E20',
                             '&:hover': {
                               backgroundColor: '#1B5E20',
-                              color: '#fff'
-                            }
+                              color: '#fff',
+                            },
                           }}
                         >
                           Commander par numéro
@@ -517,8 +463,8 @@ const CleDynamicPage = () => {
                             color: '#1B5E20',
                             '&:hover': {
                               backgroundColor: '#1B5E20',
-                              color: '#fff'
-                            }
+                              color: '#fff',
+                            },
                           }}
                         >
                           Commander en atelier
@@ -558,7 +504,7 @@ const CleDynamicPage = () => {
                   transform: `scale(${scale})`,
                   transition: 'transform 0.2s',
                   width: '100%',
-                  height: 'auto'
+                  height: 'auto',
                 }}
               />
             </Box>
