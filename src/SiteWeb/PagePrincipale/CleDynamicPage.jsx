@@ -40,7 +40,8 @@ function formatBrandName(name) {
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-// --- Composant pour afficher une image avec Skeleton conditionnel ---
+// --- Composant ImageWithSkeleton ---
+// Ce composant affiche un Skeleton tant que l'image n'est pas chargée.
 const ImageWithSkeleton = ({ src, alt, sx, ...props }) => {
   const [loaded, setLoaded] = useState(false);
   return (
@@ -66,8 +67,8 @@ const ImageWithSkeleton = ({ src, alt, sx, ...props }) => {
             left: 0,
             width: '100%',
             height: '100%',
-            borderTopLeftRadius: sx.borderTopLeftRadius,
-            borderTopRightRadius: sx.borderTopRightRadius,
+            borderTopLeftRadius: sx?.borderTopLeftRadius,
+            borderTopRightRadius: sx?.borderTopRightRadius,
           }}
         />
       )}
@@ -115,12 +116,10 @@ const CleDynamicPage = () => {
       } else {
         navigate(`/produit/${encodeURIComponent(param)}`);
       }
-      return;
     }
   }, [brandFull, brandName, navigate]);
 
   // --- Extraction du nom de la marque ---
-  // Pour les URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension (.php) si présente
   const suffix = '_1_reproduction_cle.html';
   let actualBrandName = "";
   if (brandName) {
@@ -136,8 +135,6 @@ const CleDynamicPage = () => {
     }
   }
   const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
-
-  // Log de débogage pour vérifier la marque extraite
   console.log("Marque ajustée :", adjustedBrandName);
 
   // Balises SEO
@@ -181,7 +178,7 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandName, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque (uniquement pour les URL non slug)
+  // Chargement du logo pour la marque (pour URL non slug)
   useEffect(() => {
     const param = brandFull || brandName;
     if (/^\d+-/.test(param)) return;
@@ -308,13 +305,13 @@ const CleDynamicPage = () => {
     page: {
       backgroundColor: '#fafafa',
       minHeight: '100vh',
-      paddingBottom: '24px',
+      paddingBottom: '24px'
     },
     searchContainer: {
       marginTop: { xs: '20px', sm: '40px' }
     },
     gridContainer: {
-      padding: '16px 0',
+      padding: '16px 0'
     },
     card: {
       backgroundColor: '#fff',
@@ -326,44 +323,44 @@ const CleDynamicPage = () => {
       height: '100%',
       minHeight: '400px',
       width: '100%',
-      flex: 1,
+      flex: 1
     },
     cardMedia: {
       height: 180,
       objectFit: 'contain',
       backgroundColor: '#fff',
       borderTopLeftRadius: '12px',
-      borderTopRightRadius: '12px',
+      borderTopRightRadius: '12px'
     },
     cardContent: {
       flexGrow: 1,
       padding: { xs: '8px', sm: '16px' },
       fontFamily: 'Montserrat, sans-serif',
-      textAlign: 'left',
+      textAlign: 'left'
     },
     productName: {
       fontSize: '1.2rem',
       fontWeight: 700,
       marginBottom: 0,
       color: '#333',
-      cursor: 'pointer',
+      cursor: 'pointer'
     },
     brandName: {
       fontSize: '0.9rem',
       color: '#777',
-      marginBottom: '8px',
+      marginBottom: '8px'
     },
     pricesContainer: {
       display: 'flex',
       gap: '8px',
-      marginTop: '12px',
+      marginTop: '12px'
     },
     priceBadge: {
       backgroundColor: '#e8f5e9',
       padding: '6px 12px',
       borderRadius: '8px',
       textAlign: 'center',
-      color: '#1B5E20',
+      color: '#1B5E20'
     },
     buttonSecondary: {
       borderRadius: '50px',
@@ -373,14 +370,14 @@ const CleDynamicPage = () => {
       fontWeight: 600,
       fontSize: '0.75rem',
       boxShadow: 'none',
-      marginTop: '8px',
+      marginTop: '8px'
     },
     buttonContainer: {
       padding: { xs: '8px', sm: '16px' },
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
-      mt: 'auto',
+      mt: 'auto'
     },
     brandLogoContainer: {
       position: 'absolute',
@@ -392,8 +389,8 @@ const CleDynamicPage = () => {
       overflow: 'hidden',
       backgroundColor: '#fff',
       boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-      zIndex: 2,
-    },
+      zIndex: 2
+    }
   }), []);
 
   return (
@@ -491,8 +488,8 @@ const CleDynamicPage = () => {
                             color: '#1B5E20',
                             '&:hover': {
                               backgroundColor: '#1B5E20',
-                              color: '#fff',
-                            },
+                              color: '#fff'
+                            }
                           }}
                         >
                           Commander par numéro
@@ -509,8 +506,8 @@ const CleDynamicPage = () => {
                             color: '#1B5E20',
                             '&:hover': {
                               backgroundColor: '#1B5E20',
-                              color: '#fff',
-                            },
+                              color: '#fff'
+                            }
                           }}
                         >
                           Commander en atelier
@@ -550,7 +547,7 @@ const CleDynamicPage = () => {
                   transform: `scale(${scale})`,
                   transition: 'transform 0.2s',
                   width: '100%',
-                  height: 'auto',
+                  height: 'auto'
                 }}
               />
             </Box>
