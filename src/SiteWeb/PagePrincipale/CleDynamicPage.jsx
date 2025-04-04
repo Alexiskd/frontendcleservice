@@ -522,5 +522,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
-
