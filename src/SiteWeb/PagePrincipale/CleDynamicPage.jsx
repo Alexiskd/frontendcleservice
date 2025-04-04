@@ -31,12 +31,12 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// Fonction de normalisation pour comparer les chaînes de caractères
+// Normalisation d'une chaîne (pour comparaison)
 function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
+// Formatage du nom de la marque pour l'affichage (première lettre en majuscule)
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
@@ -47,7 +47,7 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", rediriger
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee.php" replace />;
   }
@@ -80,17 +80,21 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (pour les URL non slug)
+  // Extraction du nom de la marque depuis l'URL en retirant le suffixe si présent
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
-  console.log("Marque ajustée :", adjustedBrandName);
+  
+  // Pour l'affichage, on souhaite "Abus" (première lettre en majuscule) ; pour l'appel API, on utilise le nom en MAJUSCULES
+  const adjustedBrandNameDisplay = actualBrandName ? formatBrandName(actualBrandName) : "";
+  const adjustedBrandNameAPI = actualBrandName ? actualBrandName.toUpperCase() : "";
+  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
+  console.log("Marque (API) :", adjustedBrandNameAPI);
 
   // Balises SEO
-  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
@@ -100,12 +104,12 @@ const CleDynamicPage = () => {
     return imageUrl;
   }, []);
 
-  // Données structurées Schema.org
+  // Données structurées Schema.org pour le SEO
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `${adjustedBrandName} – Catalogue de clés`,
-    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
+    "name": `${adjustedBrandNameDisplay} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -114,10 +118,7 @@ const CleDynamicPage = () => {
         "name": item.nom,
         "description": item.descriptionNumero || "Clé de reproduction",
         "image": getImageSrc(item.imageUrl),
-        "brand": {
-          "@type": "Brand",
-          "name": item.marque
-        },
+        "brand": { "@type": "Brand", "name": item.marque },
         "offers": {
           "@type": "Offer",
           "price": item.prix,
@@ -127,7 +128,7 @@ const CleDynamicPage = () => {
         }
       }
     }))
-  }), [adjustedBrandName, keys, getImageSrc]);
+  }), [adjustedBrandNameDisplay, keys, getImageSrc]);
 
   // Chargement du logo pour la marque (pour les URL non slug)
   useEffect(() => {
@@ -158,13 +159,14 @@ const CleDynamicPage = () => {
       setLoading(false);
       return;
     }
-    if (!adjustedBrandName) {
+    if (!adjustedBrandNameAPI) {
       setError("La marque n'a pas été fournie.");
       setLoading(false);
       return;
     }
     setLoading(true);
-    preloadKeysData(adjustedBrandName)
+    // Utilisation de la marque en MAJUSCULES pour l'appel API
+    preloadKeysData(adjustedBrandNameAPI)
       .then((data) => {
         console.log("Clés chargées :", data);
         setKeys(data);
@@ -177,7 +179,7 @@ const CleDynamicPage = () => {
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
-  }, [adjustedBrandName, brandFull]);
+  }, [adjustedBrandNameAPI, brandFull]);
 
   // Préchargement des images
   useEffect(() => {
@@ -191,7 +193,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche (sans inversion de l'ordre)
+  // Filtrage des clés par terme de recherche (sans inverser l'ordre)
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -199,15 +201,9 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Tri (optionnel) – ici, on trie selon la présence d'un prix positif
+  // Optionnel : Si vous souhaitez trier les clés, retirez ce tri pour conserver l'ordre du backend
   const sortedKeys = useMemo(() => {
-    return [...filteredKeys].sort((a, b) => {
-      const aIsManufacturer = Number(a.prix) > 0;
-      const bIsManufacturer = Number(b.prix) > 0;
-      if (aIsManufacturer && !bIsManufacturer) return 1;
-      if (!aIsManufacturer && bIsManufacturer) return -1;
-      return 0;
-    });
+    return [...filteredKeys];
   }, [filteredKeys]);
 
   const handleOrderNow = useCallback((item, mode) => {
