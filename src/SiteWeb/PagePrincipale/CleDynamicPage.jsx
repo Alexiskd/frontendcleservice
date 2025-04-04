@@ -87,8 +87,10 @@ const CleDynamicPage = () => {
     : brandFull;
 
   // Pour l'affichage, on souhaite la forme "Abus", et pour l'API on utilise "ABUS"
-  const adjustedBrandNameDisplay = actualBrandName ? formatBrandName(actualBrandName) : "";
-  const adjustedBrandNameAPI = actualBrandName ? actualBrandName.toUpperCase() : "";
+  const brandNameFromUrl = actualBrandName.split('_')[0];  // Extrait "abus" de "abus_1_reproduction_cle.html"
+  const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
+  const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
+
   console.log("Marque (affichage) :", adjustedBrandNameDisplay);
   console.log("Marque (API) :", adjustedBrandNameAPI);
 
@@ -136,11 +138,11 @@ const CleDynamicPage = () => {
   // Chargement du logo pour la marque
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
-    if (!actualBrandName) return;
-    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(actualBrandName)}`)
+    if (!adjustedBrandNameAPI) return;
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(adjustedBrandNameAPI)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(`Logo non trouvé pour ${actualBrandName}`);
+        throw new Error(`Logo non trouvé pour ${adjustedBrandNameAPI}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -150,7 +152,7 @@ const CleDynamicPage = () => {
         console.error("Erreur lors du chargement du logo:", error);
         setBrandLogo(null);
       });
-  }, [actualBrandName, brandFull]);
+  }, [adjustedBrandNameAPI, brandFull]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -347,7 +349,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
+        <meta name="keywords" content={`${adjustedBrandNameDisplay}, clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
