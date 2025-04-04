@@ -429,12 +429,24 @@ const CleDynamicPage = () => {
                           />
                         </Box>
                       )}
-                      {/* Utilisation du composant ImageWithSkeleton pour un affichage correct de l'image */}
-                      <ImageWithSkeleton
-                        src={getImageSrc(item.imageUrl)}
+                      <CardMedia
+                        component="img"
+                        image={getImageSrc(item.imageUrl)}
                         alt={item.nom}
                         sx={styles.cardMedia}
                         onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
+                      />
+                      <Skeleton
+                        variant="rectangular"
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: 180,
+                          borderTopLeftRadius: '12px',
+                          borderTopRightRadius: '12px',
+                        }}
                       />
                     </Box>
                     <CardContent sx={styles.cardContent}>
