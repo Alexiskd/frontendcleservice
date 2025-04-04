@@ -36,7 +36,7 @@ function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// Formatage du nom de la marque pour l'affichage (première lettre en majuscule)
+// Formatage pour l'affichage : première lettre en majuscule
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
@@ -80,17 +80,21 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (pour les URL non slug)
+  // Extraction du nom de la marque en retirant le suffixe si présent
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
-  console.log("Marque ajustée :", adjustedBrandName);
+
+  // Pour l'affichage, on souhaite la forme "Abus", et pour l'API on utilise "ABUS"
+  const adjustedBrandNameDisplay = actualBrandName ? formatBrandName(actualBrandName) : "";
+  const adjustedBrandNameAPI = actualBrandName ? actualBrandName.toUpperCase() : "";
+  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
+  console.log("Marque (API) :", adjustedBrandNameAPI);
 
   // Balises SEO
-  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
@@ -104,8 +108,8 @@ const CleDynamicPage = () => {
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `${adjustedBrandName} – Catalogue de clés`,
-    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
+    "name": `${adjustedBrandNameDisplay} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -127,9 +131,9 @@ const CleDynamicPage = () => {
         }
       }
     }))
-  }), [adjustedBrandName, keys, getImageSrc]);
+  }), [adjustedBrandNameDisplay, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque (pour les URL non slug)
+  // Chargement du logo pour la marque
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
     if (!actualBrandName) return;
@@ -152,19 +156,19 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des clés depuis le backend
+  // Récupération des clés depuis le backend en utilisant le nom en MAJUSCULES pour l'API
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
       return;
     }
-    if (!adjustedBrandName) {
+    if (!adjustedBrandNameAPI) {
       setError("La marque n'a pas été fournie.");
       setLoading(false);
       return;
     }
     setLoading(true);
-    preloadKeysData(adjustedBrandName)
+    preloadKeysData(adjustedBrandNameAPI)
       .then((data) => {
         console.log("Clés chargées :", data);
         setKeys(data);
@@ -177,7 +181,7 @@ const CleDynamicPage = () => {
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
-  }, [adjustedBrandName, brandFull]);
+  }, [adjustedBrandNameAPI, brandFull]);
 
   // Préchargement des images
   useEffect(() => {
@@ -191,7 +195,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche sans modifier l'ordre
+  // Filtrage des clés par terme de recherche (sans inverser l'ordre)
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -199,7 +203,7 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Conserver l'ordre reçu du backend (ou ajouté manuellement)
+  // Conserver l'ordre du backend
   const sortedKeys = useMemo(() => {
     return [...filteredKeys];
   }, [filteredKeys]);
@@ -488,11 +492,7 @@ const CleDynamicPage = () => {
           onClose={handleCloseSnackbar}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={snackbarSeverity}
-            sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}
-          >
+          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}>
             {snackbarMessage}
           </Alert>
         </Snackbar>
@@ -518,4 +518,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
