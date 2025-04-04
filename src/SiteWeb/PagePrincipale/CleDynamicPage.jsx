@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -35,7 +35,7 @@ function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
+// Fonction de formatage pour l'affichage : première lettre en majuscule, le reste en minuscules
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
@@ -115,17 +115,21 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction et normalisation du nom de la marque (pour les URL non slug)
+  // Extraction du nom de la marque à partir de l'URL
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
     : brandFull;
-  const adjustedBrandName = actualBrandName ? formatBrandName(actualBrandName) : "";
-  console.log("Marque ajustée :", adjustedBrandName);
+
+  // Pour l'affichage, on souhaite la forme "Abus", et pour l'appel API on utilise "ABUS"
+  const adjustedBrandNameDisplay = actualBrandName ? formatBrandName(actualBrandName) : "";
+  const adjustedBrandNameAPI = actualBrandName ? actualBrandName.toUpperCase() : "";
+  console.log("Marque ajustée (affichage) :", adjustedBrandNameDisplay);
+  console.log("Marque ajustée (API) :", adjustedBrandNameAPI);
 
   // Balises SEO
-  const pageTitle = `${adjustedBrandName} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandName}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
+  const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
@@ -139,8 +143,8 @@ const CleDynamicPage = () => {
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `${adjustedBrandName} – Catalogue de clés`,
-    "description": `Catalogue des clés et reproductions pour ${adjustedBrandName}. Commandez en ligne la reproduction de votre clé.`,
+    "name": `${adjustedBrandNameDisplay} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -162,7 +166,7 @@ const CleDynamicPage = () => {
         }
       }
     }))
-  }), [adjustedBrandName, keys, getImageSrc]);
+  }), [adjustedBrandNameDisplay, keys, getImageSrc]);
 
   // Chargement du logo pour la marque (pour les URL non slug)
   useEffect(() => {
@@ -193,13 +197,14 @@ const CleDynamicPage = () => {
       setLoading(false);
       return;
     }
-    if (!adjustedBrandName) {
+    if (!adjustedBrandNameAPI) {
       setError("La marque n'a pas été fournie.");
       setLoading(false);
       return;
     }
     setLoading(true);
-    preloadKeysData(adjustedBrandName)
+    // Utilisation de adjustedBrandNameAPI pour appeler le backend
+    preloadKeysData(adjustedBrandNameAPI)
       .then((data) => {
         console.log("Clés chargées :", data);
         setKeys(data);
@@ -212,7 +217,7 @@ const CleDynamicPage = () => {
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
-  }, [adjustedBrandName, brandFull]);
+  }, [adjustedBrandNameAPI, brandFull]);
 
   // Préchargement des images
   useEffect(() => {
@@ -234,7 +239,7 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Tri (optionnel) – ici, on trie selon un critère (exemple : présence d'un prix positif)
+  // Tri (optionnel) – ici, on trie selon la présence d'un prix positif
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
@@ -385,7 +390,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
+        <meta name="keywords" content={`${adjustedBrandName} , clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -429,7 +434,7 @@ const CleDynamicPage = () => {
                           />
                         </Box>
                       )}
-                      {/* Utilisation du composant ImageWithSkeleton pour un affichage correct de l'image */}
+                      {/* Affichage de l'image via ImageWithSkeleton pour gérer le chargement */}
                       <ImageWithSkeleton
                         src={getImageSrc(item.imageUrl)}
                         alt={item.nom}
@@ -518,7 +523,11 @@ const CleDynamicPage = () => {
           onClose={handleCloseSnackbar}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}>
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbarSeverity}
+            sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}
+          >
             {snackbarMessage}
           </Alert>
         </Snackbar>
