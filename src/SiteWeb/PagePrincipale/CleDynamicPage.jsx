@@ -31,12 +31,12 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// Fonction de normalisation pour comparer les chaînes de caractères
+// Normalisation d'une chaîne
 function normalizeString(str) {
   return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// Fonction de formatage pour obtenir la première lettre en majuscule et le reste en minuscules
+// Formatage du nom de la marque pour l'affichage (première lettre en majuscule)
 function formatBrandName(name) {
   if (!name) return "";
   const lower = name.toLowerCase();
@@ -65,7 +65,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Redirection si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
@@ -80,7 +80,7 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction du nom de la marque depuis l'URL (en retirant le suffixe si présent)
+  // Extraction et normalisation du nom de la marque (pour les URL non slug)
   const suffix = '_1_reproduction_cle.html';
   const actualBrandName = brandFull && brandFull.endsWith(suffix)
     ? brandFull.slice(0, -suffix.length)
@@ -152,7 +152,7 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des clés via preloadKeysData
+  // Récupération des clés depuis le backend
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -179,23 +179,6 @@ const CleDynamicPage = () => {
       .finally(() => setLoading(false));
   }, [adjustedBrandName, brandFull]);
 
-  // Ajout manuel du produit "DFES CL2 ZEBI" si la marque est "Dfes" et qu'aucune clé n'est renvoyée
-  useEffect(() => {
-    if (adjustedBrandName === "Dfes" && keys.length === 0) {
-      setKeys([
-        {
-          id: 'dfes-cl2-zebi',
-          nom: 'DFES CL2 ZEBI',
-          marque: 'DFES',
-          prix: 150,
-          prixSansCartePropriete: 0,
-          descriptionNumero: 'Produit DFES CL2 ZEBI',
-          imageUrl: 'https://example.com/dfes-cl2-zebi.jpg'
-        }
-      ]);
-    }
-  }, [adjustedBrandName, keys]);
-
   // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
@@ -208,7 +191,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche (sans inverser l'ordre)
+  // Filtrage des clés par terme de recherche sans modifier l'ordre
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -216,7 +199,7 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // On conserve l'ordre reçu du backend (ou ajouté manuellement)
+  // Conserver l'ordre reçu du backend (ou ajouté manuellement)
   const sortedKeys = useMemo(() => {
     return [...filteredKeys];
   }, [filteredKeys]);
@@ -259,8 +242,7 @@ const CleDynamicPage = () => {
     event.preventDefault();
     setScale((prevScale) => {
       let newScale = prevScale + (event.deltaY < 0 ? 0.1 : -0.1);
-      newScale = Math.max(0.5, Math.min(newScale, 3));
-      return newScale;
+      return Math.max(0.5, Math.min(newScale, 3));
     });
   }, []);
 
