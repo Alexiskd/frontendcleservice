@@ -19,6 +19,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
+
 // --- Utilitaires ---
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -30,11 +31,7 @@ function useDebounce(value, delay) {
 }
 
 function normalizeString(str) {
-  return str
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function formatBrandName(name) {
@@ -105,7 +102,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Gestion du cas où le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
     const param = brandFull || brandName;
     if (/^\d+-/.test(param)) {
@@ -121,8 +118,7 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, brandName, navigate]);
 
-  // --- Extraction du nom de la marque ---
-  // Pour une URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension (.php) si présente
+  // Extraction du nom de la marque (pour une URL comme "cle-coffre-fort-corbin.php")
   const suffix = '_1_reproduction_cle.html';
   let actualBrandName = "";
   if (brandName) {
@@ -218,7 +214,6 @@ const CleDynamicPage = () => {
       return;
     }
     setLoading(true);
-    // Utilisez ici l'endpoint approprié pour récupérer toutes les clés de la marque.
     fetch(`https://cl-back.onrender.com/brands/keys/${encodeURIComponent(adjustedBrandName)}`)
       .then((res) => {
         if (!res.ok) {
@@ -252,12 +247,15 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  const filteredKeys = useMemo(() => (
-    keys.filter((item) =>
+  // Filtrez les clés en fonction du terme de recherche (si saisi)
+  const filteredKeys = useMemo(() => {
+    if (!debouncedSearchTerm) return keys;
+    return keys.filter((item) =>
       item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    ).slice().reverse()
-  ), [keys, debouncedSearchTerm]);
+    );
+  }, [keys, debouncedSearchTerm]);
 
+  // Optionnel : Si vous souhaitez trier les clés (ici par prix, par exemple)
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
@@ -274,7 +272,9 @@ const CleDynamicPage = () => {
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      const formattedBrand = (brandName || brandFull).toLowerCase().replace(/\s+/g, '-');
+      const formattedBrand = (brandName || brandFull)
+        .toLowerCase()
+        .replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
