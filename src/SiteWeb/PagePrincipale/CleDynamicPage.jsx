@@ -1,10 +1,11 @@
- import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
   Typography,
   Container,
   Card,
+  CardMedia,
   CardContent,
   Button,
   TextField,
@@ -42,42 +43,6 @@ function formatBrandName(name) {
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-// Composant pour afficher une image avec Skeleton conditionnel
-const ImageWithSkeleton = ({ src, alt, sx, ...props }) => {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <Box sx={{ position: 'relative', ...sx }}>
-      <img
-        src={src}
-        alt={alt}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          display: loaded ? 'block' : 'none'
-        }}
-        onLoad={() => setLoaded(true)}
-        {...props}
-      />
-      {!loaded && (
-        <Skeleton
-          variant="rectangular"
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            borderTopLeftRadius: sx?.borderTopLeftRadius,
-            borderTopRightRadius: sx?.borderTopRightRadius,
-          }}
-        />
-      )}
-    </Box>
-  );
-};
-
-// Composante CleDynamicPage
 const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
@@ -226,7 +191,7 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche
+  // Filtrage des clés par terme de recherche (sans inversion de l'ordre)
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -234,7 +199,7 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Tri (optionnel) – ici, on trie selon un critère (exemple : présence d'un prix positif)
+  // Tri (optionnel) – ici, on trie selon la présence d'un prix positif
   const sortedKeys = useMemo(() => {
     return [...filteredKeys].sort((a, b) => {
       const aIsManufacturer = Number(a.prix) > 0;
@@ -429,12 +394,24 @@ const CleDynamicPage = () => {
                           />
                         </Box>
                       )}
-                      {/* Utilisation du composant ImageWithSkeleton pour un affichage correct de l'image */}
-                      <ImageWithSkeleton
-                        src={getImageSrc(item.imageUrl)}
+                      <CardMedia
+                        component="img"
+                        image={getImageSrc(item.imageUrl)}
                         alt={item.nom}
                         sx={styles.cardMedia}
                         onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
+                      />
+                      <Skeleton
+                        variant="rectangular"
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: 180,
+                          borderTopLeftRadius: '12px',
+                          borderTopRightRadius: '12px',
+                        }}
                       />
                     </Box>
                     <CardContent sx={styles.cardContent}>
