@@ -7,7 +7,7 @@ import {
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-import Header from "./appbar.jsx";
+
 import Footer from './PagePrincipale/footer.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import { DataProvider } from './PagePrincipale/DataContext.jsx';
