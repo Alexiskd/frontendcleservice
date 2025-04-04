@@ -18,7 +18,6 @@ import {
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '../brandsApi';
 
 // --- Utilitaires ---
 function useDebounce(value, delay) {
@@ -31,7 +30,11 @@ function useDebounce(value, delay) {
 }
 
 function normalizeString(str) {
-  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return str
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function formatBrandName(name) {
@@ -40,8 +43,7 @@ function formatBrandName(name) {
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-// --- Composant ImageWithSkeleton ---
-// Ce composant affiche un Skeleton tant que l'image n'est pas chargée.
+// --- Composant pour afficher une image avec Skeleton conditionnel ---
 const ImageWithSkeleton = ({ src, alt, sx, ...props }) => {
   const [loaded, setLoaded] = useState(false);
   return (
@@ -120,6 +122,7 @@ const CleDynamicPage = () => {
   }, [brandFull, brandName, navigate]);
 
   // --- Extraction du nom de la marque ---
+  // Pour une URL du type "cle-coffre-fort-corbin.php", on retire le préfixe et l'extension (.php) si présente
   const suffix = '_1_reproduction_cle.html';
   let actualBrandName = "";
   if (brandName) {
@@ -178,7 +181,7 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandName, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque (pour URL non slug)
+  // Récupération du logo pour la marque (pour les URL non slug)
   useEffect(() => {
     const param = brandFull || brandName;
     if (/^\d+-/.test(param)) return;
@@ -202,7 +205,7 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Chargement initial des clés via preloadKeysData
+  // Récupération complète des clés de la marque depuis le backend
   useEffect(() => {
     const param = brandFull || brandName;
     if (/^\d+-/.test(param)) {
@@ -215,13 +218,20 @@ const CleDynamicPage = () => {
       return;
     }
     setLoading(true);
-    preloadKeysData(adjustedBrandName)
+    // Utilisez ici l'endpoint approprié pour récupérer toutes les clés de la marque.
+    fetch(`https://cl-back.onrender.com/brands/keys/${encodeURIComponent(adjustedBrandName)}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Erreur lors du chargement des clés");
+        }
+        return res.json();
+      })
       .then((data) => {
         console.log("Clés chargées :", data);
         setKeys(data);
       })
       .catch((err) => {
-        console.error('Erreur lors du chargement des clés:', err);
+        console.error("Erreur lors du chargement des clés:", err);
         setError(err.message);
         setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
@@ -270,9 +280,9 @@ const CleDynamicPage = () => {
       console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
-      console.error('Erreur lors de la navigation vers la commande:', error);
+      console.error("Erreur lors de la navigation vers la commande:", error);
       setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
-      setSnackbarSeverity('error');
+      setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
   }, [brandName, brandFull, navigate]);
@@ -398,10 +408,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`}
-        />
+        <meta name="keywords" content={`${adjustedBrandName}, clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
