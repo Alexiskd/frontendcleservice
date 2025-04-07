@@ -16,7 +16,7 @@ import {
   Dialog,
   DialogContent
 } from '@mui/material';
-import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
@@ -57,26 +57,27 @@ function formatPrice(price) {
 
 const CleDynamicPage = () => {
   const { brandFull } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
 
-  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", on redirige
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
 
-  // Vérification de l'URL pour extraire uniquement la marque si le format est "/cle-coffre-fort-:brandName.php"
-  const regex = /^\/cle-coffre-fort-([a-zA-Z0-9]+)\.php$/;
-  const match = location.pathname.match(regex);
-  const extractedBrand = match ? match[1] : brandFull;
-
-  // Exemple de redirection : si la marque extraite est "assa", on redirige vers la page produit correspondante
-  if (extractedBrand && extractedBrand.toLowerCase() === "assa") {
-    return <Navigate to="/produit/assa/assa-cle" replace />;
+  // Détection de l'URL du type "/cle-coffre-fort-:brandName.php"
+  let actualBrandName = brandFull;
+  if (
+    brandFull &&
+    brandFull.toLowerCase().startsWith("cle-coffre-fort-") &&
+    brandFull.toLowerCase().endsWith(".php")
+  ) {
+    actualBrandName = brandFull.slice("cle-coffre-fort-".length, -4);
+  } else if (brandFull && brandFull.endsWith('_1_reproduction_cle.html')) {
+    actualBrandName = brandFull.slice(0, -'_1_reproduction_cle.html'.length);
   }
 
-  // Pour l'affichage et pour l'API, on utilise le premier segment
-  const brandNameFromUrl = extractedBrand ? extractedBrand.split('_')[0] : "";
+  // Pour l'affichage et pour l'API
+  const brandNameFromUrl = actualBrandName.split('_')[0];
   const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
   const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
 
@@ -219,7 +220,7 @@ const CleDynamicPage = () => {
     return [...filteredKeys];
   }, [filteredKeys]);
 
-  // Navigation vers la page commande lorsque l'utilisateur clique sur "Commander"
+  // Redirige vers la page commande quand l'utilisateur appuie sur un bouton "Commander"
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
