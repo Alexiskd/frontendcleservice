@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';  
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
 import {
   Box,
@@ -155,14 +155,15 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName]);
 
-  // Redirige vers la page de commande selon le mode choisi
+  // Redirige vers la page commande selon le mode choisi
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
+        // Modification : Utilisation de la route "/commande" pour la page de commande
         navigate(
-          `/commander/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedProductName)}?mode=${mode}`
+          `/commande/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedProductName)}?mode=${mode}`
         );
       }
     },
@@ -283,7 +284,7 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                {/* Nom du produit en premier */}
+                {/* Nom du produit */}
                 <Typography
                   variant="h4"
                   sx={{
