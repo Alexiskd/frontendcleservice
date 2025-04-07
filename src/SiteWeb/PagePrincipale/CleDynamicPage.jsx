@@ -59,8 +59,7 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Modification de la redirection :
-  // Au lieu de rediriger vers une URL PHP, on redirige vers une route React dédiée
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
@@ -223,6 +222,7 @@ const CleDynamicPage = () => {
     return [...filteredKeys];
   }, [filteredKeys]);
 
+  // Modification de la fonction handleOrderNow pour rediriger vers la route commande
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
@@ -231,7 +231,8 @@ const CleDynamicPage = () => {
       }
       const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
+      // Construire l'URL pour la page commande
+      const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
