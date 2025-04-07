@@ -97,17 +97,14 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// -----------------------------
-// Composant Principal : CommandePage
-// -----------------------------
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres depuis l'URL, dont "id"
-  const { brandName, articleType, id, articleName } = useParams();
-  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
+  // Extraction des paramètres depuis l'URL
+  const { brand, reference, name } = useParams();
+  const decodedName = name ? name.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const modeNormalized = mode ? mode.toLowerCase() : '';
@@ -121,6 +118,7 @@ const CommandePage = () => {
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
 
+  // États pour les informations client et commande
   const [userInfo, setUserInfo] = useState({
     clientType: 'particulier',
     nom: '',
@@ -133,7 +131,6 @@ const CommandePage = () => {
   });
 
   const [keyInfo, setKeyInfo] = useState({
-    // En mode "numero", le nom du produit sera utilisé dans le champ "keyNumber"
     keyNumber: '',
     propertyCardNumber: '',
     frontPhoto: null,
@@ -162,26 +159,24 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
+  // Récupération du produit à l'aide du paramètre "reference"
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Si un id est présent, on utilise cet identifiant pour récupérer le produit
-        const endpoint = id
-          ? `https://cl-back.onrender.com/produit/cles/${id}`
-          : `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        const endpoint = `https://cl-back.onrender.com/produit/cles/${reference}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
-          if (response.status === 404) throw new Error('Article non trouvé.');
-          throw new Error("Erreur lors du chargement de l'article.");
+          if (response.status === 404) throw new Error('Produit non trouvé.');
+          throw new Error("Erreur lors du chargement du produit.");
         }
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-        console.log('Article récupéré :', data);
-        if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
-          throw new Error("La marque de l'article ne correspond pas.");
+        // Vérification de la marque
+        if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brand.toLowerCase()) {
+          throw new Error("La marque du produit ne correspond pas.");
         }
         setArticle(data);
       } catch (err) {
@@ -191,9 +186,9 @@ const CommandePage = () => {
       }
     };
     fetchArticle();
-  }, [brandName, decodedArticleName, articleType, id]);
+  }, [brand, reference]);
 
-  // Fonction pour normaliser le format du prix
+  // Fonction de normalisation du prix
   const normalizePrice = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(',', '.'));
@@ -201,20 +196,13 @@ const CommandePage = () => {
     return parseFloat(price);
   };
 
-  // Calcul du prix :
-  // - En mode "postal" : on utilise article.prixSansCartePropriete
-  // - En mode "numero" : on utilise article.prix (prix classique avec carte de propriété)
-  // Si article.prix est indéfini, on utilise un fallback sur article.prixSansCartePropriete.
+  // Calcul du prix du produit en fonction du mode
   const articlePrice =
     article &&
-    (isCleAPasse && article.prixCleAPasse
-      ? normalizePrice(article.prixCleAPasse)
-      : modeNormalized === 'postal'
+    (modeNormalized === 'postal'
       ? normalizePrice(article.prixSansCartePropriete)
       : modeNormalized === 'numero'
-      ? article.prix !== undefined && article.prix !== null
-        ? normalizePrice(article.prix)
-        : normalizePrice(article.prixSansCartePropriete)
+      ? normalizePrice(article.prix)
       : normalizePrice(article.prix)) || 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
@@ -251,8 +239,8 @@ const CommandePage = () => {
     return true;
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     if (name in userInfo) {
       setUserInfo((prev) => ({ ...prev, [name]: value }));
     } else if (name in keyInfo) {
@@ -260,15 +248,15 @@ const CommandePage = () => {
     }
   };
 
-  const handlePhotoUpload = (event) => {
-    const { name, files } = event.target;
+  const handlePhotoUpload = (e) => {
+    const { name, files } = e.target;
     if (files && files[0]) {
       setKeyInfo((prev) => ({ ...prev, [name]: files[0] }));
     }
   };
 
-  const handleIdCardUpload = async (event) => {
-    const { name, files } = event.target;
+  const handleIdCardUpload = async (e) => {
+    const { name, files } = e.target;
     if (files && files[0]) {
       if (name === 'domicileJustificatif') {
         const formData = new FormData();
@@ -316,7 +304,6 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
-      // Utilisation du nom du produit récupéré
       commandeFormData.append('articleName', article?.nom || '');
       commandeFormData.append('quantity', quantity);
 
@@ -383,22 +370,14 @@ const CommandePage = () => {
     }
   };
 
-  const handleCloseSnackbar = (event, reason) => {
+  const handleCloseSnackbar = (e, reason) => {
     if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
 
   if (loadingArticle) {
     return (
-      <Box
-        sx={{
-          backgroundColor: '#fff',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress />
       </Box>
     );
@@ -406,15 +385,7 @@ const CommandePage = () => {
 
   if (errorArticle) {
     return (
-      <Box
-        sx={{
-          backgroundColor: '#fff',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Typography variant="h6" color="error">
           {errorArticle}
         </Typography>
@@ -432,22 +403,13 @@ const CommandePage = () => {
                 Informations de Commande
               </Typography>
               <Divider sx={{ mb: 3 }} />
-
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#000',
-                    fontWeight: 'bold',
-                    fontSize: '1.2rem',
-                    mb: 1,
-                  }}
-                >
+                <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
                   Processus de Commande
                 </Typography>
                 {modeNormalized === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé classique).
+                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie.
                   </Typography>
                 ) : (
                   <Typography variant="body1" sx={{ color: '#000' }}>
@@ -455,7 +417,6 @@ const CommandePage = () => {
                   </Typography>
                 )}
               </Box>
-
               {modeNormalized === 'numero' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
@@ -463,17 +424,11 @@ const CommandePage = () => {
                   </Typography>
                   {article?.estCleAPasse && (
                     <FormControlLabel
-                      control={
-                        <ModernCheckbox
-                          checked={isCleAPasse}
-                          onChange={(e) => setIsCleAPasse(e.target.checked)}
-                        />
-                      }
+                      control={<ModernCheckbox checked={isCleAPasse} onChange={(e) => setIsCleAPasse(e.target.checked)} />}
                       label="Clé à passe ? (Ouvre plusieurs serrures)"
                       sx={{ mb: 2 }}
                     />
                   )}
-
                   {article?.besoinNumeroCle && (
                     <>
                       <TextField
@@ -492,16 +447,10 @@ const CommandePage = () => {
                       )}
                     </>
                   )}
-
                   {article?.besoinNumeroCarte && (
                     <Box sx={{ mb: 2 }}>
                       <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={lostCartePropriete}
-                            onChange={(e) => setLostCartePropriete(e.target.checked)}
-                          />
-                        }
+                        control={<Checkbox checked={lostCartePropriete} onChange={(e) => setLostCartePropriete(e.target.checked)} />}
                         label="J'ai perdu ma carte de propriété"
                         sx={{ mr: 2 }}
                       />
@@ -552,12 +501,7 @@ const CommandePage = () => {
                             file={idCardInfo.domicileJustificatif}
                           />
                           <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={attestationPropriete}
-                                onChange={(e) => setAttestationPropriete(e.target.checked)}
-                              />
-                            }
+                            control={<Checkbox checked={attestationPropriete} onChange={(e) => setAttestationPropriete(e.target.checked)} />}
                             label="J'atteste être le propriétaire"
                             sx={{ mt: 1 }}
                           />
@@ -567,7 +511,6 @@ const CommandePage = () => {
                   )}
                 </Box>
               )}
-
               {article?.besoinPhoto && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
@@ -591,7 +534,6 @@ const CommandePage = () => {
                   />
                 </Box>
               )}
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Quantité de copies souhaitée
@@ -606,23 +548,14 @@ const CommandePage = () => {
                   fullWidth
                 />
               </Box>
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Informations Client
                 </Typography>
                 <FormControl component="fieldset" sx={{ mb: 2 }}>
                   <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
-                    <FormControlLabel
-                      value="particulier"
-                      control={<Radio sx={{ color: '#1B5E20' }} />}
-                      label="Particulier"
-                    />
-                    <FormControlLabel
-                      value="entreprise"
-                      control={<Radio sx={{ color: '#1B5E20' }} />}
-                      label="Entreprise"
-                    />
+                    <FormControlLabel value="particulier" control={<Radio sx={{ color: '#1B5E20' }} />} label="Particulier" />
+                    <FormControlLabel value="entreprise" control={<Radio sx={{ color: '#1B5E20' }} />} label="Entreprise" />
                   </RadioGroup>
                 </FormControl>
                 <TextField
@@ -746,15 +679,13 @@ const CommandePage = () => {
                   sx={{ mb: 2 }}
                 />
               </Box>
-
               {modeNormalized === 'postal' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 1 }}>
                     Type d'expédition
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                    Une fois le paiement effectué, vous recevrez un email contenant l'adresse d'envoi de votre clé.
-                    Pour une sécurité maximale, nous vous conseillons de l'envoyer en recommandé.
+                    Une fois le paiement effectué, vous recevrez un email contenant l'adresse d'envoi de votre clé. Pour une sécurité maximale, nous vous conseillons de l'envoyer en recommandé.
                   </Typography>
                   <FormControl fullWidth>
                     <Select
@@ -783,7 +714,6 @@ const CommandePage = () => {
                   </FormControl>
                 </Box>
               )}
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Mode de Récupération
@@ -791,23 +721,13 @@ const CommandePage = () => {
                 <FormControl component="fieldset">
                   <RadioGroup row name="shippingMethod" value={shippingMethod} onChange={(e) => setShippingMethod(e.target.value)}>
                     <FormControlLabel value="magasin" control={<Radio sx={{ color: '#1B5E20' }} />} label="En magasin" />
-                    <FormControlLabel
-                      value="expedition"
-                      control={<Radio sx={{ color: '#1B5E20' }} />}
-                      label="Expédition (Collisimo Suivi 8€)"
-                    />
+                    <FormControlLabel value="expedition" control={<Radio sx={{ color: '#1B5E20' }} />} label="Expédition (Collisimo Suivi 8€)" />
                   </RadioGroup>
                 </FormControl>
               </Box>
-
               <Box>
                 <FormControlLabel
-                  control={
-                    <ModernCheckbox
-                      checked={termsAccepted}
-                      onChange={(e) => setTermsAccepted(e.target.checked)}
-                    />
-                  }
+                  control={<ModernCheckbox checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />}
                   label={
                     <>
                       J'accepte les{' '}
@@ -828,7 +748,6 @@ const CommandePage = () => {
               </Box>
             </SectionPaper>
           </Grid>
-
           <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>
@@ -899,13 +818,11 @@ const CommandePage = () => {
           </Grid>
         </Grid>
       </Container>
-
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
           <img src={article?.imageUrl} alt={article?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
         </DialogContent>
       </Dialog>
-
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -924,7 +841,6 @@ const CommandePage = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
