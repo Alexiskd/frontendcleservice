@@ -109,7 +109,7 @@ const CommandePage = () => {
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
-  const modeNormalized = mode ? mode.toLowerCase() : ''; // s'assurer que c'est en minuscule
+  const modeNormalized = mode ? mode.toLowerCase() : ''; // Assurer que c'est en minuscule
   const navigate = useNavigate();
 
   const [article, setArticle] = useState(null);
@@ -177,7 +177,7 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-        console.log('Article récupéré :', data); // Pour debugger
+        console.log('Article récupéré :', data); // Pour vérifier les données
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -199,10 +199,10 @@ const CommandePage = () => {
     return parseFloat(price);
   };
 
-  // Gestion du prix selon le mode
-  // En mode "postal", on utilise article.prixSansCartePropriete.
-  // En mode "numero", on utilise article.prix (prix classique avec carte de propriété)
-  // On ajoute un fallback si article.prix n'est pas défini.
+  // Calcul du prix en fonction du mode
+  // En mode "postal" : article.prixSansCartePropriete
+  // En mode "numero" : article.prix (prix classique avec carte de propriété)
+  // Si article.prix est indéfini, on utilise un fallback sur article.prixSansCartePropriete
   const articlePrice =
     article &&
     (isCleAPasse && article.prixCleAPasse
@@ -233,7 +233,6 @@ const CommandePage = () => {
       return false;
     }
     if (modeNormalized === 'numero') {
-      // En mode "numero", on n'a plus besoin de vérifier keyInfo.keyNumber puisque le nom du produit est utilisé
       if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim())
         return false;
       if (lostCartePropriete) {
@@ -315,12 +314,10 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
-      // Enregistrer le nom du produit commandé dans "articleName"
       commandeFormData.append('articleName', article?.nom || '');
       commandeFormData.append('quantity', quantity);
 
       if (modeNormalized === 'numero') {
-        // En mode "numero", le numéro de clé est remplacé par le nom du produit
         if (article?.besoinNumeroCle) {
           commandeFormData.append('keyNumber', article?.nom || '');
         }
@@ -476,7 +473,6 @@ const CommandePage = () => {
 
                   {article?.besoinNumeroCle && (
                     <>
-                      {/* Remplacement du champ de saisie par l'utilisation automatique du nom du produit */}
                       <TextField
                         disabled
                         placeholder="Le nom du produit sera utilisé comme numéro de clé"
@@ -857,7 +853,23 @@ const CommandePage = () => {
                     {article.manufacturer && (
                       <Typography variant="body2">Marque : {article.manufacturer}</Typography>
                     )}
-                    <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
+                    <Typography variant="body2">
+                      Prix affiché : {safeArticlePrice.toFixed(2)} €
+                    </Typography>
+                    {modeNormalized === 'numero' && (
+                      <Box>
+                        <Typography variant="body2">
+                          Prix classique (article.prix) :{" "}
+                          {article.prix !== undefined ? normalizePrice(article.prix).toFixed(2) : "Non défini"} €
+                        </Typography>
+                        <Typography variant="body2">
+                          Prix sans carte (article.prixSansCartePropriete) :{" "}
+                          {article.prixSansCartePropriete !== undefined
+                            ? normalizePrice(article.prixSansCartePropriete).toFixed(2)
+                            : "Non défini"} €
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </Box>
               )}
