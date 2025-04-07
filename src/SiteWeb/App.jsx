@@ -172,6 +172,8 @@ const App = () => {
                 <Route path="/cle-izis-cassee.php" element={<ProductPage />} />
                 {/* Nouvelles routes pour les URL dynamiques de clé coffre-fort */}
                 <Route path="/cle-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
+                {/* Route pour la page commande */}
+                <Route path="/commande/:brand/cle/:reference/:name" element={<CommandePage />} />
                 {/* Catch-all pour CleDynamicPage */}
                 <Route path="/:brandFull" element={<CleDynamicPage />} />
                 {/* Routes Admin protégées */}
