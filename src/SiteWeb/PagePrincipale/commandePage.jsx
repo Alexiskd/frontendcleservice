@@ -103,10 +103,11 @@ const CommandePage = () => {
   }, []);
 
   // Extraction des paramètres depuis l'URL
+  // La route est définie comme : /commande/:brand/cle/:reference/:name
   const { brand, reference, name } = useParams();
   const decodedName = name ? name.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode');
+  const mode = searchParams.get('mode'); // mode=postal ou mode=numero
   const modeNormalized = mode ? mode.toLowerCase() : '';
   const navigate = useNavigate();
 
@@ -118,7 +119,7 @@ const CommandePage = () => {
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
 
-  // États pour les informations client et commande
+  // Informations Client et commande
   const [userInfo, setUserInfo] = useState({
     clientType: 'particulier',
     nom: '',
@@ -159,7 +160,7 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération du produit à l'aide du paramètre "reference"
+  // Récupération du produit via le paramètre "reference"
   useEffect(() => {
     const fetchArticle = async () => {
       try {
@@ -188,7 +189,7 @@ const CommandePage = () => {
     fetchArticle();
   }, [brand, reference]);
 
-  // Fonction de normalisation du prix
+  // Fonction de normalisation des prix (pour gérer les virgules)
   const normalizePrice = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(',', '.'));
@@ -196,7 +197,9 @@ const CommandePage = () => {
     return parseFloat(price);
   };
 
-  // Calcul du prix du produit en fonction du mode
+  // Calcul du prix en fonction du mode
+  // En mode "postal" : on utilise article.prixSansCartePropriete
+  // En mode "numero"  : on utilise article.prix (prix classique avec carte de propriété)
   const articlePrice =
     article &&
     (modeNormalized === 'postal'
@@ -304,6 +307,7 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
+      // Utilisation du nom du produit récupéré
       commandeFormData.append('articleName', article?.nom || '');
       commandeFormData.append('quantity', quantity);
 
@@ -761,12 +765,7 @@ const CommandePage = () => {
                         component="img"
                         image={article.imageUrl}
                         alt={article.nom}
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          objectFit: 'cover',
-                          borderRadius: 1,
-                        }}
+                        sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1 }}
                       />
                     </Box>
                   )}
@@ -782,9 +781,7 @@ const CommandePage = () => {
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="body2">
-                  {shippingMethod === 'expedition'
-                    ? "Frais d'expédition"
-                    : "Récupération en magasin"}
+                  {shippingMethod === 'expedition' ? "Frais d'expédition" : "Récupération en magasin"}
                 </Typography>
                 <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
               </Box>
@@ -807,9 +804,7 @@ const CommandePage = () => {
                   color: '#e0e0e0',
                   fontWeight: 'bold',
                   border: '1px solid #1B5E20',
-                  '&:hover': {
-                    backgroundImage: 'linear-gradient(145deg, black, #1B5E20)',
-                  },
+                  '&:hover': { backgroundImage: 'linear-gradient(145deg, black, #1B5E20)' },
                 }}
               >
                 {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
@@ -847,3 +842,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
