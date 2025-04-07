@@ -60,18 +60,22 @@ const CleDynamicPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Vérifier si l'URL correspond au format "/cle-coffre-fort-:brand.php"
-  const regex = /^\/cle-coffre-fort-([a-zA-Z0-9]+)\.php$/;
-  const match = location.pathname.match(regex);
-  // Si oui, on extrait la marque, sinon on utilise le paramètre brandFull
-  const extractedBrand = match ? match[1] : brandFull;
-
-  // Si le résultat est exactement "Clé Izis Cavers Reparation de clé", rediriger
-  if (extractedBrand && normalizeString(extractedBrand) === normalizeString("Clé Izis Cavers Reparation de clé")) {
+  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", on redirige
+  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
 
-  // Utiliser uniquement le premier segment pour l'affichage et l'API
+  // Vérification de l'URL pour extraire uniquement la marque si le format est "/cle-coffre-fort-:brandName.php"
+  const regex = /^\/cle-coffre-fort-([a-zA-Z0-9]+)\.php$/;
+  const match = location.pathname.match(regex);
+  const extractedBrand = match ? match[1] : brandFull;
+
+  // Exemple de redirection : si la marque extraite est "assa", on redirige vers la page produit correspondante
+  if (extractedBrand && extractedBrand.toLowerCase() === "assa") {
+    return <Navigate to="/produit/assa/assa-cle" replace />;
+  }
+
+  // Pour l'affichage et pour l'API, on utilise le premier segment
   const brandNameFromUrl = extractedBrand ? extractedBrand.split('_')[0] : "";
   const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
   const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
@@ -92,7 +96,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Gestion du slug produit si le paramètre commence par un chiffre suivi d'un tiret
+  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
@@ -511,3 +515,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
