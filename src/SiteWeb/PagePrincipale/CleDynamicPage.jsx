@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'; 
+import React, { useState, useEffect, useMemo, useCallback } from 'react';  
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -92,11 +92,22 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction du nom de la marque en retirant le suffixe si présent
-  const suffix = '_1_reproduction_cle.html';
-  const actualBrandName = brandFull && brandFull.endsWith(suffix)
-    ? brandFull.slice(0, -suffix.length)
-    : brandFull;
+  // Extraction du nom de la marque en fonction du format de l'URL
+  let actualBrandName = brandFull || "";
+  const htmlSuffix = '_1_reproduction_cle.html';
+  const phpSuffix = '.php';
+
+  if (actualBrandName.endsWith(htmlSuffix)) {
+    actualBrandName = actualBrandName.slice(0, -htmlSuffix.length);
+  } else if (actualBrandName.endsWith(phpSuffix)) {
+    actualBrandName = actualBrandName.slice(0, -phpSuffix.length);
+  }
+
+  // Si l'URL est du type /cle-coffre-fort-assa.php, on retire le préfixe "cle-coffre-fort-"
+  const prefix = "cle-coffre-fort-";
+  if (actualBrandName.startsWith(prefix)) {
+    actualBrandName = actualBrandName.slice(prefix.length);
+  }
 
   // Pour l'affichage, on souhaite la forme "Abus" et pour l'API on utilise "ABUS"
   const brandNameFromUrl = actualBrandName.split('_')[0];
