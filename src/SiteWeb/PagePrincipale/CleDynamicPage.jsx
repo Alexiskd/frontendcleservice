@@ -56,6 +56,7 @@ function formatPrice(price) {
 }
 
 const CleDynamicPage = () => {
+  // Le paramètre "brandFull" est récupéré via la route "/cle-coffre-fort-:brandFull.php"
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
@@ -63,6 +64,28 @@ const CleDynamicPage = () => {
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
+
+  // Détection de l'URL du type "/cle-coffre-fort-:brandFull.php"
+  // Par exemple, si brandFull vaut "assa", on le conserve. 
+  // Sinon, si brandFull contient un suffixe particulier, on l'ajuste.
+  let actualBrandName = brandFull;
+  if (
+    brandFull &&
+    brandFull.toLowerCase().startsWith("cle-coffre-fort-") &&
+    brandFull.toLowerCase().endsWith(".php")
+  ) {
+    actualBrandName = brandFull.slice("cle-coffre-fort-".length, -4);
+  } else if (brandFull && brandFull.endsWith('_1_reproduction_cle.html')) {
+    actualBrandName = brandFull.slice(0, -'_1_reproduction_cle.html'.length);
+  }
+
+  // Pour l'affichage et l'appel API
+  const brandNameFromUrl = actualBrandName.split('_')[0];
+  const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
+  const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
+
+  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
+  console.log("Marque (API) :", adjustedBrandNameAPI);
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -92,25 +115,9 @@ const CleDynamicPage = () => {
     }
   }, [brandFull, navigate]);
 
-  // Extraction du nom de la marque en retirant le suffixe si présent
-  const suffix = '_1_reproduction_cle.html';
-  const actualBrandName = brandFull && brandFull.endsWith(suffix)
-    ? brandFull.slice(0, -suffix.length)
-    : brandFull;
-
-  // Pour l'affichage, on souhaite la forme "Abus", et pour l'API on utilise "ABUS"
-  const brandNameFromUrl = actualBrandName.split('_')[0];
-  const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
-  const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
-
-  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
-  console.log("Marque (API) :", adjustedBrandNameAPI);
-
-  // Balises SEO
   const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
   const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
-  // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
     if (imageUrl.startsWith('data:')) return imageUrl;
@@ -118,7 +125,6 @@ const CleDynamicPage = () => {
     return imageUrl;
   }, []);
 
-  // Données structurées Schema.org
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -147,7 +153,6 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandNameDisplay, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
     if (!adjustedBrandNameAPI) return;
@@ -170,7 +175,6 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des clés depuis le backend
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -197,7 +201,6 @@ const CleDynamicPage = () => {
       .finally(() => setLoading(false));
   }, [adjustedBrandNameAPI, brandFull]);
 
-  // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
@@ -209,7 +212,6 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -217,12 +219,11 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Conserver l'ordre du backend
   const sortedKeys = useMemo(() => {
     return [...filteredKeys];
   }, [filteredKeys]);
 
-  // Modification de la fonction handleOrderNow pour rediriger vers la route commande
+  // Navigation vers la page commande lorsque l'utilisateur clique sur "Commander"
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
@@ -231,7 +232,6 @@ const CleDynamicPage = () => {
       }
       const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      // Construire l'URL pour la page commande
       const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
@@ -456,40 +456,22 @@ const CleDynamicPage = () => {
                     </CardContent>
                     <Box sx={styles.buttonContainer}>
                       {Number(item.prix) > 0 && (
-                        <Button
+                        <StyledButton
                           variant="outlined"
                           onClick={() => handleOrderNow(item, 'numero')}
                           startIcon={<ConfirmationNumberIcon />}
-                          sx={{
-                            ...styles.buttonSecondary,
-                            borderColor: '#1B5E20',
-                            color: '#1B5E20',
-                            '&:hover': {
-                              backgroundColor: '#1B5E20',
-                              color: '#fff'
-                            }
-                          }}
                         >
                           Commander par numéro
-                        </Button>
+                        </StyledButton>
                       )}
                       {Number(item.prixSansCartePropriete) > 0 && (
-                        <Button
+                        <StyledButton
                           variant="outlined"
                           onClick={() => handleOrderNow(item, 'postal')}
                           startIcon={<LocalShippingIcon />}
-                          sx={{
-                            ...styles.buttonSecondary,
-                            borderColor: '#1B5E20',
-                            color: '#1B5E20',
-                            '&:hover': {
-                              backgroundColor: '#1B5E20',
-                              color: '#fff'
-                            }
-                          }}
                         >
                           Commander en atelier
-                        </Button>
+                        </StyledButton>
                       )}
                       <Button variant="text" onClick={() => handleViewProduct(item)} sx={{ mt: 1, textTransform: 'none' }}>
                         Voir le produit
