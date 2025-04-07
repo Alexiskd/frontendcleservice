@@ -109,6 +109,7 @@ const CommandePage = () => {
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
+  const modeNormalized = mode ? mode.toLowerCase() : ''; // s'assurer que c'est en minuscule
   const navigate = useNavigate();
 
   const [article, setArticle] = useState(null);
@@ -176,6 +177,7 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
+        console.log('Article récupéré :', data); // Pour debugger
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -198,17 +200,20 @@ const CommandePage = () => {
   };
 
   // Gestion du prix selon le mode
-  // En mode "postal", on utilise le prix sans carte de propriété,
-  // En mode "numero", on utilise le prix classique (avec carte de propriété), c'est-à-dire "prix".
-  const articlePrice = article
-    ? isCleAPasse && article.prixCleAPasse
+  // En mode "postal", on utilise article.prixSansCartePropriete.
+  // En mode "numero", on utilise article.prix (prix classique avec carte de propriété)
+  // On ajoute un fallback si article.prix n'est pas défini.
+  const articlePrice =
+    article &&
+    (isCleAPasse && article.prixCleAPasse
       ? normalizePrice(article.prixCleAPasse)
-      : mode === 'postal'
+      : modeNormalized === 'postal'
       ? normalizePrice(article.prixSansCartePropriete)
-      : mode === 'numero'
-      ? normalizePrice(article.prix)
-      : normalizePrice(article.prix)
-    : 0;
+      : modeNormalized === 'numero'
+      ? article.prix !== undefined && article.prix !== null
+        ? normalizePrice(article.prix)
+        : normalizePrice(article.prixSansCartePropriete)
+      : normalizePrice(article.prix)) || 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
   const totalPrice = safeArticlePrice + shippingFee;
@@ -223,11 +228,11 @@ const CommandePage = () => {
       !userInfo.ville.trim() ||
       (article?.besoinPhoto && (!keyInfo.frontPhoto || !keyInfo.backPhoto)) ||
       !shippingMethod ||
-      (mode === 'postal' && !deliveryType)
+      (modeNormalized === 'postal' && !deliveryType)
     ) {
       return false;
     }
-    if (mode === 'numero') {
+    if (modeNormalized === 'numero') {
       // En mode "numero", on n'a plus besoin de vérifier keyInfo.keyNumber puisque le nom du produit est utilisé
       if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim())
         return false;
@@ -314,7 +319,7 @@ const CommandePage = () => {
       commandeFormData.append('articleName', article?.nom || '');
       commandeFormData.append('quantity', quantity);
 
-      if (mode === 'numero') {
+      if (modeNormalized === 'numero') {
         // En mode "numero", le numéro de clé est remplacé par le nom du produit
         if (article?.besoinNumeroCle) {
           commandeFormData.append('keyNumber', article?.nom || '');
@@ -440,7 +445,7 @@ const CommandePage = () => {
                 >
                   Processus de Commande
                 </Typography>
-                {mode === 'postal' ? (
+                {modeNormalized === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
                     Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé classique).
                   </Typography>
@@ -451,7 +456,7 @@ const CommandePage = () => {
                 )}
               </Box>
 
-              {mode === 'numero' && (
+              {modeNormalized === 'numero' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     Informations sur la clé
@@ -743,7 +748,7 @@ const CommandePage = () => {
                 />
               </Box>
 
-              {mode === 'postal' && (
+              {modeNormalized === 'postal' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 1 }}>
                     Type d'expédition
