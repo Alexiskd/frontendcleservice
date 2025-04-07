@@ -56,18 +56,15 @@ function formatPrice(price) {
 }
 
 const CleDynamicPage = () => {
-  // Le paramètre "brandFull" est récupéré via la route "/cle-coffre-fort-:brandFull.php"
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", on redirige
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
 
-  // Détection de l'URL du type "/cle-coffre-fort-:brandFull.php"
-  // Par exemple, si brandFull vaut "assa", on le conserve. 
-  // Sinon, si brandFull contient un suffixe particulier, on l'ajuste.
+  // Détection de l'URL du type "/cle-coffre-fort-:brandName.php"
   let actualBrandName = brandFull;
   if (
     brandFull &&
@@ -79,7 +76,12 @@ const CleDynamicPage = () => {
     actualBrandName = brandFull.slice(0, -'_1_reproduction_cle.html'.length);
   }
 
-  // Pour l'affichage et l'appel API
+  // Si l'URL est "/cle-coffre-fort-assa.php", on redirige vers la page produit correspondante
+  if (actualBrandName.toLowerCase() === "assa") {
+    return <Navigate to="/produit/assa/assa-cle" replace />;
+  }
+
+  // Pour l'affichage et pour l'API, on utilise le premier segment
   const brandNameFromUrl = actualBrandName.split('_')[0];
   const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
   const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
