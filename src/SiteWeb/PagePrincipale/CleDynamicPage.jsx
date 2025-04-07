@@ -59,9 +59,10 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  // Modification de la redirection :
+  // Au lieu de rediriger vers une URL PHP, on redirige vers une route React dédiée
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
-    return <Navigate to="/cle-izis-cassee.php" replace />;
+    return <Navigate to="/cle-izis-cassee" replace />;
   }
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -243,7 +244,7 @@ const CleDynamicPage = () => {
 
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
-      navigate("/cle-izis-cassee.php");
+      navigate("/cle-izis-cassee");
     } else {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
@@ -535,4 +536,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
