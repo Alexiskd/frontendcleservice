@@ -161,7 +161,7 @@ const ProductPage = () => {
       if (product) {
         const formattedBrand = brandName.toLowerCase().replace(/\s+/g, '-');
         const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
-        // Utilisation de la route "/commande" pour la page de commande
+        // Navigation vers la route de commande
         navigate(
           `/commande/${formattedBrand}/cle/${product.referenceEbauche}/${encodeURIComponent(formattedProductName)}?mode=${mode}`
         );
@@ -469,3 +469,4 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
+
