@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -190,12 +190,23 @@ const CommandePage = () => {
     fetchArticle();
   }, [brandName, decodedArticleName, articleType]);
 
+  // Fonction pour normaliser le format du prix
+  const normalizePrice = (price) => {
+    if (typeof price === 'string') {
+      return parseFloat(price.replace(',', '.'));
+    }
+    return parseFloat(price);
+  };
+
+  // Gestion du prix selon le mode
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
-      ? parseFloat(article.prixCleAPasse)
+      ? normalizePrice(article.prixCleAPasse)
       : mode === 'postal'
-      ? parseFloat(article.prixSansCartePropriete)
-      : parseFloat(article.prix)
+      ? normalizePrice(article.prixSansCartePropriete)
+      : mode === 'numero'
+      ? normalizePrice(article.prixNumero || article.prix)
+      : normalizePrice(article.prix)
     : 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
@@ -217,7 +228,8 @@ const CommandePage = () => {
     }
     if (mode === 'numero') {
       // Ici, nous n'avons plus besoin de vérifier keyInfo.keyNumber car nous y mettrons le nom du produit commandé
-      if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim()) return false;
+      if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim())
+        return false;
       if (lostCartePropriete) {
         if (
           !idCardInfo.idCardFront ||
