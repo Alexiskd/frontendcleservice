@@ -1,9 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  Box,
-  CircularProgress,
-} from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -26,7 +23,7 @@ const StatistiquesCommandes = lazy(() => import('../AppAdmin/stat.jsx'));
 // Pages utilisateurs (lazy loading)
 const CommandePagePanier = lazy(() => import('./PagePrincipale/commandePagePanier.jsx'));
 const Login = lazy(() => import("../SiteWeb/HomePage.jsx"));
-import Catalogue from "./PagePrincipale/catologue.jsx";
+import Catalogue from "./PagePrincipale/catalogue.jsx";
 const CleDynamicPage = lazy(() => import("./PagePrincipale/CleDynamicPage.jsx"));
 const Coffrefort = lazy(() => import('./PagePrincipale/coffrefort.jsx'));
 const Telecommande = lazy(() => import('./PagePrincipale/telecommande.jsx'));
@@ -74,7 +71,7 @@ const App = () => {
   const handleCloseTutorial = () => setShowTutorial(false);
   const isAppRoute = location.pathname.startsWith('/app');
 
-  // Préchargement immédiat des modules lazy (sans keysearch.jsx)
+  // Préchargement immédiat des modules lazy
   useEffect(() => {
     import("./PagePrincipale/CleDynamicPage.jsx");
     import("../AppAdmin/barreadmin.jsx");
@@ -175,7 +172,6 @@ const App = () => {
                 <Route path="/cle-izis-cassee.php" element={<ProductPage />} />
                 {/* Nouvelles routes pour les URL dynamiques de clé coffre-fort */}
                 <Route path="/cle-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
-            
                 {/* Catch-all pour CleDynamicPage */}
                 <Route path="/:brandFull" element={<CleDynamicPage />} />
                 {/* Routes Admin protégées */}
