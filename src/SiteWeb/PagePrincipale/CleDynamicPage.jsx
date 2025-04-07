@@ -222,6 +222,7 @@ const CleDynamicPage = () => {
     return [...filteredKeys];
   }, [filteredKeys]);
 
+  // Modification de la fonction handleOrderNow pour rediriger vers la route commande
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
@@ -230,7 +231,7 @@ const CleDynamicPage = () => {
       }
       const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      // Modification de l'URL pour naviguer vers la page commande
+      // Construire l'URL pour la page commande
       const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
