@@ -23,7 +23,7 @@ const StatistiquesCommandes = lazy(() => import('../AppAdmin/stat.jsx'));
 // Pages utilisateurs (lazy loading)
 const CommandePagePanier = lazy(() => import('./PagePrincipale/commandePagePanier.jsx'));
 const Login = lazy(() => import("../SiteWeb/HomePage.jsx"));
-import Catalogue from "./PagePrincipale/catologue.jsx"; // Note : le fichier s'appelle "catologue.jsx"
+import Catalogue from "./PagePrincipale/catologue.jsx"; // Vérifiez que le nom du fichier est "catologue.jsx"
 const CleDynamicPage = lazy(() => import("./PagePrincipale/CleDynamicPage.jsx"));
 const Coffrefort = lazy(() => import('./PagePrincipale/coffrefort.jsx'));
 const Telecommande = lazy(() => import('./PagePrincipale/telecommande.jsx'));
@@ -124,7 +124,7 @@ const App = () => {
       <DataProvider>
         <>
           <Helmet>
-            {/* Métadonnées */}
+            {/* Vos métadonnées ici */}
           </Helmet>
           <noscript>
             <div style={{ padding: '1rem', textAlign: 'center', background: '#f8d7da', color: '#721c24' }}>
@@ -170,8 +170,11 @@ const App = () => {
                 <Route path="/produit/:brandName/:productName" element={<ProductPage />} />
                 {/* Ancien lien toujours fonctionnel */}
                 <Route path="/cle-izis-cassee.php" element={<ProductPage />} />
-                {/* Route pour les URL dynamiques de clé coffre-fort */}
+                {/* Routes pour les URL dynamiques de clé coffre‑fort */}
                 <Route path="/cle-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
+                <Route path="/clé-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
+                {/* Nouveau lien spécifique vers /cle-coffre-fort-assa.php */}
+                <Route path="/cle-coffre-fort-assa.php" element={<CleDynamicPage />} />
                 {/* Route pour la page commande */}
                 <Route path="/commande/:brand/cle/:reference/:name" element={<CommandePage />} />
                 {/* Catch-all pour CleDynamicPage */}
