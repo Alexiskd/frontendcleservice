@@ -1,513 +1,218 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Helmet, HelmetProvider } from 'react-helmet-async';
-import {
-  Box,
-  Typography,
-  Container,
-  Card,
-  CardMedia,
-  CardContent,
-  Button,
-  TextField,
-  Snackbar,
-  Alert,
-  Skeleton,
-  Grid,
-  Dialog,
-  DialogContent
-} from '@mui/material';
-import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '../brandsApi';
+ import React, { useState, useEffect, Suspense, lazy } from 'react'; 
+import { Helmet } from 'react-helmet';
+import { Box, CircularProgress } from '@mui/material';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import styled from 'styled-components';
 
-// Hook de debounce pour la saisie utilisateur
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debouncedValue;
-}
+import Header from "./appbar.jsx";
+import Footer from './PagePrincipale/footer.jsx';
+import { CartProvider } from './context/CartContext.jsx';
+import { DataProvider } from './PagePrincipale/DataContext.jsx';
+import ProductPage from './PagePrincipale/ProductPage.jsx';
+import { preloadBrandsData, preloadKeysData } from './brandsApi';
 
-// Normalisation d'une chaîne
-function normalizeString(str) {
-  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
+// Composantes Admin (lazy loading)
+const Barreadmin = lazy(() => import('../AppAdmin/barreadmin.jsx'));
+const Ajoutez = lazy(() => import('../AppAdmin/ajoutez.jsx'));
+const Commande = lazy(() => import('../AppAdmin/commande.jsx'));
+const Messages = lazy(() => import('../AppAdmin/Messages.jsx'));
+const Loginside = lazy(() => import('../AppAdmin/loginside.jsx'));
+const MarqueAdmin = lazy(() => import('../AppAdmin/MarqueAdmin.jsx'));
+const StatistiquesCommandes = lazy(() => import('../AppAdmin/stat.jsx'));
 
-// Formatage pour l'affichage : première lettre en majuscule
-function formatBrandName(name) {
-  if (!name) return "";
-  const lower = name.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
-}
+// Pages utilisateurs (lazy loading)
+const CommandePagePanier = lazy(() => import('./PagePrincipale/commandePagePanier.jsx'));
+const Login = lazy(() => import("../SiteWeb/HomePage.jsx"));
+import Catalogue from "./PagePrincipale/catologue.jsx"; // Vérifiez que le nom du fichier est "catologue.jsx"
+const CleDynamicPage = lazy(() => import("./PagePrincipale/CleDynamicPage.jsx"));
+const Coffrefort = lazy(() => import('./PagePrincipale/coffrefort.jsx'));
+const Telecommande = lazy(() => import('./PagePrincipale/telecommande.jsx'));
+const Badgeuu = lazy(() => import('./PagePrincipale/badge.jsx'));
+const ServiceRedirect = lazy(() => import('./PagePrincipale/serviceredirect.jsx'));
+const Contact = lazy(() => import('./PagePrincipale/contact.jsx'));
+const Devis = lazy(() => import('./UserPA/devis.jsx'));
+const TutorialPopup = lazy(() => import('./PagePrincipale/tuto.jsx'));
+const AboutUs = lazy(() => import('./PagePrincipale/aboutus.jsx'));
+const CommandePage = lazy(() => import('./PagePrincipale/commandePage.jsx'));
+const PaymentSuccess = lazy(() => import('./PagePrincipale/PaymentSuccess.jsx'));
+const PaymentCancel = lazy(() => import('./PagePrincipale/PaymentCancel.jsx'));
+const MultiImageUploader = lazy(() => import('../AppAdmin/multi.jsx'));
+const PolitiqueConfidentialite = lazy(() => import('./PagePrincipale/politique.jsx'));
+const MentionsLegales = lazy(() => import('./PagePrincipale/mentionlegal.jsx'));
+const ConditionsGeneralesDeVente = lazy(() => import('./PagePrincipale/conditiongene.jsx'));
 
-// Fonction pour formater le prix avec une virgule et deux zéros pour les entiers
-function formatPrice(price) {
-  const parsedPrice = parseFloat(price);
-  if (isNaN(parsedPrice)) {
-    return '0,00';
-  }
-  if (Number.isInteger(parsedPrice)) {
-    return parsedPrice.toFixed(2).replace('.', ',');
-  }
-  return parsedPrice.toFixed(2).replace('.', ',');
-}
+const AppContainer = styled.div
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f9fafb;
+;
 
-const CleDynamicPage = () => {
-  const { brandFull } = useParams();
+const ProtectedRouteWrapper = ({ children }) => {
+  const isAuthenticated = () => !!localStorage.getItem('token');
+  return isAuthenticated() ? children : <Navigate to="/app" />;
+};
+
+const App = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-
-  // Vérifier si l'URL correspond au format "/cle-coffre-fort-:brand.php"
-  const regex = /^\/cle-coffre-fort-([a-zA-Z0-9]+)\.php$/;
-  const match = location.pathname.match(regex);
-  // Si oui, on extrait la marque, sinon on utilise le paramètre brandFull
-  const extractedBrand = match ? match[1] : brandFull;
-
-  // Si le résultat est exactement "Clé Izis Cavers Reparation de clé", rediriger
-  if (extractedBrand && normalizeString(extractedBrand) === normalizeString("Clé Izis Cavers Reparation de clé")) {
-    return <Navigate to="/cle-izis-cassee" replace />;
-  }
-
-  // Utiliser uniquement le premier segment pour l'affichage et l'API
-  const brandNameFromUrl = extractedBrand ? extractedBrand.split('_')[0] : "";
-  const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
-  const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
-
-  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
-  console.log("Marque (API) :", adjustedBrandNameAPI);
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [keys, setKeys] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [brandLogo, setBrandLogo] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalImageSrc, setModalImageSrc] = useState('');
-  const [scale, setScale] = useState(1);
-
-  // Gestion du slug produit si le paramètre commence par un chiffre suivi d'un tiret
-  useEffect(() => {
-    if (/^\d+-/.test(brandFull)) {
-      const parts = brandFull.split("-");
-      if (parts.length >= 3) {
-        const brand = parts[0];
-        const productName = parts.slice(2).join("-");
-        console.log("Navigation produit (slug):", brand, productName);
-        navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
-      } else {
-        navigate(`/produit/${encodeURIComponent(brandFull)}`);
-      }
-    }
-  }, [brandFull, navigate]);
-
-  const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
-  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
-
-  const getImageSrc = useCallback((imageUrl) => {
-    if (!imageUrl || imageUrl.trim() === '') return '';
-    if (imageUrl.startsWith('data:')) return imageUrl;
-    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
-    return imageUrl;
-  }, []);
-
-  const jsonLdData = useMemo(() => ({
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": `${adjustedBrandNameDisplay} – Catalogue de clés`,
-    "description": `Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.`,
-    "itemListElement": keys.map((item, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "item": {
-        "@type": "Product",
-        "name": item.nom,
-        "description": item.descriptionNumero || "Clé de reproduction",
-        "image": getImageSrc(item.imageUrl),
-        "brand": {
-          "@type": "Brand",
-          "name": item.marque
-        },
-        "offers": {
-          "@type": "Offer",
-          "price": item.prix,
-          "priceCurrency": "EUR",
-          "availability": "https://schema.org/InStock",
-          "url": window.location.href
-        }
-      }
-    }))
-  }), [adjustedBrandNameDisplay, keys, getImageSrc]);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    if (/^\d+-/.test(brandFull)) return;
-    if (!adjustedBrandNameAPI) return;
-    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(adjustedBrandNameAPI)}`)
-      .then((res) => {
-        if (res.ok) return res.blob();
-        throw new Error(`Logo non trouvé pour ${adjustedBrandNameAPI}`);
-      })
-      .then((blob) => {
-        const logoUrl = URL.createObjectURL(blob);
-        setBrandLogo(logoUrl);
-      })
-      .catch((error) => {
-        console.error("Erreur lors du chargement du logo:", error);
-        setBrandLogo(null);
-      });
-  }, [adjustedBrandNameAPI, brandFull]);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    if (/^\d+-/.test(brandFull)) {
-      setLoading(false);
-      return;
-    }
-    if (!adjustedBrandNameAPI) {
-      setError("La marque n'a pas été fournie.");
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    preloadKeysData(adjustedBrandNameAPI)
-      .then((data) => {
-        console.log("Clés chargées :", data);
-        setKeys(data);
-      })
-      .catch((err) => {
-        console.error("Erreur lors du chargement des clés:", err);
-        setError(err.message);
-        setSnackbarMessage(`Erreur: ${err.message}`);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      })
-      .finally(() => setLoading(false));
-  }, [adjustedBrandNameAPI, brandFull]);
-
-  useEffect(() => {
-    keys.forEach((item) => {
-      const img = new Image();
-      img.src = getImageSrc(item.imageUrl);
-    });
-  }, [keys, getImageSrc]);
-
-  const handleSearchChange = useCallback((event) => {
-    setSearchTerm(event.target.value);
-  }, []);
-
-  const filteredKeys = useMemo(() => {
-    if (!debouncedSearchTerm) return keys;
-    return keys.filter((item) =>
-      item.nom.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    );
-  }, [keys, debouncedSearchTerm]);
-
-  const sortedKeys = useMemo(() => {
-    return [...filteredKeys];
-  }, [filteredKeys]);
-
-  // Navigation vers la page commande lorsque l'utilisateur clique sur "Commander"
-  const handleOrderNow = useCallback((item, mode) => {
-    try {
-      const reference = item.referenceEbauche || item.reference || item.id;
-      if (!reference) {
-        throw new Error("Référence introuvable pour cet article");
-      }
-      const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
-      const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
-      console.log("Navigation vers", url);
-      navigate(url);
-    } catch (error) {
-      console.error("Erreur lors de la navigation vers la commande:", error);
-      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
-  }, [brandFull, navigate]);
-
-  const handleViewProduct = useCallback((item) => {
-    if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
-      navigate("/cle-izis-cassee");
+    if (
+      location.pathname === '/trouvez.php' ||
+      location.pathname === '/catalogue-cles-coffre.php'
+    ) {
+      setShowTutorial(true);
     } else {
-      const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-      navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
+      setShowTutorial(false);
     }
-  }, [navigate]);
+  }, [location]);
 
-  const handleCloseSnackbar = useCallback((event, reason) => {
-    if (reason === 'clickaway') return;
-    setSnackbarOpen(false);
+  const handleCloseTutorial = () => setShowTutorial(false);
+  const isAppRoute = location.pathname.startsWith('/app');
+
+  // Préchargement immédiat des modules lazy
+  useEffect(() => {
+    import("./PagePrincipale/CleDynamicPage.jsx");
+    import("../AppAdmin/barreadmin.jsx");
+    import("../AppAdmin/ajoutez.jsx");
+    import("../AppAdmin/commande.jsx");
+    import("../AppAdmin/Messages.jsx");
+    import("../AppAdmin/loginside.jsx");
+    import("../AppAdmin/MarqueAdmin.jsx");
+    import("../AppAdmin/stat.jsx");
+    import("./PagePrincipale/commandePagePanier.jsx");
+    import("./PagePrincipale/coffrefort.jsx");
+    import("./PagePrincipale/telecommande.jsx");
+    import("./PagePrincipale/badge.jsx");
+    import("./PagePrincipale/serviceredirect.jsx");
+    import("./PagePrincipale/contact.jsx");
+    import("./UserPA/devis.jsx");
+    import("./PagePrincipale/tuto.jsx");
+    import("./PagePrincipale/aboutus.jsx");
+    import("./PagePrincipale/commandePage.jsx");
+    import("./PagePrincipale/PaymentSuccess.jsx");
+    import("./PagePrincipale/PaymentCancel.jsx");
+    import("../AppAdmin/multi.jsx");
+    import("./PagePrincipale/politique.jsx");
+    import("./PagePrincipale/mentionlegal.jsx");
+    import("./PagePrincipale/conditiongene.jsx");
   }, []);
 
-  const handleWheel = useCallback((event) => {
-    event.preventDefault();
-    setScale((prevScale) => {
-      let newScale = prevScale + (event.deltaY < 0 ? 0.1 : -0.1);
-      return Math.max(0.5, Math.min(newScale, 3));
-    });
-  }, []);
-
-  const styles = useMemo(() => ({
-    page: {
-      backgroundColor: '#fafafa',
-      minHeight: '100vh',
-      paddingBottom: '24px'
-    },
-    searchContainer: {
-      marginTop: { xs: '20px', sm: '40px' }
-    },
-    gridContainer: {
-      padding: '16px 0'
-    },
-    card: {
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      minHeight: '400px',
-      width: '100%',
-      flex: 1
-    },
-    cardMedia: {
-      height: 180,
-      objectFit: 'contain',
-      backgroundColor: '#fff',
-      borderTopLeftRadius: '12px',
-      borderTopRightRadius: '12px'
-    },
-    cardContent: {
-      flexGrow: 1,
-      padding: { xs: '8px', sm: '16px' },
-      fontFamily: 'Montserrat, sans-serif',
-      textAlign: 'left'
-    },
-    productName: {
-      fontSize: '1.2rem',
-      fontWeight: 700,
-      marginBottom: 0,
-      color: '#333',
-      cursor: 'pointer'
-    },
-    brandName: {
-      fontSize: '0.9rem',
-      color: '#777',
-      marginBottom: '8px'
-    },
-    pricesContainer: {
-      display: 'flex',
-      gap: '8px',
-      marginTop: '12px'
-    },
-    priceBadge: {
-      backgroundColor: '#e8f5e9',
-      padding: '6px 12px',
-      borderRadius: '8px',
-      textAlign: 'center',
-      color: '#1B5E20'
-    },
-    buttonSecondary: {
-      borderRadius: '50px',
-      padding: '8px 16px',
-      fontFamily: 'Montserrat, sans-serif',
-      textTransform: 'none',
-      fontWeight: 600,
-      fontSize: '0.75rem',
-      boxShadow: 'none',
-      marginTop: '8px'
-    },
-    buttonContainer: {
-      padding: { xs: '8px', sm: '16px' },
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      mt: 'auto'
-    },
-    brandLogoContainer: {
-      position: 'absolute',
-      top: 8,
-      left: 8,
-      width: 32,
-      height: 32,
-      borderRadius: '50%',
-      overflow: 'hidden',
-      backgroundColor: '#fff',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-      zIndex: 2
+  // Préchargement des données hors admin
+  useEffect(() => {
+    if (!location.pathname.startsWith('/app')) {
+      preloadBrandsData()
+        .then((brandsData) => {
+          console.log("Marques préchargées :", brandsData);
+          brandsData.forEach((brand) => {
+            preloadKeysData(brand.nom)
+              .then((keysData) => {
+                console.log(Clés préchargées pour ${brand.nom} :, keysData);
+              })
+              .catch((err) =>
+                console.error(Erreur lors du préchargement des clés pour ${brand.nom} :, err)
+              );
+          });
+        })
+        .catch((err) => console.error("Erreur lors du préchargement des marques :", err));
     }
-  }), []);
+  }, [location.pathname]);
 
   return (
-    <HelmetProvider>
-      <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={`${adjustedBrandNameDisplay}, clés, reproduction, commande, qualité, produit authentique`} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://votre-site.com" />
-        <script type="application/ld+json">
-          {JSON.stringify(jsonLdData)}
-        </script>
-      </Helmet>
-      <Box sx={styles.page}>
-        <Container sx={styles.searchContainer}>
-          <TextField
-            label="Tapez le numéro de votre clé"
-            variant="outlined"
-            fullWidth
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-        </Container>
-        <Container maxWidth="xl">
-          {loading ? (
-            <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Chargement...
-            </Typography>
-          ) : error ? (
-            <Typography align="center" color="error" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
-              {error}
-            </Typography>
-          ) : sortedKeys.length > 0 ? (
-            <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
-              {sortedKeys.map((item, index) => (
-                <Grid key={item.id || index} item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
-                  <Card sx={styles.card}>
-                    <Box onClick={() => handleViewProduct(item)} sx={{ cursor: 'pointer', position: 'relative' }}>
-                      {brandLogo && (
-                        <Box sx={styles.brandLogoContainer}>
-                          <img
-                            src={brandLogo}
-                            alt={item.marque}
-                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                            onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
-                          />
+    <CartProvider>
+      <DataProvider>
+        <>
+          <Helmet>
+            {/* Vos métadonnées ici */}
+          </Helmet>
+          <noscript>
+            <div style={{ padding: '1rem', textAlign: 'center', background: '#f8d7da', color: '#721c24' }}>
+              Cette application fonctionne mieux avec JavaScript activé.
+            </div>
+          </noscript>
+          <AppContainer className="app">
+            {!isAppRoute && <Header />}
+            {showTutorial && (
+              <Suspense fallback={<div style={{ textAlign: 'center', padding: '20px' }}>Chargement du tutoriel...</div>}>
+                <TutorialPopup onClose={handleCloseTutorial} />
+              </Suspense>
+            )}
+            <Suspense fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh' }}>
+                <CircularProgress />
+              </Box>
+            }>
+              <Routes>
+                {/* Routes publiques */}
+                <Route path="/" element={<Login />} />
+                <Route path="/index.php" element={<Login />} />
+                <Route path="/trouvez.php" element={<Catalogue />} />
+                <Route path="/catalogue-cles-coffre.php" element={<Coffrefort />} />
+                <Route path="/catalogue-telecommandes.php" element={<Telecommande />} />
+                <Route path="/badges.php" element={<Badgeuu />} />
+                <Route path="/services.php" element={<ServiceRedirect />} />
+                <Route path="/cle/double-de-cle.html" element={<ServiceRedirect />} />
+                <Route path="/zone.php" element={<ServiceRedirect />} />
+                <Route path="/paiement_devis.php" element={<ServiceRedirect />} />
+                <Route path="/recherche.php" element={<ServiceRedirect />} />
+                <Route path="/contact.php" element={<Contact />} />
+                <Route path="/commande-success" element={<PaymentSuccess />} />
+                <Route path="/commande-cancel" element={<PaymentCancel />} />
+                <Route path="/devis.php" element={<Devis />} />
+                <Route path="/qui.php" element={<AboutUs />} />
+                <Route path="/commande-panier" element={<CommandePagePanier />} />
+                <Route path="/upload-multiple" element={<MultiImageUploader />} />
+                <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
+                <Route path="/mentions-legales" element={<MentionsLegales />} />
+                <Route path="/conditions-generales" element={<ConditionsGeneralesDeVente />} />
+                {/* Route produit */}
+                <Route path="/produit/:brandName/:productName" element={<ProductPage />} />
+                {/* Ancien lien toujours fonctionnel */}
+                <Route path="/cle-izis-cassee.php" element={<ProductPage />} />
+                {/* Routes pour les URL dynamiques de clé coffre‑fort */}
+                <Route path="/cle-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
+                <Route path="/clé-coffre-fort-:brandName.php" element={<CleDynamicPage />} />
+                {/* Nouveau lien spécifique vers /cle-coffre-fort-assa.php */}
+                <Route path="/cle-coffre-fort-assa.php" element={<CleDynamicPage />} />
+                {/* Route pour la page commande */}
+                <Route path="/commande/:brand/cle/:reference/:name" element={<CommandePage />} />
+                {/* Catch-all pour CleDynamicPage */}
+                <Route path="/:brandFull" element={<CleDynamicPage />} />
+                {/* Routes Admin protégées */}
+                <Route
+                  path="/app/admin/*"
+                  element={
+                    <ProtectedRouteWrapper>
+                      <Box sx={{ display: 'flex' }}>
+                        <Suspense fallback={<div>Chargement de l'administration...</div>}>
+                          <Barreadmin />
+                        </Suspense>
+                        <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, ml: '240px' }}>
+                          <Suspense fallback={<div>Chargement...</div>}>
+                            <Routes>
+                              <Route path="ajouter" element={<Ajoutez />} />
+                              <Route path="commande" element={<Commande />} />
+                              <Route path="statistiques" element={<StatistiquesCommandes />} />
+                              <Route path="messages" element={<Messages />} />
+                              <Route path="marque" element={<MarqueAdmin />} />
+                            </Routes>
+                          </Suspense>
                         </Box>
-                      )}
-                      {loading ? (
-                        <Skeleton
-                          variant="rectangular"
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: 180,
-                            borderTopLeftRadius: '12px',
-                            borderTopRightRadius: '12px',
-                          }}
-                        />
-                      ) : (
-                        <CardMedia
-                          component="img"
-                          image={getImageSrc(item.imageUrl)}
-                          alt={item.nom}
-                          sx={styles.cardMedia}
-                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
-                        />
-                      )}
-                    </Box>
-                    <CardContent sx={styles.cardContent}>
-                      <Typography sx={styles.productName} onClick={() => handleViewProduct(item)}>
-                        {item.nom}
-                      </Typography>
-                      <Typography sx={styles.brandName}>{item.marque}</Typography>
-                      <Box sx={styles.pricesContainer}>
-                        {Number(item.prix) > 0 && (
-                          <Box sx={styles.priceBadge}>
-                            <Typography variant="caption">Copie fabricant</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                              {formatPrice(item.prix)} €
-                            </Typography>
-                          </Box>
-                        )}
-                        {Number(item.prixSansCartePropriete) > 0 && (
-                          <Box sx={styles.priceBadge}>
-                            <Typography variant="caption">Copie atelier</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                              {formatPrice(item.prixSansCartePropriete)} €
-                            </Typography>
-                          </Box>
-                        )}
                       </Box>
-                    </CardContent>
-                    <Box sx={styles.buttonContainer}>
-                      {Number(item.prix) > 0 && (
-                        <StyledButton
-                          variant="outlined"
-                          onClick={() => handleOrderNow(item, 'numero')}
-                          startIcon={<ConfirmationNumberIcon />}
-                        >
-                          Commander par numéro
-                        </StyledButton>
-                      )}
-                      {Number(item.prixSansCartePropriete) > 0 && (
-                        <StyledButton
-                          variant="outlined"
-                          onClick={() => handleOrderNow(item, 'postal')}
-                          startIcon={<LocalShippingIcon />}
-                        >
-                          Commander en atelier
-                        </StyledButton>
-                      )}
-                      <Button variant="text" onClick={() => handleViewProduct(item)} sx={{ mt: 1, textTransform: 'none' }}>
-                        Voir le produit
-                      </Button>
-                    </Box>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Aucune clé trouvée.
-            </Typography>
-          )}
-        </Container>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-        <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="lg">
-          <DialogContent>
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} onWheel={handleWheel}>
-              <img
-                src={modalImageSrc}
-                alt="Agrandissement de la clé"
-                style={{
-                  transform: `scale(${scale})`,
-                  transition: 'transform 0.2s',
-                  width: '100%',
-                  height: 'auto'
-                }}
-              />
-            </Box>
-          </DialogContent>
-        </Dialog>
-      </Box>
-    </HelmetProvider>
+                    </ProtectedRouteWrapper>
+                  }
+                />
+                <Route path="/app" element={<Loginside />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+            {!isAppRoute && <Footer />}
+          </AppContainer>
+        </>
+      </DataProvider>
+    </CartProvider>
   );
 };
 
-export default CleDynamicPage;
+export default App;
