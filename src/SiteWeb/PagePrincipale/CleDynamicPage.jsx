@@ -1,4 +1,4 @@
-mport React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -16,7 +16,7 @@ import {
   Dialog,
   DialogContent
 } from '@mui/material';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
@@ -57,12 +57,27 @@ function formatPrice(price) {
 
 const CleDynamicPage = () => {
   const { brandFull } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
-  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
-  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
-    return <Navigate to="/cle-izis-cassee.php" replace />;
+  // Vérifier si l'URL correspond au format "/cle-coffre-fort-:brand.php"
+  const regex = /^\/cle-coffre-fort-([a-zA-Z0-9]+)\.php$/;
+  const match = location.pathname.match(regex);
+  // Si oui, on extrait la marque, sinon on utilise le paramètre brandFull
+  const extractedBrand = match ? match[1] : brandFull;
+
+  // Si le résultat est exactement "Clé Izis Cavers Reparation de clé", rediriger
+  if (extractedBrand && normalizeString(extractedBrand) === normalizeString("Clé Izis Cavers Reparation de clé")) {
+    return <Navigate to="/cle-izis-cassee" replace />;
   }
+
+  // Utiliser uniquement le premier segment pour l'affichage et l'API
+  const brandNameFromUrl = extractedBrand ? extractedBrand.split('_')[0] : "";
+  const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
+  const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
+
+  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
+  console.log("Marque (API) :", adjustedBrandNameAPI);
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -77,7 +92,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Gestion du slug produit si le paramètre commence par un chiffre suivi d'un tiret
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
@@ -85,45 +100,28 @@ const CleDynamicPage = () => {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
         console.log("Navigation produit (slug):", brand, productName);
-        navigate(/produit/${brand}/${encodeURIComponent(productName)});
+        navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
-        navigate(/produit/${encodeURIComponent(brandFull)});
+        navigate(`/produit/${encodeURIComponent(brandFull)}`);
       }
     }
   }, [brandFull, navigate]);
 
-  // Extraction du nom de la marque en retirant le suffixe si présent
-  const suffix = '_1_reproduction_cle.html';
-  const actualBrandName = brandFull && brandFull.endsWith(suffix)
-    ? brandFull.slice(0, -suffix.length)
-    : brandFull;
+  const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
-  // Pour l'affichage, on souhaite la forme "Abus", et pour l'API on utilise "ABUS"
-  const brandNameFromUrl = actualBrandName.split('_')[0];
-  const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
-  const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
-
-  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
-  console.log("Marque (API) :", adjustedBrandNameAPI);
-
-  // Balises SEO
-  const pageTitle = ${adjustedBrandNameDisplay} – Clés et reproductions de qualité;
-  const pageDescription = Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.;
-
-  // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
     if (imageUrl.startsWith('data:')) return imageUrl;
-    if (!imageUrl.startsWith('http')) return https://cl-back.onrender.com/${imageUrl};
+    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
     return imageUrl;
   }, []);
 
-  // Données structurées Schema.org
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": ${adjustedBrandNameDisplay} – Catalogue de clés,
-    "description": Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.,
+    "name": `${adjustedBrandNameDisplay} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -147,14 +145,13 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandNameDisplay, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) return;
     if (!adjustedBrandNameAPI) return;
-    fetch(https://cl-back.onrender.com/brands/logo/${encodeURIComponent(adjustedBrandNameAPI)})
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(adjustedBrandNameAPI)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(Logo non trouvé pour ${adjustedBrandNameAPI});
+        throw new Error(`Logo non trouvé pour ${adjustedBrandNameAPI}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -170,7 +167,6 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des clés depuis le backend
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       setLoading(false);
@@ -190,14 +186,13 @@ const CleDynamicPage = () => {
       .catch((err) => {
         console.error("Erreur lors du chargement des clés:", err);
         setError(err.message);
-        setSnackbarMessage(Erreur: ${err.message});
+        setSnackbarMessage(`Erreur: ${err.message}`);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
   }, [adjustedBrandNameAPI, brandFull]);
 
-  // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
@@ -209,7 +204,6 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -217,11 +211,11 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Conserver l'ordre du backend
   const sortedKeys = useMemo(() => {
     return [...filteredKeys];
   }, [filteredKeys]);
 
+  // Navigation vers la page commande lorsque l'utilisateur clique sur "Commander"
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
@@ -230,12 +224,12 @@ const CleDynamicPage = () => {
       }
       const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const url = /commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode};
+      const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
       console.error("Erreur lors de la navigation vers la commande:", error);
-      setSnackbarMessage(Erreur lors de la commande: ${error.message});
+      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -243,11 +237,11 @@ const CleDynamicPage = () => {
 
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
-      navigate("/cle-izis-cassee.php");
+      navigate("/cle-izis-cassee");
     } else {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-      navigate(/produit/${formattedBrand}/${encodeURIComponent(formattedName)});
+      navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
     }
   }, [navigate]);
 
@@ -361,7 +355,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={${adjustedBrandNameDisplay}, clés, reproduction, commande, qualité, produit authentique} />
+        <meta name="keywords" content={`${adjustedBrandNameDisplay}, clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -401,7 +395,7 @@ const CleDynamicPage = () => {
                             src={brandLogo}
                             alt={item.marque}
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                            onError={(e) => console.error(Erreur de chargement du logo pour ${item.marque}:, e)}
+                            onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
                           />
                         </Box>
                       )}
@@ -454,40 +448,22 @@ const CleDynamicPage = () => {
                     </CardContent>
                     <Box sx={styles.buttonContainer}>
                       {Number(item.prix) > 0 && (
-                        <Button
+                        <StyledButton
                           variant="outlined"
                           onClick={() => handleOrderNow(item, 'numero')}
                           startIcon={<ConfirmationNumberIcon />}
-                          sx={{
-                            ...styles.buttonSecondary,
-                            borderColor: '#1B5E20',
-                            color: '#1B5E20',
-                            '&:hover': {
-                              backgroundColor: '#1B5E20',
-                              color: '#fff'
-                            }
-                          }}
                         >
                           Commander par numéro
-                        </Button>
+                        </StyledButton>
                       )}
                       {Number(item.prixSansCartePropriete) > 0 && (
-                        <Button
+                        <StyledButton
                           variant="outlined"
                           onClick={() => handleOrderNow(item, 'postal')}
                           startIcon={<LocalShippingIcon />}
-                          sx={{
-                            ...styles.buttonSecondary,
-                            borderColor: '#1B5E20',
-                            color: '#1B5E20',
-                            '&:hover': {
-                              backgroundColor: '#1B5E20',
-                              color: '#fff'
-                            }
-                          }}
                         >
                           Commander en atelier
-                        </Button>
+                        </StyledButton>
                       )}
                       <Button variant="text" onClick={() => handleViewProduct(item)} sx={{ mt: 1, textTransform: 'none' }}>
                         Voir le produit
@@ -520,7 +496,7 @@ const CleDynamicPage = () => {
                 src={modalImageSrc}
                 alt="Agrandissement de la clé"
                 style={{
-                  transform: scale(${scale}),
+                  transform: `scale(${scale})`,
                   transition: 'transform 0.2s',
                   width: '100%',
                   height: 'auto'
