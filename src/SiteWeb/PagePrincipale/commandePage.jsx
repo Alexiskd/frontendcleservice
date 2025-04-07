@@ -105,11 +105,12 @@ const CommandePage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const { brandName, articleType, articleName } = useParams();
+  // Extraction des paramètres depuis l'URL, dont "id"
+  const { brandName, articleType, id, articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
-  const modeNormalized = mode ? mode.toLowerCase() : ''; // Assurer que c'est en minuscule
+  const modeNormalized = mode ? mode.toLowerCase() : '';
   const navigate = useNavigate();
 
   const [article, setArticle] = useState(null);
@@ -166,9 +167,10 @@ const CommandePage = () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
-          decodedArticleName
-        )}`;
+        // Si un id est présent, on utilise cet identifiant pour récupérer le produit
+        const endpoint = id
+          ? `https://cl-back.onrender.com/produit/cles/${id}`
+          : `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
           if (response.status === 404) throw new Error('Article non trouvé.');
@@ -177,7 +179,7 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-        console.log('Article récupéré :', data); // Pour vérifier les données
+        console.log('Article récupéré :', data);
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -189,7 +191,7 @@ const CommandePage = () => {
       }
     };
     fetchArticle();
-  }, [brandName, decodedArticleName, articleType]);
+  }, [brandName, decodedArticleName, articleType, id]);
 
   // Fonction pour normaliser le format du prix
   const normalizePrice = (price) => {
@@ -199,10 +201,10 @@ const CommandePage = () => {
     return parseFloat(price);
   };
 
-  // Calcul du prix en fonction du mode
-  // En mode "postal" : article.prixSansCartePropriete
-  // En mode "numero" : article.prix (prix classique avec carte de propriété)
-  // Si article.prix est indéfini, on utilise un fallback sur article.prixSansCartePropriete
+  // Calcul du prix :
+  // - En mode "postal" : on utilise article.prixSansCartePropriete
+  // - En mode "numero" : on utilise article.prix (prix classique avec carte de propriété)
+  // Si article.prix est indéfini, on utilise un fallback sur article.prixSansCartePropriete.
   const articlePrice =
     article &&
     (isCleAPasse && article.prixCleAPasse
@@ -314,6 +316,7 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
+      // Utilisation du nom du produit récupéré
       commandeFormData.append('articleName', article?.nom || '');
       commandeFormData.append('quantity', quantity);
 
@@ -853,23 +856,7 @@ const CommandePage = () => {
                     {article.manufacturer && (
                       <Typography variant="body2">Marque : {article.manufacturer}</Typography>
                     )}
-                    <Typography variant="body2">
-                      Prix affiché : {safeArticlePrice.toFixed(2)} €
-                    </Typography>
-                    {modeNormalized === 'numero' && (
-                      <Box>
-                        <Typography variant="body2">
-                          Prix classique (article.prix) :{" "}
-                          {article.prix !== undefined ? normalizePrice(article.prix).toFixed(2) : "Non défini"} €
-                        </Typography>
-                        <Typography variant="body2">
-                          Prix sans carte (article.prixSansCartePropriete) :{" "}
-                          {article.prixSansCartePropriete !== undefined
-                            ? normalizePrice(article.prixSansCartePropriete).toFixed(2)
-                            : "Non défini"} €
-                        </Typography>
-                      </Box>
-                    )}
+                    <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
                   </Box>
                 </Box>
               )}
