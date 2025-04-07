@@ -230,7 +230,8 @@ const CleDynamicPage = () => {
       }
       const formattedBrand = brandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const url = `/commander/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
+      // Modification de l'URL pour naviguer vers la page commande
+      const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
@@ -535,4 +536,3 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
-
