@@ -16,7 +16,7 @@ import {
   Dialog,
   DialogContent
 } from '@mui/material';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { preloadKeysData } from '../brandsApi';
@@ -57,32 +57,22 @@ function formatPrice(price) {
 
 const CleDynamicPage = () => {
   const { brandFull } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
-  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé", on redirige
-  if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
+  // Vérifier si l'URL correspond au format "/cle-coffre-fort-:brand.php"
+  const regex = /^\/cle-coffre-fort-([a-zA-Z0-9]+)\.php$/;
+  const match = location.pathname.match(regex);
+  // Si oui, on extrait la marque, sinon on utilise le paramètre brandFull
+  const extractedBrand = match ? match[1] : brandFull;
+
+  // Si le résultat est exactement "Clé Izis Cavers Reparation de clé", rediriger
+  if (extractedBrand && normalizeString(extractedBrand) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
 
-  // Détection de l'URL du type "/cle-coffre-fort-:brandName.php"
-  let actualBrandName = brandFull;
-  if (
-    brandFull &&
-    brandFull.toLowerCase().startsWith("cle-coffre-fort-") &&
-    brandFull.toLowerCase().endsWith(".php")
-  ) {
-    actualBrandName = brandFull.slice("cle-coffre-fort-".length, -4);
-  } else if (brandFull && brandFull.endsWith('_1_reproduction_cle.html')) {
-    actualBrandName = brandFull.slice(0, -'_1_reproduction_cle.html'.length);
-  }
-
-  // Si l'URL est "/cle-coffre-fort-assa.php", on redirige vers la page produit correspondante
-  if (actualBrandName.toLowerCase() === "assa") {
-    return <Navigate to="/produit/assa/assa-cle" replace />;
-  }
-
-  // Pour l'affichage et pour l'API, on utilise le premier segment
-  const brandNameFromUrl = actualBrandName.split('_')[0];
+  // Utiliser uniquement le premier segment pour l'affichage et l'API
+  const brandNameFromUrl = extractedBrand ? extractedBrand.split('_')[0] : "";
   const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
   const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
 
@@ -102,7 +92,7 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
+  // Gestion du slug produit si le paramètre commence par un chiffre suivi d'un tiret
   useEffect(() => {
     if (/^\d+-/.test(brandFull)) {
       const parts = brandFull.split("-");
