@@ -34,7 +34,6 @@ import {
   Home,
   LocationCity,
   Info,
-  VpnKey,
   CheckCircle,
   Error as ErrorIcon,
 } from '@mui/icons-material';
@@ -132,7 +131,7 @@ const CommandePage = () => {
   });
 
   const [keyInfo, setKeyInfo] = useState({
-    // Note : pour le mode "numero", nous utiliserons désormais le nom du produit commandé dans le champ "keyNumber"
+    // En mode "numero", le nom du produit sera utilisé dans le champ "keyNumber"
     keyNumber: '',
     propertyCardNumber: '',
     frontPhoto: null,
@@ -199,13 +198,15 @@ const CommandePage = () => {
   };
 
   // Gestion du prix selon le mode
+  // En mode "postal", on utilise le prix sans carte de propriété,
+  // En mode "numero", on utilise le prix classique (avec carte de propriété), c'est-à-dire "prix".
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
       ? normalizePrice(article.prixCleAPasse)
       : mode === 'postal'
       ? normalizePrice(article.prixSansCartePropriete)
       : mode === 'numero'
-      ? normalizePrice(article.prixNumero || article.prix)
+      ? normalizePrice(article.prix)
       : normalizePrice(article.prix)
     : 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
@@ -227,7 +228,7 @@ const CommandePage = () => {
       return false;
     }
     if (mode === 'numero') {
-      // Ici, nous n'avons plus besoin de vérifier keyInfo.keyNumber car nous y mettrons le nom du produit commandé
+      // En mode "numero", on n'a plus besoin de vérifier keyInfo.keyNumber puisque le nom du produit est utilisé
       if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim())
         return false;
       if (lostCartePropriete) {
@@ -314,7 +315,7 @@ const CommandePage = () => {
       commandeFormData.append('quantity', quantity);
 
       if (mode === 'numero') {
-        // Remplacer le numéro de clé par le nom du produit commandé
+        // En mode "numero", le numéro de clé est remplacé par le nom du produit
         if (article?.besoinNumeroCle) {
           commandeFormData.append('keyNumber', article?.nom || '');
         }
