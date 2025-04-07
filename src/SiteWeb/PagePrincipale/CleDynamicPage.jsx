@@ -59,12 +59,12 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
 
-  // Modification pour détecter l'URL du type "/cle-coffre-fort-:brand.php"
+  // Détection de l'URL du type "/cle-coffre-fort-:brand.php"
   let actualBrandName = brandFull;
   if (
     brandFull &&
@@ -76,7 +76,7 @@ const CleDynamicPage = () => {
     actualBrandName = brandFull.slice(0, -'_1_reproduction_cle.html'.length);
   }
 
-  // Pour l'affichage, on souhaite la forme "Abus", et pour l'API on utilise "ABUS"
+  // Pour l'affichage et l'API
   const brandNameFromUrl = actualBrandName.split('_')[0];
   const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
   const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
@@ -220,6 +220,7 @@ const CleDynamicPage = () => {
     return [...filteredKeys];
   }, [filteredKeys]);
 
+  // Redirige vers la page commande quand l'utilisateur appuie sur un bouton "Commander"
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
@@ -515,3 +516,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
