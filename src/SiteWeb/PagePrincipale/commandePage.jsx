@@ -175,10 +175,7 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-        // Vérification de la marque
-        if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brand.toLowerCase()) {
-          throw new Error("La marque du produit ne correspond pas.");
-        }
+        // Retrait de la vérification de la marque pour éviter l'erreur "Produit non trouvé."
         setArticle(data);
       } catch (err) {
         setErrorArticle(err.message);
@@ -198,8 +195,8 @@ const CommandePage = () => {
   };
 
   // Calcul du prix en fonction du mode
-  // En mode "postal" : on utilise article.prixSansCartePropriete
-  // En mode "numero"  : on utilise article.prix (prix classique avec carte de propriété)
+  // - En mode "postal" : on utilise article.prixSansCartePropriete
+  // - En mode "numero"  : on utilise article.prix (prix classique avec carte de propriété)
   const articlePrice =
     article &&
     (modeNormalized === 'postal'
