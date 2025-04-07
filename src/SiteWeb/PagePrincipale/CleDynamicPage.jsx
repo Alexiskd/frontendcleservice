@@ -59,8 +59,7 @@ const CleDynamicPage = () => {
   const { brandFull } = useParams();
   const navigate = useNavigate();
 
-  // Modification de la redirection :
-  // Au lieu de rediriger vers une URL PHP, on redirige vers une route React dédiée
+  // Redirection si le paramètre correspond exactement à "Clé Izis Cavers Reparation de clé"
   if (brandFull && normalizeString(brandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
@@ -536,3 +535,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
