@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import {
   Box,
   Typography,
@@ -42,6 +42,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
+// Composant utilitaire pour l'upload de fichiers
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>
@@ -97,16 +98,18 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
+// -----------------------------
+// Composant Principal : CommandePage
+// -----------------------------
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres depuis l'URL
-  const { brandName, productName } = useParams();
-  const decodedProductName = productName ? productName.replace(/-/g, ' ') : '';
+  const { brandName, articleType, articleName } = useParams();
+  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode'); // ex: 'postal' ou 'numero'
+  const mode = searchParams.get('mode');
   const navigate = useNavigate();
 
   const [article, setArticle] = useState(null);
@@ -130,7 +133,7 @@ const CommandePage = () => {
 
   // Pour le mode "numero", le champ keyNumber recevra automatiquement le nom du produit commandé
   const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '', // À remplir automatiquement avec article.nom
+    keyNumber: '', // Ce champ sera automatiquement rempli avec article.nom
     propertyCardNumber: '',
     frontPhoto: null,
     backPhoto: null,
@@ -158,13 +161,12 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération du produit selon brandName et decodedProductName
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`;
+        const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
           if (response.status === 404) throw new Error('Article non trouvé.');
@@ -173,8 +175,6 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-
-        // Vérification de la cohérence de la marque
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -186,9 +186,8 @@ const CommandePage = () => {
       }
     };
     fetchArticle();
-  }, [brandName, decodedProductName]);
+  }, [brandName, decodedArticleName, articleType]);
 
-  // Calcul du prix en fonction du mode et des options choisies
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
       ? parseFloat(article.prixCleAPasse)
@@ -200,8 +199,174 @@ const CommandePage = () => {
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
   const totalPrice = safeArticlePrice + shippingFee;
 
-  // Reste de la logique du composant (gestion des formulaires, envoi, affichage, etc.)
-  // ... (par exemple, validateForm, handleInputChange, handleOrder, etc.)
+  const validateForm = () => {
+    if (
+      !userInfo.nom.trim() ||
+      !userInfo.email.trim() ||
+      !userInfo.phone.trim() ||
+      !userInfo.address.trim() ||
+      !userInfo.postalCode.trim() ||
+      !userInfo.ville.trim() ||
+      (article?.besoinPhoto && (!keyInfo.frontPhoto || !keyInfo.backPhoto)) ||
+      !shippingMethod ||
+      (mode === 'postal' && !deliveryType)
+    ) {
+      return false;
+    }
+    if (mode === 'numero') {
+      // Pour "numero", keyNumber n'est pas vérifié car il sera rempli automatiquement
+      if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim()) return false;
+      if (lostCartePropriete) {
+        if (
+          !idCardInfo.idCardFront ||
+          !idCardInfo.idCardBack ||
+          !idCardInfo.domicileJustificatif ||
+          !attestationPropriete
+        ) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    if (name in userInfo) {
+      setUserInfo((prev) => ({ ...prev, [name]: value }));
+    } else if (name in keyInfo) {
+      setKeyInfo((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handlePhotoUpload = (event) => {
+    const { name, files } = event.target;
+    if (files && files[0]) {
+      setKeyInfo((prev) => ({ ...prev, [name]: files[0] }));
+    }
+  };
+
+  const handleIdCardUpload = async (event) => {
+    const { name, files } = event.target;
+    if (files && files[0]) {
+      if (name === 'domicileJustificatif') {
+        const formData = new FormData();
+        formData.append('pdf', files[0]);
+        try {
+          const response = await fetch('https://cl-back.onrender.com/upload/pdf', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!response.ok) throw new Error("Erreur lors de l'upload du justificatif.");
+          const data = await response.json();
+          setIdCardInfo((prev) => ({ ...prev, domicileJustificatif: data.filePath }));
+        } catch (err) {
+          setSnackbarMessage("Erreur lors de l'upload du justificatif.");
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+        }
+      } else {
+        setIdCardInfo((prev) => ({ ...prev, [name]: files[0] }));
+      }
+    }
+  };
+
+  const handleOrder = async () => {
+    if (!termsAccepted) {
+      setSnackbarMessage('Veuillez accepter les Conditions Générales de Vente.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    if (!validateForm()) {
+      setSnackbarMessage('Veuillez remplir tous les champs obligatoires.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    setOrdering(true);
+    try {
+      const commandeFormData = new FormData();
+      commandeFormData.append('nom', userInfo.nom);
+      commandeFormData.append('email', userInfo.email);
+      commandeFormData.append('phone', userInfo.phone);
+      commandeFormData.append('address', userInfo.address);
+      commandeFormData.append('postalCode', userInfo.postalCode);
+      commandeFormData.append('ville', userInfo.ville);
+      commandeFormData.append('additionalInfo', userInfo.additionalInfo);
+      commandeFormData.append('prix', totalPrice.toFixed(2));
+      // Enregistrer le nom du produit commandé dans "articleName"
+      commandeFormData.append('articleName', article?.nom || '');
+      commandeFormData.append('quantity', quantity);
+
+      if (mode === 'numero') {
+        // Pour les commandes de type "numero", nous remplaçons le numéro de clé par le nom du produit commandé
+        if (article?.besoinNumeroCle) {
+          commandeFormData.append('keyNumber', article?.nom || '');
+        }
+        if (article?.besoinNumeroCarte) {
+          if (!lostCartePropriete) {
+            commandeFormData.append('propertyCardNumber', keyInfo.propertyCardNumber);
+          } else {
+            commandeFormData.append('idCardFront', idCardInfo.idCardFront);
+            commandeFormData.append('idCardBack', idCardInfo.idCardBack);
+            commandeFormData.append('domicileJustificatifPath', idCardInfo.domicileJustificatif);
+            commandeFormData.append('attestationPropriete', attestationPropriete.toString());
+          }
+        }
+      }
+      commandeFormData.append('deliveryType', deliveryType);
+      commandeFormData.append('shippingMethod', shippingMethod);
+      commandeFormData.append('isCleAPasse', isCleAPasse.toString());
+      if (article?.besoinPhoto) {
+        commandeFormData.append('frontPhoto', keyInfo.frontPhoto);
+        commandeFormData.append('backPhoto', keyInfo.backPhoto);
+      }
+
+      const commandeResponse = await fetch('https://cl-back.onrender.com/commande/create', {
+        method: 'POST',
+        body: commandeFormData,
+      });
+      if (!commandeResponse.ok) {
+        const errorText = await commandeResponse.text();
+        throw new Error(`Erreur lors de la création de la commande : ${errorText}`);
+      }
+      const commandeResult = await commandeResponse.json();
+      const { numeroCommande } = commandeResult;
+
+      const paymentPayload = {
+        amount: totalPrice * 100,
+        currency: 'eur',
+        description: article
+          ? `Veuillez procéder au paiement pour ${userInfo.nom}`
+          : 'Veuillez procéder au paiement',
+        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
+      };
+
+      const paymentResponse = await fetch('https://cl-back.onrender.com/stripe/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentPayload),
+      });
+      if (!paymentResponse.ok) {
+        const errorText = await paymentResponse.text();
+        throw new Error(`Erreur lors de la création de la page de paiement : ${errorText}`);
+      }
+      const paymentResult = await paymentResponse.json();
+      window.location.href = paymentResult.paymentUrl;
+    } catch (error) {
+      setSnackbarMessage(`Erreur : ${error.message}`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setOrdering(false);
+    }
+  };
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbarOpen(false);
+  };
 
   if (loadingArticle) {
     return (
@@ -249,16 +414,24 @@ const CommandePage = () => {
               <Divider sx={{ mb: 3 }} />
 
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
-                <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: '#000',
+                    fontWeight: 'bold',
+                    fontSize: '1.2rem',
+                    mb: 1,
+                  }}
+                >
                   Processus de Commande
                 </Typography>
                 {mode === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction.
+                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé classique).
                   </Typography>
                 ) : (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire d'envoyer votre clé. La commande sera directement traitée par le fabricant grâce au numéro.
+                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire d'envoyer votre clé préalablement. La commande sera directement traitée par le fabricant grâce au numéro.
                   </Typography>
                 )}
               </Box>
@@ -271,14 +444,19 @@ const CommandePage = () => {
                   {article?.estCleAPasse && (
                     <FormControlLabel
                       control={
-                        <ModernCheckbox checked={isCleAPasse} onChange={(e) => setIsCleAPasse(e.target.checked)} />
+                        <ModernCheckbox
+                          checked={isCleAPasse}
+                          onChange={(e) => setIsCleAPasse(e.target.checked)}
+                        />
                       }
                       label="Clé à passe ? (Ouvre plusieurs serrures)"
                       sx={{ mb: 2 }}
                     />
                   )}
+
                   {article?.besoinNumeroCle && (
                     <>
+                      {/* Affichage du nom du produit comme numéro de clé */}
                       <TextField
                         disabled
                         placeholder="Le nom du produit sera utilisé comme numéro de clé"
@@ -295,6 +473,7 @@ const CommandePage = () => {
                       )}
                     </>
                   )}
+
                   {article?.besoinNumeroCarte && (
                     <Box sx={{ mb: 2 }}>
                       <FormControlLabel
@@ -314,7 +493,7 @@ const CommandePage = () => {
                             variant="outlined"
                             name="propertyCardNumber"
                             value={keyInfo.propertyCardNumber}
-                            onChange={() => {}}
+                            onChange={handleInputChange}
                             required
                             fullWidth
                           />
@@ -333,7 +512,7 @@ const CommandePage = () => {
                             label="Photo recto de la pièce d'identité * :"
                             name="idCardFront"
                             accept="image/*"
-                            onChange={() => {}}
+                            onChange={handleIdCardUpload}
                             icon={PhotoCamera}
                             file={idCardInfo.idCardFront}
                           />
@@ -341,7 +520,7 @@ const CommandePage = () => {
                             label="Photo verso de la pièce d'identité * :"
                             name="idCardBack"
                             accept="image/*"
-                            onChange={() => {}}
+                            onChange={handleIdCardUpload}
                             icon={PhotoCamera}
                             file={idCardInfo.idCardBack}
                           />
@@ -349,13 +528,16 @@ const CommandePage = () => {
                             label="Justificatif de domicile (PDF) * :"
                             name="domicileJustificatif"
                             accept="application/pdf"
-                            onChange={() => {}}
+                            onChange={handleIdCardUpload}
                             icon={CloudUpload}
                             file={idCardInfo.domicileJustificatif}
                           />
                           <FormControlLabel
                             control={
-                              <Checkbox checked={attestationPropriete} onChange={(e) => setAttestationPropriete(e.target.checked)} />
+                              <Checkbox
+                                checked={attestationPropriete}
+                                onChange={(e) => setAttestationPropriete(e.target.checked)}
+                              />
                             }
                             label="J'atteste être le propriétaire"
                             sx={{ mt: 1 }}
@@ -376,7 +558,7 @@ const CommandePage = () => {
                     label="Photo clé (recto) * :"
                     name="frontPhoto"
                     accept="image/*"
-                    onChange={() => {}}
+                    onChange={handlePhotoUpload}
                     icon={PhotoCamera}
                     file={keyInfo.frontPhoto}
                   />
@@ -384,14 +566,167 @@ const CommandePage = () => {
                     label="Photo clé (verso) * :"
                     name="backPhoto"
                     accept="image/*"
-                    onChange={() => {}}
+                    onChange={handlePhotoUpload}
                     icon={PhotoCamera}
                     file={keyInfo.backPhoto}
                   />
                 </Box>
               )}
 
-              {/* ... Autres sections du formulaire ... */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Quantité de copies souhaitée
+                </Typography>
+                <TextField
+                  type="number"
+                  label="Nombre de clés"
+                  variant="outlined"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  inputProps={{ min: 1 }}
+                  fullWidth
+                />
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Informations Client
+                </Typography>
+                <FormControl component="fieldset" sx={{ mb: 2 }}>
+                  <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
+                    <FormControlLabel
+                      value="particulier"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Particulier"
+                    />
+                    <FormControlLabel
+                      value="entreprise"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Entreprise"
+                    />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  placeholder="* Nom et prénom"
+                  variant="outlined"
+                  fullWidth
+                  name="nom"
+                  value={userInfo.nom}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Person sx={{ color: '#1B5E20' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  placeholder="* Adresse email"
+                  variant="outlined"
+                  fullWidth
+                  name="email"
+                  type="email"
+                  value={userInfo.email}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Email sx={{ color: '#1B5E20' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  placeholder="* Téléphone"
+                  variant="outlined"
+                  fullWidth
+                  name="phone"
+                  type="tel"
+                  value={userInfo.phone}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Phone sx={{ color: '#1B5E20' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  placeholder="* Adresse de livraison"
+                  variant="outlined"
+                  fullWidth
+                  name="address"
+                  value={userInfo.address}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Home sx={{ color: '#1B5E20' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  placeholder="* Code postal"
+                  variant="outlined"
+                  fullWidth
+                  name="postalCode"
+                  value={userInfo.postalCode}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LocationCity sx={{ color: '#1B5E20' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  placeholder="* Ville"
+                  variant="outlined"
+                  fullWidth
+                  name="ville"
+                  value={userInfo.ville}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LocationCity sx={{ color: '#1B5E20' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  placeholder="Infos complémentaires de livraison"
+                  variant="outlined"
+                  fullWidth
+                  name="additionalInfo"
+                  value={userInfo.additionalInfo}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Info sx={{ color: '#1B5E20' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
+              </Box>
 
               {mode === 'postal' && (
                 <Box sx={{ mb: 3 }}>
@@ -400,6 +735,7 @@ const CommandePage = () => {
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
                     Une fois le paiement effectué, vous recevrez un email contenant l'adresse d'envoi de votre clé.
+                    Pour une sécurité maximale, nous vous conseillons de l'envoyer en recommandé.
                   </Typography>
                   <FormControl fullWidth>
                     <Select
@@ -447,7 +783,12 @@ const CommandePage = () => {
 
               <Box>
                 <FormControlLabel
-                  control={<ModernCheckbox checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />}
+                  control={
+                    <ModernCheckbox
+                      checked={termsAccepted}
+                      onChange={(e) => setTermsAccepted(e.target.checked)}
+                    />
+                  }
                   label={
                     <>
                       J'accepte les{' '}
@@ -503,7 +844,9 @@ const CommandePage = () => {
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="body2">
-                  {shippingMethod === 'expedition' ? "Frais d'expédition" : "Récupération en magasin"}
+                  {shippingMethod === 'expedition'
+                    ? "Frais d'expédition"
+                    : "Récupération en magasin"}
                 </Typography>
                 <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
               </Box>
@@ -518,7 +861,7 @@ const CommandePage = () => {
               <Button
                 variant="contained"
                 fullWidth
-                onClick={() => {}}
+                onClick={handleOrder}
                 disabled={ordering}
                 sx={{
                   mt: 2,
@@ -526,7 +869,9 @@ const CommandePage = () => {
                   color: '#e0e0e0',
                   fontWeight: 'bold',
                   border: '1px solid #1B5E20',
-                  '&:hover': { backgroundImage: 'linear-gradient(145deg, black, #1B5E20)' },
+                  '&:hover': {
+                    backgroundImage: 'linear-gradient(145deg, black, #1B5E20)',
+                  },
                 }}
               >
                 {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
@@ -545,11 +890,11 @@ const CommandePage = () => {
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
+        onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          onClose={() => setSnackbarOpen(false)}
+          onClose={handleCloseSnackbar}
           severity={snackbarSeverity}
           iconMapping={{
             success: <CheckCircle fontSize="inherit" sx={{ color: '#1B5E20' }} />,
@@ -567,4 +912,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
