@@ -102,7 +102,7 @@ const CommandePage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // La route est définie comme : /commande/:brand/cle/:reference/:name
+  // Extraction des paramètres de la route : /commande/:brand/cle/:reference/:name
   const { brand, reference, name } = useParams();
   const decodedName = name ? name.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
@@ -159,20 +159,19 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération du produit via le paramètre "reference"
+  // Récupération du produit via la référence (en encodant pour gérer les caractères spéciaux)
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Si l'API attend également la marque, on peut l'inclure dans l'endpoint
-        const endpoint = `https://cl-back.onrender.com/produit/cles/${reference}`;
+        const encodedReference = encodeURIComponent(reference);
+        const endpoint = `https://cl-back.onrender.com/produit/cles/${encodedReference}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
           if (response.status === 404) throw new Error('Produit non trouvé.');
           throw new Error("Erreur lors du chargement du produit.");
         }
-        // Utilisation de response.json() pour récupérer les données
         const data = await response.json();
         setArticle(data);
       } catch (err) {
@@ -184,7 +183,7 @@ const CommandePage = () => {
     fetchArticle();
   }, [brand, reference]);
 
-  // Normalisation du prix (pour traiter les prix avec des virgules)
+  // Normalisation du prix (pour gérer les virgules)
   const normalizePrice = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(',', '.'));
@@ -192,9 +191,7 @@ const CommandePage = () => {
     return parseFloat(price);
   };
 
-  // Calcul du prix selon le mode choisi
-  // En mode "postal", on utilise article.prixSansCartePropriete.
-  // En mode "numero", on utilise article.prix (prix classique avec carte de propriété).
+  // Choix du prix selon le mode sélectionné
   const articlePrice =
     article &&
     (modeNormalized === 'postal'
@@ -204,7 +201,6 @@ const CommandePage = () => {
       : normalizePrice(article.prix)) || 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
 
-  // Correction du calcul du total : multiplication par la quantité
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
   const totalPrice = safeArticlePrice * quantity + shippingFee;
 
@@ -754,9 +750,8 @@ const CommandePage = () => {
                 Récapitulatif
               </Typography>
               {article && (
-                // Ajout d'un lien cliquable vers la page du produit (adaptable selon votre routing)
                 <Link
-                  to={`/commande/${brand}/cle/${reference}/${article.nom.replace(/\s+/g, '-')}`}
+                  to={`/commande/${brand}/cle/${encodeURIComponent(reference)}/${article.nom.replace(/\s+/g, '-')}`}
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   <Box sx={{ display: 'flex', mb: 2 }}>
