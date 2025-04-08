@@ -41,7 +41,6 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
-// Composant utilitaire pour l'upload de fichiers
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>
@@ -159,17 +158,18 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération du produit via la référence (en encodant pour gérer les caractères spéciaux)
+  // Récupération du produit via la nouvelle route qui récupère la clé par référence
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        const encodedReference = encodeURIComponent(reference);
-        const endpoint = `https://cl-back.onrender.com/produit/cles/${encodedReference}`;
+        // Utilisation de la nouvelle route /produit/cles/reference/:reference
+        const endpoint = `https://cl-back.onrender.com/produit/cles/reference/${encodeURIComponent(reference)}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
-          if (response.status === 404) throw new Error('Produit non trouvé.');
+          if (response.status === 404)
+            throw new Error('Produit non trouvé.');
           throw new Error("Erreur lors du chargement du produit.");
         }
         const data = await response.json();
@@ -183,7 +183,7 @@ const CommandePage = () => {
     fetchArticle();
   }, [brand, reference]);
 
-  // Normalisation du prix (pour gérer les virgules)
+  // Normalisation du prix pour gérer les éventuelles virgules
   const normalizePrice = (price) => {
     if (typeof price === 'string') {
       return parseFloat(price.replace(',', '.'));
