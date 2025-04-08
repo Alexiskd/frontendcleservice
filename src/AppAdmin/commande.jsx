@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
   Container,
@@ -46,7 +46,9 @@ const Commande = () => {
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [zoom, setZoom] = useState(1);
 
-  // États pour l'édition d'une commande
+  // États pour l'édition d'une commande, avec les nouveaux champs :
+  // - besoinNumeroCarte : pour indiquer si l'exigence du numéro de carte est activée
+  // - fraisDeDossier : pour saisir le montant à appliquer en cas d'exigence
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState({
     id: '',
@@ -55,6 +57,8 @@ const Commande = () => {
     isCleAPasse: false,
     hasCartePropriete: true,
     attestationPropriete: false,
+    besoinNumeroCarte: false,
+    fraisDeDossier: '',
   });
 
   const theme = useTheme();
@@ -156,8 +160,11 @@ const Commande = () => {
       nom: commande.nom || '',
       ville: commande.ville || '',
       isCleAPasse: commande.isCleAPasse || false,
-      hasCartePropriete: commande.hasCartePropriete !== undefined ? commande.hasCartePropriete : true,
+      hasCartePropriete:
+        commande.hasCartePropriete !== undefined ? commande.hasCartePropriete : true,
       attestationPropriete: commande.attestationPropriete || false,
+      besoinNumeroCarte: commande.besoinNumeroCarte || false,
+      fraisDeDossier: commande.fraisDeDossier ? commande.fraisDeDossier.toString() : '',
     });
     setOpenEditDialog(true);
   };
@@ -175,16 +182,29 @@ const Commande = () => {
     setEditFormData((prev) => ({
       ...prev,
       [name]: checked,
+      // Réinitialise le champ fraisDeDossier si la case "besoinNumeroCarte" est décochée
+      ...(name === 'besoinNumeroCarte' && !checked && { fraisDeDossier: '' }),
     }));
   };
 
   const handleEditFormSubmit = async () => {
+    // Préparer les données en convertissant fraisDeDossier en nombre si besoin
+    const updatedData = {
+      ...editFormData,
+      fraisDeDossier: editFormData.besoinNumeroCarte
+        ? parseFloat(editFormData.fraisDeDossier) || 0
+        : 0,
+    };
+
     try {
-      const response = await fetch(`https://cl-back.onrender.com/commande/update/${editFormData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editFormData),
-      });
+      const response = await fetch(
+        `https://cl-back.onrender.com/commande/update/${editFormData.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData),
+        }
+      );
       if (!response.ok) {
         throw new Error('Erreur lors de la mise à jour de la commande');
       }
@@ -203,7 +223,8 @@ const Commande = () => {
     // En-tête moderne avec fond vert et logo
     doc.setFillColor(27, 94, 32);
     doc.rect(0, margin, 210, 40, 'F');
-    const logoWidth = 32, logoHeight = 32;
+    const logoWidth = 32,
+      logoHeight = 32;
     doc.addImage(logo, 'PNG', margin, margin, logoWidth, logoHeight);
     const leftTextX = margin + logoWidth + 5;
     doc.setFont('helvetica', 'normal');
@@ -252,8 +273,9 @@ const Commande = () => {
     const totalTTC = prixProduit - fraisLivraison;
 
     // Détermination du nom du produit
-    // On priorise le champ numeroCle s'il est renseigné, sinon produitCommande ou cle
-    const produit = commande.numeroCle || commande.produitCommande ||
+    const produit =
+      commande.numeroCle ||
+      commande.produitCommande ||
       (commande.cle && commande.cle.length
         ? (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle)
         : 'Produit');
@@ -373,7 +395,7 @@ const Commande = () => {
               }}
             >
               <CardContent sx={{ backgroundColor: '#fff', p: 3 }}>
-                {/* Affichage du nom du produit en premier */}
+                {/* Affichage du nom du produit */}
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'green.800', mb: 1 }}>
                   Nom du produit :
                 </Typography>
@@ -608,6 +630,7 @@ const Commande = () => {
         ))}
       </Grid>
 
+      {/* Dialog d'annulation de commande */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
@@ -648,6 +671,7 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog d'édition de commande */}
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullWidth maxWidth="sm">
         <DialogTitle>Modifier la commande</DialogTitle>
         <DialogContent>
@@ -699,6 +723,30 @@ const Commande = () => {
               label="Attestation de perte de la carte"
             />
           )}
+          {/* Nouveau checkbox pour exiger le numéro de carte */}
+          <FormControlLabel
+            control={
+              <Checkbox
+                name="besoinNumeroCarte"
+                checked={editFormData.besoinNumeroCarte}
+                onChange={handleCheckboxChange}
+              />
+            }
+            label="Exiger numéro de carte"
+          />
+          {/* Si la case est cochée, afficher l'input pour saisir les frais de dossier */}
+          {editFormData.besoinNumeroCarte && (
+            <TextField
+              label="Frais de dossier"
+              name="fraisDeDossier"
+              value={editFormData.fraisDeDossier}
+              onChange={handleEditFormChange}
+              type="number"
+              fullWidth
+              margin="normal"
+              required
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEditDialog(false)}>Annuler</Button>
@@ -708,6 +756,7 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog d'affichage agrandi d'une image */}
       <Dialog
         open={openImageDialog}
         onClose={() => {
