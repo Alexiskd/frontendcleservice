@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,7 +14,6 @@ import {
 import { Helmet } from 'react-helmet';
 import badgeImage from './badges.jpeg';
 
-
 const Badgeuu = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -24,7 +23,7 @@ const Badgeuu = () => {
   // Redirection vers la page de commande pour le Badge Vigik
   const handleOrderNow = () => {
     navigate(
-      `/commander/Vigik/cle/BadgeVigik/${encodeURIComponent('Badge Vigik')}?mode=postal`
+      `/commande/Vigik/cle/BadgeVigik/${encodeURIComponent('Badge Vigik')}?mode=postal`
     );
   };
 
@@ -143,7 +142,7 @@ const Badgeuu = () => {
       </Helmet>
       <Box sx={styles.page}>
         {/* Bandeau supérieur */}
-        
+
         {/* Conteneur regroupant les deux sections côte à côte */}
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Box
