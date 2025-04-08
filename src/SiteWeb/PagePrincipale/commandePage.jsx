@@ -38,7 +38,7 @@ import {
   Error as ErrorIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
 // Composant utilitaire pour l'upload de fichiers
@@ -165,15 +165,15 @@ const CommandePage = () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
+        // Si l'API attend également la marque, on peut l'inclure dans l'endpoint
         const endpoint = `https://cl-back.onrender.com/produit/cles/${reference}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
           if (response.status === 404) throw new Error('Produit non trouvé.');
           throw new Error("Erreur lors du chargement du produit.");
         }
-        const responseText = await response.text();
-        if (!responseText) throw new Error('Réponse vide du serveur.');
-        const data = JSON.parse(responseText);
+        // Utilisation de response.json() pour récupérer les données
+        const data = await response.json();
         setArticle(data);
       } catch (err) {
         setErrorArticle(err.message);
@@ -203,8 +203,10 @@ const CommandePage = () => {
       ? normalizePrice(article.prix)
       : normalizePrice(article.prix)) || 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
+
+  // Correction du calcul du total : multiplication par la quantité
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-  const totalPrice = safeArticlePrice + shippingFee;
+  const totalPrice = safeArticlePrice * quantity + shippingFee;
 
   const validateForm = () => {
     if (
@@ -752,25 +754,32 @@ const CommandePage = () => {
                 Récapitulatif
               </Typography>
               {article && (
-                <Box sx={{ display: 'flex', mb: 2 }}>
-                  {article.imageUrl && (
-                    <Box onClick={handleOpenImageModal} sx={{ cursor: 'pointer', mr: 2 }}>
-                      <CardMedia
-                        component="img"
-                        image={article.imageUrl}
-                        alt={article.nom}
-                        sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1 }}
-                      />
-                    </Box>
-                  )}
-                  <Box>
-                    <Typography variant="subtitle1">{article.nom}</Typography>
-                    {article.manufacturer && (
-                      <Typography variant="body2">Marque : {article.manufacturer}</Typography>
+                // Ajout d'un lien cliquable vers la page du produit (adaptable selon votre routing)
+                <Link
+                  to={`/commande/${brand}/cle/${reference}/${article.nom.replace(/\s+/g, '-')}`}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <Box sx={{ display: 'flex', mb: 2 }}>
+                    {article.imageUrl && (
+                      <Box onClick={handleOpenImageModal} sx={{ cursor: 'pointer', mr: 2 }}>
+                        <CardMedia
+                          component="img"
+                          image={article.imageUrl}
+                          alt={article.nom}
+                          sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1 }}
+                        />
+                      </Box>
                     )}
-                    <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
+                    <Box>
+                      <Typography variant="subtitle1">{article.nom}</Typography>
+                      {article.manufacturer && (
+                        <Typography variant="body2">Marque : {article.manufacturer}</Typography>
+                      )}
+                      <Typography variant="body2">Prix Unité : {safeArticlePrice.toFixed(2)} €</Typography>
+                      <Typography variant="body2">Quantité : {quantity}</Typography>
+                    </Box>
                   </Box>
-                </Box>
+                </Link>
               )}
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
