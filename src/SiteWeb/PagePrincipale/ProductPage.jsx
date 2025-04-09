@@ -21,7 +21,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// Styled components
+// Composants stylisés
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
   boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
@@ -72,7 +72,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cas particulier pour la page /cle-izis-cassee.php (valeurs par défaut)
+  // Pour le cas particulier de /cle-izis-cassee.php (valeurs par défaut)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -89,7 +89,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage et décodage du nom de produit
+  // Nettoyage du nom du produit :
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -103,14 +103,16 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        // Construit l'URL avec le nom encodé
         const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
         const response = await fetch(url);
         if (!response.ok) {
-          // Tentez de lire la réponse pour plus d'informations
+          // On tente de lire le message du serveur
           const serverMessage = await response.text();
           throw new Error(serverMessage || 'Produit introuvable.');
         }
         const data = await response.json();
+        // Vérification basique que le produit possède bien un id
         if (!data || !data.id) {
           throw new Error('Produit introuvable.');
         }
@@ -172,13 +174,12 @@ const ProductPage = () => {
     );
   }
 
-  // Détection du cas « Coffre Fort »
+  // Détection si la clé est identifiée comme "Coffre Fort"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Calcul du prix principal
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -186,7 +187,6 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte du processus de fabrication
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -194,7 +194,6 @@ const ProductPage = () => {
       ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
       : "";
 
-  // Texte pour une éventuelle clé de passe
   const cleAPasseText =
     Number(product.prixCleAPasse) > 0 &&
     product.typeReproduction &&
@@ -276,16 +275,14 @@ const ProductPage = () => {
                   <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
                     Processus de fabrication
                   </Typography>
-                  <Typography variant="subtitle1">
-                    {processText}
-                  </Typography>
+                  <Typography variant="subtitle1">{processText}</Typography>
                 </InfoBox>
                 <InfoBox>
                   <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
                     Autre moyen de reproduction
                   </Typography>
                   <Typography variant="subtitle1">
-                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. Simple et rapide.
+                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé.
                   </Typography>
                 </InfoBox>
                 {Number(product.prixCleAPasse) > 0 && (
@@ -307,9 +304,7 @@ const ProductPage = () => {
                   </InfoBox>
                 )}
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="body1">
-                    {product.descriptionNumero}
-                  </Typography>
+                  <Typography variant="body1">{product.descriptionNumero}</Typography>
                 </Box>
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
@@ -335,19 +330,13 @@ const ProductPage = () => {
                 </Grid>
                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Number(product.prix) > 0 && (
-                    <StyledButton
-                      onClick={() => handleOrderNow('numero')}
-                      startIcon={<ConfirmationNumberIcon />}
-                    >
-                      Commander par numéro chez le fabricant
+                    <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
+                      Commander par numéro
                     </StyledButton>
                   )}
                   {Number(product.prixSansCartePropriete) > 0 && (
-                    <StyledButton
-                      onClick={() => handleOrderNow('postal')}
-                      startIcon={<LocalShippingIcon />}
-                    >
-                      Commander – reproduction dans notre atelier
+                    <StyledButton onClick={() => handleOrderNow('postal')} startIcon={<LocalShippingIcon />}>
+                      Commander – atelier
                     </StyledButton>
                   )}
                 </Box>
