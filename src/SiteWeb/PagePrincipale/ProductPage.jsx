@@ -68,12 +68,11 @@ const ProductPage = () => {
   let { brandName, productName } = useParams();
   const navigate = useNavigate();
 
-  // États de chargement, produit et erreur
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Pour le cas particulier de /cle-izis-cassee.php, on affecte des valeurs par défaut
+  // Cas particulier pour la page /cle-izis-cassee.php (valeurs par défaut)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -90,41 +89,31 @@ const ProductPage = () => {
     );
   }
 
-  // On nettoie le nom du produit pour retirer les suffixes ou tirets inutiles.
+  // Nettoyage et décodage du nom de produit
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
   }
-  // On remplace les tirets par des espaces pour obtenir un nom plus « humain »
   const decodedProductName = cleanedProductName.replace(/-/g, ' ');
 
-  // On force le scroll en haut lors du montage
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Chargement du produit via l'endpoint best-by-name
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // On encode le nom pour éviter des problèmes d'URL
         const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
         const response = await fetch(url);
-
-        // Si la réponse n'est pas OK, on génère une erreur
         if (!response.ok) {
-          // On lit la réponse au format texte pour plus d'informations
-          const errorMessage = await response.text();
-          throw new Error(errorMessage || 'Produit introuvable.');
+          // Tentez de lire la réponse pour plus d'informations
+          const serverMessage = await response.text();
+          throw new Error(serverMessage || 'Produit introuvable.');
         }
-
         const data = await response.json();
-
-        // On vérifie que le produit a bien été trouvé
         if (!data || !data.id) {
           throw new Error('Produit introuvable.');
         }
-
         setProduct(data);
       } catch (err) {
         console.error('Erreur lors de la récupération du produit:', err);
@@ -137,7 +126,6 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName]);
 
-  // Gestion de la commande (redirection vers la page de commande)
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -151,7 +139,6 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
-  // Permet de naviguer vers la page produit en "rafraîchissant" l'URL
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -185,13 +172,13 @@ const ProductPage = () => {
     );
   }
 
-  // Détection d'une clé « Coffre Fort » selon le nom ou la marque (pour affichage conditionnel)
+  // Détection du cas « Coffre Fort »
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Calcul du prix principal basé sur "prix" ou "prixSansCartePropriete"
+  // Calcul du prix principal
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -199,7 +186,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte décrivant le process de reproduction
+  // Texte du processus de fabrication
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -207,7 +194,7 @@ const ProductPage = () => {
       ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
       : "";
 
-  // Texte spécifique pour une éventuelle clé de passe
+  // Texte pour une éventuelle clé de passe
   const cleAPasseText =
     Number(product.prixCleAPasse) > 0 &&
     product.typeReproduction &&
@@ -348,12 +335,18 @@ const ProductPage = () => {
                 </Grid>
                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Number(product.prix) > 0 && (
-                    <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
+                    <StyledButton
+                      onClick={() => handleOrderNow('numero')}
+                      startIcon={<ConfirmationNumberIcon />}
+                    >
                       Commander par numéro chez le fabricant
                     </StyledButton>
                   )}
                   {Number(product.prixSansCartePropriete) > 0 && (
-                    <StyledButton onClick={() => handleOrderNow('postal')} startIcon={<LocalShippingIcon />}>
+                    <StyledButton
+                      onClick={() => handleOrderNow('postal')}
+                      startIcon={<LocalShippingIcon />}
+                    >
                       Commander – reproduction dans notre atelier
                     </StyledButton>
                   )}
