@@ -103,8 +103,9 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        // Utilisation de l'endpoint best-by-name pour une recherche plus tolérante
         const response = await fetch(
-          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
+          `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`
         );
         if (!response.ok) {
           throw new Error('Produit introuvable.');
