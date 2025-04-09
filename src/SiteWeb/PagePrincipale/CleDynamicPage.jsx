@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';  
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
@@ -56,13 +56,11 @@ function formatPrice(price) {
 }
 
 const CleDynamicPage = () => {
-  // On récupère le paramètre de l'URL et on le complète si nécessaire
   const { brandFull } = useParams();
   const navigate = useNavigate();
-  // Si useParams ne fournit pas le paramètre, on l'extrait depuis le pathname
   const extractedBrandFull = brandFull ? brandFull : window.location.pathname.split('/').pop();
 
-  // Redirection spécifique pour "Clé Izis Cavers Reparation de clé"
+  // Redirection spécifique
   if (extractedBrandFull && normalizeString(extractedBrandFull) === normalizeString("Clé Izis Cavers Reparation de clé")) {
     return <Navigate to="/cle-izis-cassee" replace />;
   }
@@ -80,14 +78,12 @@ const CleDynamicPage = () => {
   const [modalImageSrc, setModalImageSrc] = useState('');
   const [scale, setScale] = useState(1);
 
-  // Si le paramètre ressemble à un slug produit (commence par un chiffre suivi d'un tiret)
   useEffect(() => {
     if (/^\d+-/.test(extractedBrandFull)) {
       const parts = extractedBrandFull.split("-");
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
-        console.log("Navigation produit (slug):", brand, productName);
         navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
         navigate(`/produit/${encodeURIComponent(extractedBrandFull)}`);
@@ -95,7 +91,6 @@ const CleDynamicPage = () => {
     }
   }, [extractedBrandFull, navigate]);
 
-  // Extraction du nom de la marque à partir de l'URL
   let actualBrandName = extractedBrandFull;
   const htmlSuffix = '_1_reproduction_cle.html';
   const phpSuffix = '.php';
@@ -105,25 +100,18 @@ const CleDynamicPage = () => {
   } else if (actualBrandName.endsWith(phpSuffix)) {
     actualBrandName = actualBrandName.slice(0, -phpSuffix.length);
   }
-  // Pour les URL de type /cle-coffre-fort-assa.php, on retire le préfixe "cle-coffre-fort-"
   const prefix = "cle-coffre-fort-";
   if (actualBrandName.startsWith(prefix)) {
     actualBrandName = actualBrandName.slice(prefix.length);
   }
 
-  // Pour l'affichage et pour l'appel API
   const brandNameFromUrl = actualBrandName.split('_')[0];
   const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
   const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
 
-  console.log("Marque (affichage) :", adjustedBrandNameDisplay);
-  console.log("Marque (API) :", adjustedBrandNameAPI);
-
-  // Balises SEO
   const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
   const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
-  // Fonction pour obtenir l'URL d'une image
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
     if (imageUrl.startsWith('data:')) return imageUrl;
@@ -131,7 +119,6 @@ const CleDynamicPage = () => {
     return imageUrl;
   }, []);
 
-  // Données structurées Schema.org
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -160,7 +147,6 @@ const CleDynamicPage = () => {
     }))
   }), [adjustedBrandNameDisplay, keys, getImageSrc]);
 
-  // Chargement du logo pour la marque
   useEffect(() => {
     if (/^\d+-/.test(extractedBrandFull)) return;
     if (!adjustedBrandNameAPI) return;
@@ -183,7 +169,6 @@ const CleDynamicPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des clés depuis le backend
   useEffect(() => {
     if (/^\d+-/.test(extractedBrandFull)) {
       setLoading(false);
@@ -197,20 +182,15 @@ const CleDynamicPage = () => {
     setLoading(true);
     preloadKeysData(adjustedBrandNameAPI)
       .then((data) => {
-        console.log("Clés chargées :", data);
         setKeys(data);
       })
       .catch((err) => {
         console.error("Erreur lors du chargement des clés:", err);
         setError(err.message);
-        setSnackbarMessage(`Erreur: ${err.message}`);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
       })
       .finally(() => setLoading(false));
   }, [adjustedBrandNameAPI, extractedBrandFull]);
 
-  // Préchargement des images
   useEffect(() => {
     keys.forEach((item) => {
       const img = new Image();
@@ -222,7 +202,6 @@ const CleDynamicPage = () => {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Filtrage des clés par terme de recherche
   const filteredKeys = useMemo(() => {
     if (!debouncedSearchTerm) return keys;
     return keys.filter((item) =>
@@ -230,28 +209,20 @@ const CleDynamicPage = () => {
     );
   }, [keys, debouncedSearchTerm]);
 
-  // Conserver l'ordre du backend
   const sortedKeys = useMemo(() => [...filteredKeys], [filteredKeys]);
 
-  // Lorsque l'utilisateur clique sur un bouton "commander",
-  // on construit l'URL de la route "/commande/:brand/cle/:reference/:name"
   const handleOrderNow = useCallback((item, mode) => {
     try {
       const reference = item.referenceEbauche || item.reference || item.id;
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      // On utilise extractedBrandFull pour conserver le format initial dans l'URL
       const formattedBrand = extractedBrandFull.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
-      console.log("Navigation vers", url);
       navigate(url);
     } catch (error) {
       console.error("Erreur lors de la navigation vers la commande:", error);
-      setSnackbarMessage(`Erreur lors de la commande: ${error.message}`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
     }
   }, [extractedBrandFull, navigate]);
 
@@ -267,7 +238,6 @@ const CleDynamicPage = () => {
 
   const handleCloseSnackbar = useCallback((event, reason) => {
     if (reason === 'clickaway') return;
-    setSnackbarOpen(false);
   }, []);
 
   const handleWheel = useCallback((event) => {
@@ -380,9 +350,7 @@ const CleDynamicPage = () => {
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://votre-site.com" />
-        <script type="application/ld+json">
-          {JSON.stringify(jsonLdData)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(jsonLdData)}</script>
       </Helmet>
       <Box sx={styles.page}>
         <Container sx={styles.searchContainer}>
@@ -396,13 +364,9 @@ const CleDynamicPage = () => {
         </Container>
         <Container maxWidth="xl">
           {loading ? (
-            <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Chargement...
-            </Typography>
+            <Typography align="center">Chargement...</Typography>
           ) : error ? (
-            <Typography align="center" color="error" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
-              {error}
-            </Typography>
+            <Typography align="center" color="error">{error}</Typography>
           ) : sortedKeys.length > 0 ? (
             <Grid container spacing={2} alignItems="stretch" justifyContent="center" sx={styles.gridContainer}>
               {sortedKeys.map((item, index) => (
@@ -415,7 +379,6 @@ const CleDynamicPage = () => {
                             src={brandLogo}
                             alt={item.marque}
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                            onError={(e) => console.error(`Erreur de chargement du logo pour ${item.marque}:`, e)}
                           />
                         </Box>
                       )}
@@ -438,7 +401,6 @@ const CleDynamicPage = () => {
                           image={getImageSrc(item.imageUrl)}
                           alt={item.nom}
                           sx={styles.cardMedia}
-                          onError={(e) => console.error("Erreur lors du chargement de l'image du produit:", e)}
                         />
                       )}
                     </Box>
@@ -512,34 +474,20 @@ const CleDynamicPage = () => {
               ))}
             </Grid>
           ) : (
-            <Typography align="center" sx={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <Typography align="center">
               Aucune clé trouvée.
             </Typography>
           )}
         </Container>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontFamily: 'Montserrat, sans-serif' }}>
+        <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
             {snackbarMessage}
           </Alert>
         </Snackbar>
         <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="lg">
           <DialogContent>
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} onWheel={handleWheel}>
-              <img
-                src={modalImageSrc}
-                alt="Agrandissement de la clé"
-                style={{
-                  transform: `scale(${scale})`,
-                  transition: 'transform 0.2s',
-                  width: '100%',
-                  height: 'auto'
-                }}
-              />
+              <img src={modalImageSrc} alt="Agrandissement de la clé" style={{ transform: `scale(${scale})`, transition: 'transform 0.2s', width: '100%', height: 'auto' }} />
             </Box>
           </DialogContent>
         </Dialog>
