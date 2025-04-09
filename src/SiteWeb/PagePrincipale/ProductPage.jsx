@@ -21,7 +21,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// Composants stylisés
+// Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
   boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
@@ -72,7 +72,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Pour le cas particulier de /cle-izis-cassee.php (valeurs par défaut)
+  // Cas spécial pour /cle-izis-cassee.php
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -89,7 +89,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit :
+  // Nettoyage du nom du produit
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -103,16 +103,13 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Construit l'URL avec le nom encodé
         const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
         const response = await fetch(url);
         if (!response.ok) {
-          // On tente de lire le message du serveur
           const serverMessage = await response.text();
           throw new Error(serverMessage || 'Produit introuvable.');
         }
         const data = await response.json();
-        // Vérification basique que le produit possède bien un id
         if (!data || !data.id) {
           throw new Error('Produit introuvable.');
         }
@@ -174,7 +171,6 @@ const ProductPage = () => {
     );
   }
 
-  // Détection si la clé est identifiée comme "Coffre Fort"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
