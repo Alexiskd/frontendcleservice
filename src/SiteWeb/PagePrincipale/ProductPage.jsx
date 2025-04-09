@@ -21,7 +21,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// Styled components
+// Composants stylisés
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
   boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
@@ -72,7 +72,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cas spécial pour /cle-izis-cassee.php
+  // Si l'URL correspond à la page spéciale, on attribue des valeurs par défaut
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -89,7 +89,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit
+  // Nettoyage du nom du produit pour supprimer d'éventuels suffixes et convertir les tirets en espaces.
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -103,9 +103,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        // Construit l'URL en encodant le nom du produit
         const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
         const response = await fetch(url);
         if (!response.ok) {
+          // Essai de récupération d'un message d'erreur issu du serveur
           const serverMessage = await response.text();
           throw new Error(serverMessage || 'Produit introuvable.');
         }
@@ -171,11 +173,13 @@ const ProductPage = () => {
     );
   }
 
+  // Détection d'une clé qui pourrait être un "Coffre Fort"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
+  // Calcul du prix principal basé sur "prix" ou "prixSansCartePropriete"
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -183,6 +187,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
+  // Texte décrivant le processus de reproduction
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -190,6 +195,7 @@ const ProductPage = () => {
       ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
       : "";
 
+  // Texte spécifique si une clé de passe est disponible
   const cleAPasseText =
     Number(product.prixCleAPasse) > 0 &&
     product.typeReproduction &&
