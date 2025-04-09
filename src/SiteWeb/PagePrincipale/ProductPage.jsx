@@ -72,7 +72,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Valeurs par défaut si l'URL correspond à '/cle-izis-cassee.php'
+  // Valeurs par défaut pour /cle-izis-cassee.php
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
