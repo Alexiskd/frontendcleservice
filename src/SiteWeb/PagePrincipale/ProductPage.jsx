@@ -15,7 +15,6 @@ import {
   Grid,
   Dialog,
   DialogContent,
-  TextField
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -68,11 +67,13 @@ const ProductPage = () => {
   const location = useLocation();
   let { brandName, productName } = useParams();
   const navigate = useNavigate();
+
+  // États de chargement, produit et erreur
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Valeurs par défaut pour /cle-izis-cassee.php
+  // Pour le cas particulier de /cle-izis-cassee.php, on affecte des valeurs par défaut
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -89,39 +90,54 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom de produit
+  // On nettoie le nom du produit pour retirer les suffixes ou tirets inutiles.
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
   }
+  // On remplace les tirets par des espaces pour obtenir un nom plus « humain »
   const decodedProductName = cleanedProductName.replace(/-/g, ' ');
 
+  // On force le scroll en haut lors du montage
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  // Chargement du produit via l'endpoint best-by-name
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Utilisation de l'endpoint best-by-name pour une recherche plus tolérante
-        const response = await fetch(
-          `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`
-        );
+        // On encode le nom pour éviter des problèmes d'URL
+        const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
+        const response = await fetch(url);
+
+        // Si la réponse n'est pas OK, on génère une erreur
         if (!response.ok) {
+          // On lit la réponse au format texte pour plus d'informations
+          const errorMessage = await response.text();
+          throw new Error(errorMessage || 'Produit introuvable.');
+        }
+
+        const data = await response.json();
+
+        // On vérifie que le produit a bien été trouvé
+        if (!data || !data.id) {
           throw new Error('Produit introuvable.');
         }
-        const data = await response.json();
+
         setProduct(data);
       } catch (err) {
-        console.error(err);
-        setError(err.message);
+        console.error('Erreur lors de la récupération du produit:', err);
+        setError(err.message || 'Erreur inconnue');
       } finally {
         setLoading(false);
       }
     };
+
     fetchProduct();
   }, [decodedProductName]);
 
+  // Gestion de la commande (redirection vers la page de commande)
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -135,6 +151,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
+  // Permet de naviguer vers la page produit en "rafraîchissant" l'URL
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -168,11 +185,13 @@ const ProductPage = () => {
     );
   }
 
+  // Détection d'une clé « Coffre Fort » selon le nom ou la marque (pour affichage conditionnel)
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
+  // Calcul du prix principal basé sur "prix" ou "prixSansCartePropriete"
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -180,6 +199,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
+  // Texte décrivant le process de reproduction
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -187,8 +207,11 @@ const ProductPage = () => {
       ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
       : "";
 
+  // Texte spécifique pour une éventuelle clé de passe
   const cleAPasseText =
-    Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier')
+    Number(product.prixCleAPasse) > 0 &&
+    product.typeReproduction &&
+    product.typeReproduction.toLowerCase().includes('atelier')
       ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
       : "Reproduction par numéro clé de passe : votre clé est un passe qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer la clé en amont.";
 
@@ -197,7 +220,10 @@ const ProductPage = () => {
       <HelmetProvider>
         <Helmet>
           <title>{product.nom} – Clé Izis Cavers Réparation de clé</title>
-          <meta name="description" content={`Découvrez ${product.nom} de ${brandName}. Réparation et reproduction de clé en ligne.`} />
+          <meta
+            name="description"
+            content={`Découvrez ${product.nom} de ${brandName}. Réparation et reproduction de clé en ligne.`}
+          />
           <link rel="canonical" href={`https://www.votresite.com/cle-izis-cassee.php`} />
         </Helmet>
       </HelmetProvider>
@@ -234,7 +260,11 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                <Typography variant="h4" sx={{ color: '#1B5E20', mb: 1, cursor: 'pointer' }} onClick={handleViewProduct}>
+                <Typography
+                  variant="h4"
+                  sx={{ color: '#1B5E20', mb: 1, cursor: 'pointer' }}
+                  onClick={handleViewProduct}
+                >
                   {product.nom}
                 </Typography>
                 <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -339,7 +369,11 @@ const ProductPage = () => {
       <Dialog open={false} onClose={() => {}} maxWidth="lg">
         <DialogContent>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img src="" alt="Agrandissement de la clé" style={{ width: '100%', maxWidth: '800px', height: 'auto' }} />
+            <img
+              src=""
+              alt="Agrandissement de la clé"
+              style={{ width: '100%', maxWidth: '800px', height: 'auto' }}
+            />
           </Box>
         </DialogContent>
       </Dialog>
