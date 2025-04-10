@@ -21,8 +21,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// Import du module de préchargement avec un chemin relatif
-import { preloadKeysData } from "../../utils/preloadData.js";
+// Import depuis brandsApi.js qui se trouve dans le dossier SiteWeb
+import { preloadKeysData } from "../brandsApi.js";
 
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
@@ -65,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche dans la liste des clés préchargées
+// Recherche simple dans la liste des clés préchargées
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -79,6 +79,7 @@ const ProductPage = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Message d'erreur générique
   const [error, setError] = useState(null);
 
   // Cas particulier pour "/cle-izis-cassee.php"
@@ -98,7 +99,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit
+  // Nettoyage du nom du produit : suppression de suffixe éventuel et remplacement des tirets par des espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -112,11 +113,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Préchargement des clés pour la marque donnée
+        // Préchargement des clés pour la marque donnée via brandsApi.js
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Fallback si le produit n'est pas trouvé dans le préchargement
+        // Si aucune correspondance n'est trouvée dans le préchargement, fallback sur l'endpoint best-by-name
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
