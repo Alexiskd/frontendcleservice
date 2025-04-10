@@ -21,9 +21,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// Ajustez le chemin suivant en fonction de l'emplacement de preloadData.js.
-// Si preloadData.js se trouve dans src/utils, par exemple, utilisez "../../utils/preloadData.js".
-import { preloadKeysData } from "../../utils/preloadData.js";
+// Import des fonctions de préchargement via l'alias configuré
+import { preloadKeysData } from '@utils/preloadData.js';
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -84,7 +83,7 @@ const ProductPage = () => {
   // Message d'erreur générique
   const [error, setError] = useState(null);
 
-  // Valeurs par défaut pour la page spécifique "/cle-izis-cassee.php"
+  // Cas particulier pour la page "/cle-izis-cassee.php"
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -101,7 +100,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit
+  // Nettoyage du nom du produit (suppression de suffixes et remplacement de tirets par des espaces)
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -115,12 +114,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Utilisation du préchargement des clés pour la marque donnée
+        // On précharge les clés pour la marque spécifiée
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si le produit n'est pas trouvé dans les clés préchargées,
-        // on effectue un fallback sur l'endpoint best-by-name.
+        // Si le produit n'est pas trouvé dans le préchargement, on fait un fallback sur l'endpoint best-by-name
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
