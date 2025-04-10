@@ -21,9 +21,9 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// IMPORTANT : Vérifiez que ce chemin est correct selon la structure de votre projet.
-// Si preloadData.js se trouve dans le même dossier, utilisez "./preloadData.js"
-import { preloadKeysData } from './preloadData.js';
+// Ajustez le chemin suivant en fonction de l'emplacement de preloadData.js.
+// Si preloadData.js se trouve dans src/utils, par exemple, utilisez "../../utils/preloadData.js".
+import { preloadKeysData } from "../../utils/preloadData.js";
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -84,7 +84,7 @@ const ProductPage = () => {
   // Message d'erreur générique
   const [error, setError] = useState(null);
 
-  // Cas particulier pour une page spécifique
+  // Valeurs par défaut pour la page spécifique "/cle-izis-cassee.php"
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -115,28 +115,28 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // On précharge les clés pour la marque spécifiée
+        // Utilisation du préchargement des clés pour la marque donnée
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si le produit n'est pas trouvé dans les données préchargées,
-        // on effectue une requête sur l'endpoint best-by-name
+        // Si le produit n'est pas trouvé dans les clés préchargées,
+        // on effectue un fallback sur l'endpoint best-by-name.
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
           if (!response.ok) {
             const serverMessage = await response.text();
-            throw new Error(serverMessage || 'Erreur lors du chargement de l\'article.');
+            throw new Error(serverMessage || "Erreur lors du chargement de l'article.");
           }
           foundProduct = await response.json();
           if (!foundProduct || !foundProduct.id) {
-            throw new Error('Erreur lors du chargement de l\'article.');
+            throw new Error("Erreur lors du chargement de l'article.");
           }
         }
         setProduct(foundProduct);
       } catch (err) {
-        console.error('Erreur lors de la récupération du produit:', err);
-        setError(err.message || 'Erreur inconnue');
+        console.error("Erreur lors de la récupération du produit:", err);
+        setError(err.message || "Erreur inconnue");
       } finally {
         setLoading(false);
       }
