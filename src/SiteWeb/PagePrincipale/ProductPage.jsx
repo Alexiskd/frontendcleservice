@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-// Utilisation de l'alias @utils
+// Import via alias @utils (assurez-vous que vite.config.js est configuré)
 import { preloadKeysData } from '@utils/preloadData.js';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -51,6 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
+// Retourne le délai de livraison selon le type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -64,6 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
+// Recherche une correspondance exacte dans la liste préchargée
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -79,6 +81,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Cas particulier pour d'anciens formats d'URL, par exemple : /cle-izis-cassee.php
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -95,6 +98,7 @@ const ProductPage = () => {
     );
   }
 
+  // Nettoyage du nom du produit : suppression d'un éventuel suffixe et conversion des tirets en espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -108,8 +112,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        // Préchargement des clés pour la marque indiquée
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
+
+        // Si aucune correspondance n'est trouvée, utiliser un endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
