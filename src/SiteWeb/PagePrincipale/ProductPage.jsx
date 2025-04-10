@@ -1,3 +1,4 @@
+// ProductPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
@@ -50,7 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Détermine le délai de livraison en fonction du type de reproduction
+// Fonction utilitaire qui détermine le délai de livraison en fonction du type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -64,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche dans la liste des clés préchargées une correspondance exacte
+// Recherche dans la liste des clés préchargées une correspondance exacte pour le nom du produit
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -78,10 +79,10 @@ const ProductPage = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  // Message d'erreur
+  // Message d'erreur à afficher en cas de problème
   const [error, setError] = useState(null);
 
-  // Cas particulier (exemple d'ancien URL avec .php)
+  // Cas particulier pour un ancien format d'URL (exemple avec .php)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -98,7 +99,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit  
+  // Nettoyage du nom du produit : suppression de suffixes et remplacement de tirets par des espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -112,11 +113,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Préchargement des clés correspondant à la marque
+        // Préchargement des clés correspondant à la marque passée en paramètre
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si non trouvé dans le préchargement, utiliser l'endpoint de fallback
+        // Si aucune correspondance n'est trouvée dans le préchargement, utiliser l'endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
@@ -141,7 +142,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
-  // Fonction de commande redirigeant vers la page de commande (mode 'numero' ou 'postal')
+  // Redirige vers la page de commande en fonction du mode sélectionné ('numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -155,6 +156,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
+  // Redirige vers l'URL de la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -188,13 +190,13 @@ const ProductPage = () => {
     );
   }
 
-  // Vérification si le produit contient "COFFRE FORT"
+  // Vérification d'un cas particulier où le produit est associé à un "COFFRE FORT"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Détermination du prix principal
+  // Détermination du prix principal (soit le prix standard soit le prix sans carte de propriété)
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -202,7 +204,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte à afficher dans le processus de commande en fonction du prix
+  // Texte explicatif en fonction des tarifs
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
