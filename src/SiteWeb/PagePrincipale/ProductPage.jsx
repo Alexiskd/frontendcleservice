@@ -1,5 +1,6 @@
+// src/SiteWeb/PagePrincipale/ProductPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Helmet } from 'react-helmet';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
   Box,
   Typography,
@@ -13,12 +14,12 @@ import {
   Alert,
   Divider,
   Grid,
+  Dialog,
+  DialogContent,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Dialog,
-  DialogContent
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -29,6 +30,8 @@ import LabelIcon from '@mui/icons-material/Label';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import DescriptionIcon from '@mui/icons-material/Description';
+// Import via alias configuré dans vite.config.js
+import { preloadKeysData } from '@utils/preloadData.js';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
@@ -57,6 +60,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
+// (Optionnel) Composants pour l'affichage du tableau de prix de clé de passe
 const PricingGrid = styled(Grid)(({ theme }) => ({
   border: '1px solid #1B5E20',
   borderRadius: 4,
@@ -94,32 +98,32 @@ const ProductPage = () => {
   const location = useLocation();
   let { brandName, productName } = useParams();
   const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // États pour le modal d'image agrandie
+  // États pour le modal d'image agrandie (optionnel)
   const [openImageModal, setOpenImageModal] = useState(false);
   const [modalImage, setModalImage] = useState('');
 
-  // Si aucun nom de produit n'est fourni et que le chemin est '/cle-izis-cassee.php', on définit une valeur par défaut
+  // Cas particulier pour l'ancien format d'URL
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
-  // On peut aussi définir une marque par défaut si nécessaire
   if (!brandName && location.pathname === '/cle-izis-cassee.php') {
     brandName = "cle-izis-cavers";
   }
-
   if (!productName) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
+        <Typography variant="h6" color="error">
           Nom de produit non spécifié.
         </Typography>
       </Container>
     );
   }
 
+  // Nettoyage du nom du produit
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -133,26 +137,40 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(
-          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedProductName)}`
+        // Ici on précharge les clés pour la marque
+        const keys = await preloadKeysData(brandName);
+        // On cherche une correspondance exacte dans la liste préchargée
+        let foundProduct = keys.find(
+          (item) =>
+            item.nom.trim().toLowerCase() === decodedProductName.trim().toLowerCase()
         );
-        if (!response.ok) {
-          throw new Error('Produit introuvable.');
+
+        // Fallback : si la clé exacte n'est pas trouvée
+        if (!foundProduct) {
+          const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(
+            decodedProductName
+          )}`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            const serverMessage = await response.text();
+            throw new Error(serverMessage || "Erreur lors du chargement de l'article.");
+          }
+          foundProduct = await response.json();
+          if (!foundProduct || !foundProduct.id) {
+            throw new Error("Erreur lors du chargement de l'article.");
+          }
         }
-        const data = await response.json();
-        if (!data) {
-          throw new Error('Réponse vide du serveur.');
-        }
-        setProduct(data);
+        setProduct(foundProduct);
       } catch (err) {
-        console.error(err);
-        setError(err.message);
+        console.error("Erreur lors de la récupération du produit:", err);
+        setError(err.message || "Erreur inconnue");
       } finally {
         setLoading(false);
       }
     };
+
     fetchProduct();
-  }, [decodedProductName]);
+  }, [decodedProductName, brandName]);
 
   const handleOrderNow = useCallback(
     (mode) => {
@@ -176,7 +194,6 @@ const ProductPage = () => {
     }
   }, [navigate, product, brandName]);
 
-  // Ouvre le modal d'image agrandie
   const handleOpenImageModal = useCallback(() => {
     if (product && product.imageUrl) {
       setModalImage(product.imageUrl);
@@ -184,15 +201,9 @@ const ProductPage = () => {
     }
   }, [product]);
 
-  // Ferme le modal
   const handleCloseImageModal = useCallback(() => {
     setOpenImageModal(false);
   }, []);
-
-  // Fonction pour ouvrir la source de la page dans un nouvel onglet
-  const handleOpenSourcePage = () => {
-    window.open('https://www.votresite.com/cle-izis-cassee.php', '_blank');
-  };
 
   if (loading) {
     return (
@@ -205,7 +216,7 @@ const ProductPage = () => {
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
+        <Typography variant="h6" color="error">
           {error}
         </Typography>
       </Container>
@@ -215,20 +226,18 @@ const ProductPage = () => {
   if (!product) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h6" color="error" sx={{ fontFamily: 'Bento, sans-serif' }}>
+        <Typography variant="h6" color="error">
           Produit non trouvé.
         </Typography>
       </Container>
     );
   }
 
-  // Vérification si c'est une clé de coffre‑fort
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Détermination du prix principal (sauf clé de passe)
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -236,7 +245,6 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte de procédé pour la section principale
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -244,18 +252,27 @@ const ProductPage = () => {
       ? "Reproduction dans notre atelier : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie (clé à passe ou clé normale)."
       : "";
 
-  // Texte de la cellule droite du tableau clé de passe
   const cleAPasseText =
-    Number(product.prixCleAPasse) > 0 && product.typeReproduction && product.typeReproduction.toLowerCase().includes('atelier')
+    Number(product.prixCleAPasse) > 0 &&
+    product.typeReproduction &&
+    product.typeReproduction.toLowerCase().includes('atelier')
       ? "Reproduction dans notre atelier pour clé de passe : vous devez nous envoyer la clé en amont et nous vous la renverrons accompagnée de sa copie."
-      : "Reproduction par numéro clé de passe : votre clé est un passe, qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer leur clé en amont.";
+      : "Reproduction par numéro clé de passe : votre clé est un passe qui ouvre plusieurs serrures. Vous n'avez pas besoin d'envoyer la clé en amont.";
 
   return (
     <>
       <Helmet>
-        <title>Clé Izis Cavers Reparation de clé – Votre solution en ligne</title>
-        <meta name="description" content="Découvrez la clé Izis Cavers Reparation de clé, réalisée avec soin par nos experts." />
-        <link rel="canonical" href="https://www.votresite.com/cle-izis-cassee.php" />
+        <title>{product.nom} – Clé Izis Cavers Réparation de clé</title>
+        <meta
+          name="description"
+          content={`Découvrez ${product.nom} de ${brandName}. Réparation et reproduction de clé en ligne.`}
+        />
+        <link
+          rel="canonical"
+          href={`https://www.votresite.com/produit/${brandName}/${encodeURIComponent(
+            product.nom.trim().replace(/\s+/g, '-')
+          )}`}
+        />
       </Helmet>
       <Container sx={{ mt: 2, mb: 4 }}>
         <StyledCard>
@@ -290,36 +307,21 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                {/* Nom du produit */}
                 <Typography
                   variant="h4"
-                  sx={{
-                    fontFamily: 'Bento, sans-serif',
-                    color: '#1B5E20',
-                    mb: 1,
-                    cursor: 'pointer',
-                  }}
+                  sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 1, cursor: 'pointer' }}
                   onClick={handleViewProduct}
                 >
                   {product.nom}
                 </Typography>
-                {/* Marque et prix */}
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ flexWrap: 'nowrap', mb: 2 }}
-                >
+                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'nowrap', mb: 2 }}>
                   {product.marque && (
                     <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20' }}>
                       {product.marque}
                     </Typography>
                   )}
                   {mainPrice && (
-                    <Typography
-                      variant="h5"
-                      sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}
-                    >
+                    <Typography variant="h5" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', whiteSpace: 'nowrap' }}>
                       {mainPrice} €
                     </Typography>
                   )}
@@ -330,7 +332,6 @@ const ProductPage = () => {
                   </Typography>
                 )}
                 <Divider sx={{ my: 2 }} />
-                {/* Processus de fabrication */}
                 <InfoBox>
                   <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
                     Processus de fabrication
@@ -339,16 +340,14 @@ const ProductPage = () => {
                     {processText}
                   </Typography>
                 </InfoBox>
-                {/* Autre moyen de reproduction */}
                 <InfoBox>
                   <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
                     Autre moyen de reproduction
                   </Typography>
                   <Typography variant="subtitle1" sx={{ fontFamily: 'Bento, sans-serif' }}>
-                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide. N'hésitez pas à venir nous voir !
+                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé. C'est simple et rapide.
                   </Typography>
                 </InfoBox>
-                {/* Tableau pour clé de passe */}
                 {Number(product.prixCleAPasse) > 0 && (
                   <InfoBox>
                     <Typography variant="h6" sx={{ fontFamily: 'Bento, sans-serif', color: '#1B5E20', mb: 2 }}>
@@ -356,7 +355,7 @@ const ProductPage = () => {
                     </Typography>
                     <PricingGrid container>
                       <PricingCell item xs={12} sm={4}>
-                        Copie fabricant d'une clé de passe (clé qui ouvre plusieurs serrures)
+                        Copie fabricant d'une clé de passe (clé ouvrant plusieurs serrures)
                       </PricingCell>
                       <PricingCell item xs={12} sm={4}>
                         {product.prixCleAPasse} €
@@ -448,7 +447,6 @@ const ProductPage = () => {
                     </InfoBox>
                   </Grid>
                 </Grid>
-                {/* Bloc de commande */}
                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Number(product.prix) > 0 && (
                     <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
@@ -457,12 +455,10 @@ const ProductPage = () => {
                   )}
                   {Number(product.prixSansCartePropriete) > 0 && (
                     <StyledButton onClick={() => handleOrderNow('postal')} startIcon={<LocalShippingIcon />}>
-                      Commander, la reproduction sera effectuée dans notre atelier.
+                      Commander – atelier (reproduction dans notre atelier)
                     </StyledButton>
                   )}
                 </Box>
-                
-                
               </CardContent>
             </Grid>
           </Grid>
@@ -473,7 +469,6 @@ const ProductPage = () => {
           </Snackbar>
         )}
       </Container>
-      {/* Dialog affichant l'image agrandie */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="lg">
         <DialogContent>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
