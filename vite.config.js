@@ -6,10 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@PagePrincipale': path.resolve(__dirname, 'src/PagePrincipale'),
+      // Ici, on indique que l'alias "@utils" pointe vers le dossier "src/utils"
+      '@utils': path.resolve(__dirname, 'src/utils'),
     },
   },
-  preview: {
-    allowedHosts: ['frontendcleservice.onrender.com', 'www.cleservice.com']
-  }
 });
