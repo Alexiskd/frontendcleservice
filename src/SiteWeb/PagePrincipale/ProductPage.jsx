@@ -1,4 +1,4 @@
-// ProductPage.jsx
+// src/SiteWeb/PagePrincipale/ProductPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '@utils/preloadData.js';
+import { preloadKeysData } from '../../utils/preloadData.js';  // Import relatif corrigé
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -51,7 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Fonction utilitaire qui détermine le délai de livraison en fonction du type de reproduction
+// Détermine le délai de livraison en fonction du type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -79,7 +79,6 @@ const ProductPage = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  // Message d'erreur à afficher en cas de problème
   const [error, setError] = useState(null);
 
   // Cas particulier pour un ancien format d'URL (exemple avec .php)
@@ -142,7 +141,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
-  // Redirige vers la page de commande en fonction du mode sélectionné ('numero' ou 'postal')
+  // Redirection vers la page de commande en fonction du mode ('numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -156,7 +155,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
-  // Redirige vers l'URL de la page produit
+  // Redirection vers l'URL de la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -190,13 +189,11 @@ const ProductPage = () => {
     );
   }
 
-  // Vérification d'un cas particulier où le produit est associé à un "COFFRE FORT"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Détermination du prix principal (soit le prix standard soit le prix sans carte de propriété)
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -204,7 +201,6 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte explicatif en fonction des tarifs
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -382,3 +378,4 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
+
