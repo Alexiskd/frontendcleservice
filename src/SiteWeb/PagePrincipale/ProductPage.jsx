@@ -21,6 +21,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
+// Import des fonctions de préchargement
+import { preloadKeysData } from './preloadData'; // ajustez le chemin si nécessaire
+
+// Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
   boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
@@ -48,6 +52,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
+// Fonction utilitaire pour déterminer le délai de livraison
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -61,14 +66,25 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
+// Fonction de recherche simple parmi les clés préchargées
+const findProductInKeys = (keys, productName) => {
+  // Ici, on effectue une recherche insensible à la casse et aux espaces superflus
+  return keys.find((item) => 
+    item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
+  );
+};
+
 const ProductPage = () => {
   const location = useLocation();
   let { brandName, productName } = useParams();
   const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  // On affiche un message générique d'erreur en cas d'échec
   const [error, setError] = useState(null);
 
+  // Pour la page spécifique, on attribue des valeurs par défaut
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -85,6 +101,7 @@ const ProductPage = () => {
     );
   }
 
+  // Nettoyage du nom du produit : suppression de suffixes et remplacement de tirets par des espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -98,17 +115,26 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          const serverMessage = await response.text();
-          throw new Error(serverMessage || 'Erreur lors du chargement de l\'article.');
+        // On utilise la fonction de préchargement pour la marque concernée
+        const keys = await preloadKeysData(brandName);
+        // Recherche du produit parmi les clés préchargées
+        let foundProduct = findProductInKeys(keys, decodedProductName);
+
+        if (!foundProduct) {
+          // Si aucun produit n'est trouvé dans les clés préchargées,
+          // on peut éventuellement effectuer une requête sur l'endpoint best-by-name
+          const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            const serverMessage = await response.text();
+            throw new Error(serverMessage || 'Erreur lors du chargement de l\'article.');
+          }
+          foundProduct = await response.json();
+          if (!foundProduct || !foundProduct.id) {
+            throw new Error('Erreur lors du chargement de l\'article.');
+          }
         }
-        const data = await response.json();
-        if (!data || !data.id) {
-          throw new Error('Erreur lors du chargement de l\'article.');
-        }
-        setProduct(data);
+        setProduct(foundProduct);
       } catch (err) {
         console.error('Erreur lors de la récupération du produit:', err);
         setError(err.message || 'Erreur inconnue');
@@ -118,7 +144,7 @@ const ProductPage = () => {
     };
 
     fetchProduct();
-  }, [decodedProductName]);
+  }, [decodedProductName, brandName]);
 
   const handleOrderNow = useCallback(
     (mode) => {
