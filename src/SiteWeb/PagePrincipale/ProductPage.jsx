@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-// Le chemin relatif remonte de trois niveaux vers le dossier utils
+// Remonte de trois niveaux pour atteindre le dossier utils
 import { preloadKeysData } from '../../../utils/preloadData.js';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -51,7 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Retourne le délai de livraison en fonction du type de reproduction
+// Retourne le délai de livraison selon le type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -65,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche dans la liste préchargée une correspondance exacte pour le nom du produit
+// Recherche une correspondance exacte dans la liste préchargée
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -81,7 +81,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Traitement particulier pour d'anciens formats d'URL (ex : .php)
+  // Traitement particulier pour d'anciens formats d'URL (exemple avec .php)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -98,7 +98,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit : suppression d'un éventuel suffixe et conversion des tirets en espaces
+  // Nettoyage du nom du produit : suppression éventuelle d'un suffixe et conversion des tirets en espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -116,7 +116,7 @@ const ProductPage = () => {
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si aucune correspondance n'est trouvée, utiliser l'endpoint de fallback
+        // Si aucune correspondance n'est trouvée, on utilise un endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
@@ -141,7 +141,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
-  // Redirige vers la page de commande selon le mode sélectionné ('numero' ou 'postal')
+  // Redirection vers la page de commande selon le mode sélectionné ('numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -155,7 +155,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
-  // Redirige vers la page produit
+  // Redirection vers la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -226,9 +226,7 @@ const ProductPage = () => {
           />
           <link
             rel="canonical"
-            href={`https://www.votresite.com/produit/${brandName}/${encodeURIComponent(
-              product.nom.trim().replace(/\s+/g, '-')
-            )}`}
+            href={`https://www.votresite.com/produit/${brandName}/${encodeURIComponent(product.nom.trim().replace(/\s+/g, '-'))}`}
           />
         </Helmet>
       </HelmetProvider>
