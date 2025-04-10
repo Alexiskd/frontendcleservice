@@ -1,10 +1,10 @@
 // src/utils/preloadData.js
 
 /**
- * Précharge les clés associées à une marque via l'API.
+ * Précharge les clés (produits) associées à une marque.
  *
  * @param {string} brandName - Le nom de la marque pour laquelle récupérer les clés.
- * @returns {Promise<Array>} - Un tableau de clés ou [] en cas d'erreur.
+ * @returns {Promise<Array>} - Un tableau de clés ou [] en cas d’erreur.
  */
 export const preloadKeysData = async (brandName) => {
   if (!brandName) {
