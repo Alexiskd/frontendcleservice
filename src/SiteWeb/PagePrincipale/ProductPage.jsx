@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '@utils/preloadData.js'; // On utilise maintenant l'alias "@utils"
+import { preloadKeysData } from '@utils/preloadData.js'; // Utilisation de l'alias
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -116,7 +116,7 @@ const ProductPage = () => {
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si aucune correspondance n'est trouvée dans le préchargement, utiliser un endpoint de fallback
+        // Si aucune correspondance n'est trouvée dans le préchargement, utiliser l'endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
