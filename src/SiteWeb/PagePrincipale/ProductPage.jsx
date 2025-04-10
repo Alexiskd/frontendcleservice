@@ -21,8 +21,11 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// Import des fonctions de préchargement via l'alias configuré
+// Import des fonctions de préchargement via alias ou chemin relatif
+// Si vous utilisez l'alias configuré dans vite.config.js, l'import pourra être :
 import { preloadKeysData } from '@utils/preloadData.js';
+// Sinon, utilisez un chemin relatif, par exemple :
+// import { preloadKeysData } from "../../utils/preloadData.js";
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -66,7 +69,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche simple dans la liste des clés préchargées
+// Fonction de recherche simple dans la liste des clés préchargées
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -114,11 +117,12 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // On précharge les clés pour la marque spécifiée
+        // Préchargement des clés pour la marque donnée
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si le produit n'est pas trouvé dans le préchargement, on fait un fallback sur l'endpoint best-by-name
+        // Si aucune correspondance n'est trouvée dans le préchargement,
+        // on passe au fallback en utilisant l'endpoint best-by-name
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
