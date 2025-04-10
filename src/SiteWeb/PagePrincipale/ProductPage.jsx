@@ -21,8 +21,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
-// Import du module de préchargement via un chemin relatif.
-import { preloadKeysData } from "../../utils/preloadData.js";
+// Import via alias configuré dans vite.config.js
+import { preloadKeysData } from '@utils/preloadData.js';
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -66,7 +66,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche dans la liste des clés préchargées
+// Recherche simple dans la liste des clés préchargées
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -80,9 +80,10 @@ const ProductPage = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Message d'erreur générique
   const [error, setError] = useState(null);
 
-  // Cas particulier pour "/cle-izis-cassee.php"
+  // Cas particulier pour la page "/cle-izis-cassee.php"
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -99,7 +100,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit : suppression d'un suffixe éventuel et remplacement des tirets par des espaces
+  // Nettoyage du nom du produit : suppression de suffixe éventuel et remplacement des tirets par des espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -113,11 +114,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Préchargement des clés pour la marque donnée
+        // Précharger les clés pour la marque donnée
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Fallback si le produit n'est pas trouvé dans les données préchargées
+        // Si aucune correspondance n'est trouvée, effectuer un fallback vers l'endpoint best-by-name
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
@@ -259,11 +260,7 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                <Typography
-                  variant="h4"
-                  sx={{ color: '#1B5E20', mb: 1, cursor: 'pointer' }}
-                  onClick={handleViewProduct}
-                >
+                <Typography variant="h4" sx={{ color: '#1B5E20', mb: 1, cursor: 'pointer' }} onClick={handleViewProduct}>
                   {product.nom}
                 </Typography>
                 <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
