@@ -1,4 +1,4 @@
-// src/utils/preloadData.js
+// utils/preloadData.js
 
 /**
  * Précharge les clés (produits) associées à une marque spécifique depuis l'API.
@@ -12,7 +12,6 @@ export const preloadKeysData = async (brandName) => {
     return [];
   }
   
-  // Déclaration d'une URL de base (vous pouvez utiliser une variable d'environnement si besoin)
   const baseUrl = 'https://cl-back.onrender.com';
   const endpoint = `/produit/cles?marque=${encodeURIComponent(brandName)}`;
   const url = `${baseUrl}${endpoint}`;
