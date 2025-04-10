@@ -1,44 +1,35 @@
-// src/utils/preloadData.js
+// @utils/preloadData.js
 
-let preloadedBrands = null;
-let preloadedBrandsPromise = null;
-
-export function preloadBrandsData() {
-  if (!preloadedBrandsPromise) {
-    preloadedBrandsPromise = fetch('https://cl-back.onrender.com/brands')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Erreur lors de la récupération des marques');
-        }
-        return res.json();
-      })
-      .then((data) => {
-        preloadedBrands = data;
-        return data;
-      });
+/**
+ * Précharge les clés (produits) associées à une marque spécifique depuis l'API.
+ *
+ * @param {string} brandName - Le nom de la marque pour laquelle récupérer les clés.
+ * @returns {Promise<Array>} - Une promesse qui se résout avec un tableau de clés ou, en cas d'erreur, un tableau vide.
+ */
+export const preloadKeysData = async (brandName) => {
+  // Vérification que la marque a été spécifiée
+  if (!brandName) {
+    console.error("Le nom de la marque est requis pour précharger les données.");
+    return [];
   }
-  return preloadedBrandsPromise;
-}
 
-// Préchargement des clés pour une marque donnée
-let preloadedKeys = {};
-let preloadedKeysPromises = {};
+  // Déclaration d'une URL de base configurable (vous pouvez en faire une constante d'environnement par exemple)
+  const baseUrl = 'https://cl-back.onrender.com';
+  // Construction de l'endpoint à partir du nom de la marque
+  const endpoint = `/produit/cles?marque=${encodeURIComponent(brandName)}`;
+  const url = `${baseUrl}${endpoint}`;
 
-export function preloadKeysData(brand) {
-  if (!preloadedKeysPromises[brand]) {
-    preloadedKeysPromises[brand] = fetch(
-      `https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(brand)}`
-    )
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Erreur lors de la récupération des clés pour ${brand}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        preloadedKeys[brand] = data;
-        return data;
-      });
+  try {
+    const response = await fetch(url);
+    // Vérification que la réponse du serveur est correcte
+    if (!response.ok) {
+      console.error(`Erreur: Le serveur a renvoyé le statut ${response.status} pour l'URL : ${url}`);
+      throw new Error('Erreur lors du préchargement des clés');
+    }
+    const keys = await response.json();
+    return keys;
+  } catch (error) {
+    console.error("Erreur dans preloadKeysData:", error);
+    return [];
   }
-  return preloadedKeysPromises[brand];
-}
+};
