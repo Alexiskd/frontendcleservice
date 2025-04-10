@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '../../utils/preloadData.js';  // Import relatif corrigé
+import { preloadKeysData } from '../../utils/preloadData.js'; // Assurez-vous que ce chemin est correct
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -51,7 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Détermine le délai de livraison en fonction du type de reproduction
+// Fonction utilitaire : détermine le délai de livraison en fonction du type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -65,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche dans la liste des clés préchargées une correspondance exacte pour le nom du produit
+// Fonction utilitaire : recherche une correspondance exacte dans la liste des clés préchargées
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -155,7 +155,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
-  // Redirection vers l'URL de la page produit
+  // Redirection vers la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -189,11 +189,13 @@ const ProductPage = () => {
     );
   }
 
+  // Vérification d'un cas particulier où le produit est associé à un "COFFRE FORT"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
+  // Détermination du prix principal (prix standard ou prix sans carte de propriété)
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -201,6 +203,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
+  // Texte expliquant le processus de commande selon le tarif
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
