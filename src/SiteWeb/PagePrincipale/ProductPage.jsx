@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-// Import corrigé : remonter de 3 niveaux pour atteindre /src/utils
+// Import corrigé : remonter de trois niveaux (depuis src/SiteWeb/PagePrincipale/ vers src/utils)
 import { preloadKeysData } from '../../../utils/preloadData.js';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -65,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche dans la liste des clés préchargées une correspondance exacte pour le nom du produit
+// Recherche d'une correspondance exacte dans la liste des clés préchargées
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -81,7 +81,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cas particulier pour un ancien format d'URL (exemple avec .php)
+  // Cas particulier pour un ancien format d'URL (exemple .php)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -116,7 +116,7 @@ const ProductPage = () => {
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si aucune correspondance n'est trouvée dans le préchargement, utiliser un endpoint de fallback
+        // Si aucune correspondance n'est trouvée, utiliser un endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
@@ -141,7 +141,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
-  // Redirection vers la page de commande en fonction du mode ('numero' ou 'postal')
+  // Redirection vers la page de commande (mode 'numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
