@@ -1,15 +1,12 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@PagePrincipale': path.resolve(__dirname, 'src/PagePrincipale'),
+      '@utils': '/src/utils',  // Veillez à ce que ce chemin corresponde à votre structure de projet
     },
   },
-  preview: {
-    allowedHosts: ['frontendcleservice.onrender.com', 'www.cleservice.com']
-  }
 });
