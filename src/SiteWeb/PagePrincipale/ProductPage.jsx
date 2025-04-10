@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-// Utilisation du chemin relatif corrigé pour atteindre preloadData.js
+// Import corrigé : remonter de trois niveaux pour atteindre utils/preloadData.js
 import { preloadKeysData } from '../../../utils/preloadData.js';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -51,7 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Fonction utilitaire pour déterminer le délai de livraison selon le type de reproduction
+// Fonction utilitaire : retourne le délai de livraison selon le type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -65,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche d'une correspondance exacte dans la liste préchargée
+// Fonction utilitaire : recherche une correspondance exacte dans la liste préchargée
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -81,7 +81,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cas particulier pour un ancien format d'URL (par exemple, avec .php)
+  // Cas particulier pour un ancien format d'URL (exemple avec .php)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -98,7 +98,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit : suppression d'un éventuel suffixe et conversion des tirets en espaces
+  // Nettoyage du nom du produit : suppression éventuelle d'un suffixe et conversion des tirets en espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -141,7 +141,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
-  // Fonction pour rediriger vers la page de commande selon le mode ('numero' ou 'postal')
+  // Fonction qui redirige vers la page de commande (mode 'numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -155,7 +155,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
-  // Fonction pour rediriger vers l'URL de la page produit
+  // Fonction qui redirige vers la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
