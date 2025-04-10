@@ -21,9 +21,9 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '@utils/preloadData.js'; // Utilisation de l'alias
+// Utilisation de l'alias '@utils' pour importer preloadKeysData
+import { preloadKeysData } from '@utils/preloadData.js';
 
-// Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
   boxShadow: '0px 4px 20px rgba(27, 94, 32, 0.3)',
@@ -51,7 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Détermine le délai de livraison selon le type de reproduction
+// Détermine le délai de livraison en fonction du type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -65,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche une correspondance exacte dans la liste des clés préchargées
+// Recherche dans la liste des clés préchargées une correspondance exacte pour le nom du produit
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -116,7 +116,7 @@ const ProductPage = () => {
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si aucune correspondance n'est trouvée dans le préchargement, utiliser l'endpoint de fallback
+        // Si aucune correspondance n'est trouvée, utiliser l'endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
@@ -141,7 +141,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
-  // Redirige vers la page de commande en fonction du mode ('numero' ou 'postal')
+  // Redirection vers la page de commande (mode 'numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -155,7 +155,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
-  // Redirige vers l'URL de la page produit
+  // Redirection vers l'URL de la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -189,13 +189,11 @@ const ProductPage = () => {
     );
   }
 
-  // Cas particulier : vérifie si le produit est associé à "COFFRE FORT"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
-  // Détermination du prix principal (prix standard ou prix sans carte de propriété)
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -203,7 +201,6 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte expliquant le processus de commande en fonction des tarifs
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
