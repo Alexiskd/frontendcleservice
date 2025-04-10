@@ -21,7 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import { preloadKeysData } from '../../utils/preloadData.js'; // Assurez-vous que ce chemin est correct
+import { preloadKeysData } from '@utils/preloadData.js'; // On utilise maintenant l'alias "@utils"
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -51,7 +51,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Fonction utilitaire : détermine le délai de livraison en fonction du type de reproduction
+// Détermine le délai de livraison selon le type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -65,7 +65,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Fonction utilitaire : recherche une correspondance exacte dans la liste des clés préchargées
+// Recherche une correspondance exacte dans la liste des clés préchargées
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -112,11 +112,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Préchargement des clés correspondant à la marque passée en paramètre
+        // Préchargement des clés pour la marque donnée
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si aucune correspondance n'est trouvée dans le préchargement, utiliser l'endpoint de fallback
+        // Si aucune correspondance n'est trouvée dans le préchargement, utiliser un endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
@@ -141,7 +141,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
-  // Redirection vers la page de commande en fonction du mode ('numero' ou 'postal')
+  // Redirige vers la page de commande en fonction du mode ('numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -155,7 +155,7 @@ const ProductPage = () => {
     [navigate, product, brandName]
   );
 
-  // Redirection vers la page produit
+  // Redirige vers l'URL de la page produit
   const handleViewProduct = useCallback(() => {
     if (product) {
       const formattedProductName = product.nom.trim().replace(/\s+/g, '-');
@@ -189,7 +189,7 @@ const ProductPage = () => {
     );
   }
 
-  // Vérification d'un cas particulier où le produit est associé à un "COFFRE FORT"
+  // Cas particulier : vérifie si le produit est associé à "COFFRE FORT"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
@@ -203,7 +203,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
-  // Texte expliquant le processus de commande selon le tarif
+  // Texte expliquant le processus de commande en fonction des tarifs
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -227,7 +227,10 @@ const ProductPage = () => {
             name="description"
             content={`Découvrez ${product.nom} de ${brandName}. Réparation et reproduction de clé en ligne.`}
           />
-          <link rel="canonical" href={`https://www.votresite.com/produit/${brandName}/${encodeURIComponent(product.nom.trim().replace(/\s+/g, '-'))}`} />
+          <link
+            rel="canonical"
+            href={`https://www.votresite.com/produit/${brandName}/${encodeURIComponent(product.nom.trim().replace(/\s+/g, '-'))}`}
+          />
         </Helmet>
       </HelmetProvider>
       <Container sx={{ mt: 2, mb: 4 }}>
