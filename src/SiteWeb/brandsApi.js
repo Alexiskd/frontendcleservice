@@ -1,5 +1,4 @@
-// utils/preloadData.js
-
+// src/utils/preloadData.js
 /**
  * Précharge les clés (produits) associées à une marque spécifique depuis l'API.
  *
