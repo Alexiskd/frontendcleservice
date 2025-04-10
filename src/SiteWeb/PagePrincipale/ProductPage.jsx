@@ -20,8 +20,6 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-
-// Import via alias (ou ajustez le chemin relatif si nécessaire)
 import { preloadKeysData } from '@utils/preloadData.js';
 
 // Styled components
@@ -52,7 +50,7 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-// Fonction utilitaire pour déterminer le délai de livraison
+// Détermine le délai de livraison en fonction du type de reproduction
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -66,7 +64,7 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche simple dans la liste des clés préchargées
+// Recherche dans la liste des clés préchargées une correspondance exacte
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -80,9 +78,10 @@ const ProductPage = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Message d'erreur
   const [error, setError] = useState(null);
 
-  // Pour la page spécifique "/cle-izis-cassee.php", on attribue des valeurs par défaut
+  // Cas particulier (exemple d'ancien URL avec .php)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -99,7 +98,7 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit : suppression de suffixes et remplacement de tirets par des espaces
+  // Nettoyage du nom du produit  
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -113,12 +112,11 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Préchargement des clés pour la marque donnée
+        // Préchargement des clés correspondant à la marque
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
 
-        // Si aucune correspondance n'est trouvée dans le préchargement,
-        // utiliser l'endpoint fallback best-by-name
+        // Si non trouvé dans le préchargement, utiliser l'endpoint de fallback
         if (!foundProduct) {
           const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
@@ -143,6 +141,7 @@ const ProductPage = () => {
     fetchProduct();
   }, [decodedProductName, brandName]);
 
+  // Fonction de commande redirigeant vers la page de commande (mode 'numero' ou 'postal')
   const handleOrderNow = useCallback(
     (mode) => {
       if (product) {
@@ -189,11 +188,13 @@ const ProductPage = () => {
     );
   }
 
+  // Vérification si le produit contient "COFFRE FORT"
   const isCoffreFort =
     product &&
     (product.nom.toUpperCase().includes("COFFRE FORT") ||
       (product.marque && product.marque.toUpperCase().includes("COFFRE FORT")));
 
+  // Détermination du prix principal
   const mainPrice =
     Number(product.prix) > 0
       ? product.prix
@@ -201,6 +202,7 @@ const ProductPage = () => {
       ? product.prixSansCartePropriete
       : null;
 
+  // Texte à afficher dans le processus de commande en fonction du prix
   const processText =
     Number(product.prix) > 0
       ? "Reproduction par numéro et/ou carte de propriété chez le fabricant. Vous n'avez pas besoin d'envoyer la clé en amont."
@@ -224,7 +226,7 @@ const ProductPage = () => {
             name="description"
             content={`Découvrez ${product.nom} de ${brandName}. Réparation et reproduction de clé en ligne.`}
           />
-          <link rel="canonical" href={`https://www.votresite.com/cle-izis-cassee.php`} />
+          <link rel="canonical" href={`https://www.votresite.com/produit/${brandName}/${encodeURIComponent(product.nom.trim().replace(/\s+/g, '-'))}`} />
         </Helmet>
       </HelmetProvider>
       <Container sx={{ mt: 2, mb: 4 }}>
