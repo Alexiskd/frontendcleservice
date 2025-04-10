@@ -12,7 +12,7 @@ export const preloadKeysData = async (brandName) => {
     return [];
   }
   
-  // Utilisez une constante pour l'URL de base (vous pouvez l'adapter ou la passer via un fichier d'environnement)
+  // Déclaration d'une URL de base (vous pouvez utiliser une variable d'environnement si besoin)
   const baseUrl = 'https://cl-back.onrender.com';
   const endpoint = `/produit/cles?marque=${encodeURIComponent(brandName)}`;
   const url = `${baseUrl}${endpoint}`;
