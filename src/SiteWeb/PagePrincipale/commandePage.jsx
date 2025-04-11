@@ -41,8 +41,8 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-// Importation des fonctions de préchargement
-import { preloadKeysData } from 'src/SiteWeb/brandsApi';
+// Importation des fonctions de préchargement via chemin relatif
+import { preloadKeysData } from '../brandsApi';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
@@ -107,7 +107,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
         <Typography variant="body2" paragraph>
           Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
         </Typography>
-        {/* Autres articles */}
+        {/* Autres articles du document... */}
       </Box>
     </DialogContent>
     <DialogActions>
@@ -122,6 +122,7 @@ const CommandePage = () => {
   }, []);
 
   const { brand: brandName, reference: articleType, name: articleName } = useParams();
+  // Remplacement des tirets par des espaces, par exemple "Clé-Abus-XP-1" devient "Clé Abus XP 1"
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
@@ -175,7 +176,7 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Fonction pour calculer la distance de Levenshtein entre deux chaînes
+  // Fonction simple pour calculer la distance de Levenshtein entre deux chaînes
   const levenshteinDistance = (a, b) => {
     const m = a.length, n = b.length;
     const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -190,19 +191,20 @@ const CommandePage = () => {
     return dp[m][n];
   };
 
-  // Utilisation du préchargement des clés pour la marque donnée
+  // Précharger les clés pour la marque donnée et sélectionner le produit correspondant
   useEffect(() => {
     const fetchPreloadedProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Récupérer la liste des clés pour la marque via le préchargement
+        // Utiliser le préchargement pour récupérer tous les produits de la marque
         const keys = await preloadKeysData(brandName);
         if (!keys || keys.length === 0) {
           throw new Error("Aucun produit trouvé pour cette marque.");
         }
-        // Trouver une correspondance exacte sur le nom ; sinon utiliser la meilleure correspondance basée sur la distance de Levenshtein
+        // Chercher une correspondance exacte sur le nom
         let product = keys.find((p) => p.nom.toLowerCase() === decodedArticleName.toLowerCase());
+        // Sinon, utiliser la meilleure correspondance basée sur la distance de Levenshtein
         if (!product) {
           product = keys.sort(
             (a, b) =>
@@ -210,7 +212,7 @@ const CommandePage = () => {
               levenshteinDistance(decodedArticleName.toLowerCase(), b.nom.toLowerCase())
           )[0];
         }
-        // Vérifier que la marque correspond
+        // Valider que le produit a bien la marque attendue
         if (product && product.marque && product.marque.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -855,7 +857,6 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Popup CGV */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
