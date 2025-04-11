@@ -44,9 +44,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
-    <Typography variant="body2" sx={{ minWidth: '150px' }}>
-      {label}
-    </Typography>
+    <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
     <IconButton
       color="primary"
       aria-label={label}
@@ -72,9 +70,7 @@ const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent,
 
 const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
   color: theme.palette.grey[500],
-  '&.Mui-checked': {
-    color: theme.palette.primary.main
-  }
+  '&.Mui-checked': { color: theme.palette.primary.main }
 }));
 
 const SectionPaper = styled(Paper)(({ theme }) => ({
@@ -97,9 +93,9 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary
 }));
 
-// --------------------------------------------------
-// Popup Conditions Générales de Vente (inclus dans le fichier)
-// --------------------------------------------------
+// -----------------------------------------------------------------
+// Popup Conditions Générales de Vente (intégrée dans ce fichier)
+// -----------------------------------------------------------------
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
   <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
     <DialogTitle>Conditions Générales de Vente - Cleservice.com</DialogTitle>
@@ -187,14 +183,14 @@ const CommandePage = () => {
     address: '',
     postalCode: '',
     ville: '',
-    additionalInfo: '',
+    additionalInfo: ''
   });
 
   const [keyInfo, setKeyInfo] = useState({
     keyNumber: '',
     propertyCardNumber: '',
     frontPhoto: null,
-    backPhoto: null,
+    backPhoto: null
   });
 
   const [isCleAPasse, setIsCleAPasse] = useState(false);
@@ -202,7 +198,7 @@ const CommandePage = () => {
   const [idCardInfo, setIdCardInfo] = useState({
     idCardFront: null,
     idCardBack: null,
-    domicileJustificatif: '',
+    domicileJustificatif: ''
   });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
 
@@ -224,33 +220,24 @@ const CommandePage = () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
+        // Tente d'abord l'endpoint par défaut
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
-        
-        // Si le serveur indique "Produit introuvable", essayer l'endpoint de fallback
+        // Si le premier appel échoue, utiliser systématiquement l'endpoint de fallback
         if (!response.ok) {
-          const errorText = await response.text();
-          if (errorText.includes("Produit introuvable")) {
-            endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-            response = await fetch(endpoint);
-          } else {
-            throw new Error("Erreur lors du chargement de l'article.");
-          }
+          endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+          response = await fetch(endpoint);
         }
-        
         if (!response.ok) {
           throw new Error("Erreur lors du chargement de l'article.");
         }
-        
         const responseText = await response.text();
         if (!responseText) throw new Error("Réponse vide du serveur.");
         const data = JSON.parse(responseText);
-        
-        // Vérifie que la marque correspond (en respectant la casse via toLowerCase)
+        // Vérifie que la marque correspond si la donnée est renseignée
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
-        
         setArticle(data);
       } catch (err) {
         console.error("Erreur lors de la récupération du produit:", err);
@@ -330,10 +317,9 @@ const CommandePage = () => {
         try {
           const response = await fetch('https://cl-back.onrender.com/upload/pdf', {
             method: 'POST',
-            body: formData,
+            body: formData
           });
-          if (!response.ok)
-            throw new Error("Erreur lors de l'upload du justificatif.");
+          if (!response.ok) throw new Error("Erreur lors de l'upload du justificatif.");
           const data = await response.json();
           setIdCardInfo((prev) => ({ ...prev, domicileJustificatif: data.filePath }));
         } catch (err) {
@@ -399,7 +385,7 @@ const CommandePage = () => {
 
       const commandeResponse = await fetch('https://cl-back.onrender.com/commande/create', {
         method: 'POST',
-        body: commandeFormData,
+        body: commandeFormData
       });
       if (!commandeResponse.ok) {
         const errorText = await commandeResponse.text();
@@ -415,13 +401,13 @@ const CommandePage = () => {
           ? `Veuillez procéder au paiement pour ${userInfo.nom}`
           : 'Veuillez procéder au paiement',
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`
       };
 
       const paymentResponse = await fetch('https://cl-back.onrender.com/stripe/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentPayload),
+        body: JSON.stringify(paymentPayload)
       });
       if (!paymentResponse.ok) {
         const errorText = await paymentResponse.text();
@@ -453,9 +439,7 @@ const CommandePage = () => {
   if (errorArticle) {
     return (
       <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="h6" color="error">
-          {errorArticle}
-        </Typography>
+        <Typography variant="h6" color="error">{errorArticle}</Typography>
       </Box>
     );
   }
@@ -466,9 +450,7 @@ const CommandePage = () => {
         <Grid container spacing={4}>
           <Grid item xs={12}>
             <SectionPaper>
-              <Typography variant="h5" gutterBottom>
-                Informations de Commande
-              </Typography>
+              <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
               <Divider sx={{ mb: 3 }} />
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
                 <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
@@ -838,7 +820,9 @@ const CommandePage = () => {
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="body2">
-                  {shippingMethod === 'expedition' ? "Frais d'expédition" : "Récupération en magasin"}
+                  {shippingMethod === 'expedition'
+                    ? "Frais d'expédition"
+                    : "Récupération en magasin"}
                 </Typography>
                 <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
               </Box>
@@ -900,7 +884,7 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Popup Conditions Générales de Vente intégrée directement */}
+      {/* Popup Conditions Générales de Vente intégrée */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
