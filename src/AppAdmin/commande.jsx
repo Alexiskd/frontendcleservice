@@ -40,11 +40,9 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
-// Vérifiez et ajustez le chemin d'import ci-dessous selon l'emplacement réel de votre fichier ConditionsGeneralesVentePopup.
-// Exemple : si le composant se trouve dans src/components/, utilisez :
-import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup';
-// Si le fichier se trouve dans le même dossier que commande.jsx, utilisez :
-// import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Corrigez le chemin d'import ci‑dessus selon la structure de votre projet.
+// Ici, nous supposons que ConditionsGeneralesVentePopup se trouve dans le même dossier que commande.jsx.
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
@@ -170,7 +168,7 @@ const CommandePage = () => {
 
         if (!response.ok) {
           const errorText = await response.text();
-          // En cas de "Produit introuvable", on utilise un endpoint de fallback
+          // Si le texte renvoyé contient "Produit introuvable", on utilise le fallback
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
