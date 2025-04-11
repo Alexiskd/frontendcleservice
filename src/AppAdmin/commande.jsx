@@ -39,7 +39,8 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Import corrigé : si le composant ConditionsGeneralesVentePopup se trouve dans src/components/
+import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup.jsx';
 
 // Composant utilitaire pour l'upload de fichiers
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
