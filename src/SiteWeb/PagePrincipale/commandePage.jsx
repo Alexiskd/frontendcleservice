@@ -41,7 +41,6 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-// Importation des fonctions de préchargement via chemin relatif
 import { preloadKeysData } from '../brandsApi';
 
 // Fonction de normalisation pour retirer les accents, espaces superflus et mettre en minuscules
@@ -116,7 +115,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
         <Typography variant="body2" paragraph>
           Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
         </Typography>
-        {/* Autres articles du document... */}
+        {/* ... Autres articles ... */}
       </Box>
     </DialogContent>
     <DialogActions>
@@ -184,56 +183,42 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Fonction pour calculer la distance de Levenshtein
-  const levenshteinDistance = (a, b) => {
-    const m = a.length, n = b.length;
-    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
-      }
-    }
-    return dp[m][n];
-  };
-
-  // Précharger les produits pour la marque et sélectionner le produit correspondant
+  // Précharger les produits pour la marque donnée, puis utiliser la méthode best-by-name si aucune correspondance exacte n'est trouvée
   useEffect(() => {
-    const fetchPreloadedProduct = async () => {
+    const fetchProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Récupération des produits de la marque via le préchargement
+        // Précharger les clés pour la marque
         const keys = await preloadKeysData(brandName);
-        if (!keys || keys.length === 0) {
-          throw new Error("Aucun produit trouvé pour cette marque.");
+        let product = null;
+
+        if (keys && keys.length > 0) {
+          // Chercher une correspondance exacte en normalisant
+          product = keys.find((p) => normalizeString(p.nom) === normalizeString(decodedArticleName));
         }
-        // Chercher une correspondance exacte sur le nom
-        let product = keys.find((p) => normalizeString(p.nom) === normalizeString(decodedArticleName));
-        // Sinon, utiliser la meilleure correspondance basée sur la distance de Levenshtein
+        // Si aucune correspondance exacte n'est trouvée, appeler le endpoint best-by-name
         if (!product) {
-          product = keys.sort(
-            (a, b) =>
-              levenshteinDistance(normalizeString(decodedArticleName), normalizeString(a.nom)) -
-              levenshteinDistance(normalizeString(decodedArticleName), normalizeString(b.nom))
-          )[0];
+          const bestResp = await fetch(`https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`);
+          if (!bestResp.ok) {
+            throw new Error("Erreur lors du chargement du produit via la méthode best-by-name.");
+          }
+          product = await bestResp.json();
         }
-        // Valider que le produit a bien la marque attendue
+        // Vérifier que la marque correspond en normalisant
         if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
         setArticle(product);
       } catch (err) {
-        console.error("Erreur lors de la récupération du produit préchargé:", err);
+        console.error("Erreur lors de la récupération du produit :", err);
         setErrorArticle(err.message || "Erreur inconnue");
       } finally {
         setLoadingArticle(false);
       }
     };
 
-    fetchPreloadedProduct();
+    fetchProduct();
   }, [brandName, decodedArticleName]);
 
   const articlePrice = article
