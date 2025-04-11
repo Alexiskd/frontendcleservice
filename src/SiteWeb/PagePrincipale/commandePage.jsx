@@ -40,10 +40,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
-// Corrigez le chemin d'import : 
-// Si votre fichier ConditionsGeneralesVentePopup se trouve dans src/components/,
-// le chemin relatif depuis src/AppAdmin/commande.jsx doit être :
-import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup';
+// Import avec extension, en supposant que le fichier se trouve dans le même dossier
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup.jsx';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
@@ -169,6 +167,7 @@ const CommandePage = () => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          // En cas de "Produit introuvable", on utilise un endpoint de fallback
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
@@ -224,7 +223,8 @@ const CommandePage = () => {
       return false;
     }
     if (mode === 'numero') {
-      if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim()) return false;
+      if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim())
+        return false;
       if (lostCartePropriete) {
         if (
           !idCardInfo.idCardFront ||
@@ -266,7 +266,8 @@ const CommandePage = () => {
             method: 'POST',
             body: formData,
           });
-          if (!response.ok) throw new Error("Erreur lors de l'upload du justificatif.");
+          if (!response.ok)
+            throw new Error("Erreur lors de l'upload du justificatif.");
           const data = await response.json();
           setIdCardInfo((prev) => ({ ...prev, domicileJustificatif: data.filePath }));
         } catch (err) {
@@ -386,7 +387,9 @@ const CommandePage = () => {
   if (errorArticle) {
     return (
       <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="h6" color="error">{errorArticle}</Typography>
+        <Typography variant="h6" color="error">
+          {errorArticle}
+        </Typography>
       </Box>
     );
   }
