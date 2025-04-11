@@ -39,8 +39,9 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-// Import corrigé : on suppose que ConditionsGeneralesVentePopup se trouve dans le même dossier que commande.jsx
-import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Corrigez le chemin d'import suivant selon l'emplacement de ConditionsGeneralesVentePopup.
+// Ici, nous supposons que le composant se trouve dans le dossier "src/components/"
+import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
