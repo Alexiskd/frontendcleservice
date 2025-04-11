@@ -231,8 +231,8 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error("Réponse vide du serveur.");
         const data = JSON.parse(responseText);
-        // Vérifie que la marque correspond (si renseignée)
-        if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
+        // Utilise le champ "marque" au lieu de "manufacturer" pour valider la marque
+        if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
         setArticle(data);
@@ -808,8 +808,8 @@ const CommandePage = () => {
                   )}
                   <Box>
                     <Typography variant="subtitle1">{article.nom}</Typography>
-                    {article.manufacturer && (
-                      <Typography variant="body2">Marque : {article.manufacturer}</Typography>
+                    {article.marque && (
+                      <Typography variant="body2">Marque : {article.marque}</Typography>
                     )}
                     <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
                   </Box>
