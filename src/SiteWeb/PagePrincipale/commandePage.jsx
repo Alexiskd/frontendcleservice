@@ -134,7 +134,7 @@ const CommandePage = () => {
   const mode = searchParams.get('mode'); // mode "postal" ou "numero"
   const navigate = useNavigate();
 
-  // États pour l'article et le chargement/erreur
+  // États pour l'article et pour l'erreur/chargement
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
@@ -189,13 +189,14 @@ const CommandePage = () => {
   // Quantité de copies souhaitée
   const [quantity, setQuantity] = useState(1);
 
-  // Chargement du produit en utilisant les clés préchargées
+  // Chargement du produit en utilisant les clés préchargées pour la marque (exemple "KESO" si brandName === "KESO")
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
         const keys = await preloadKeysData(brandName);
+        console.log(`Clés préchargées pour ${brandName} :`, keys);
         let product = null;
 
         // Recherche d'une correspondance exacte via la fonction de normalisation
@@ -207,7 +208,7 @@ const CommandePage = () => {
         
         // Si aucune correspondance exacte n'est trouvée, on appelle l'endpoint fallback best-by-name
         if (!product) {
-          console.log("Aucune correspondance exacte trouvée avec les clés préchargées, appel de best-by-name...");
+          console.log("Aucune correspondance exacte trouvée dans les clés préchargées, appel de best-by-name...");
           const bestResp = await fetch(
             `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`
           );
@@ -451,7 +452,7 @@ const CommandePage = () => {
     );
   }
 
-  // Rendu complet du composant, incluant le formulaire de commande et le résumé
+  // Rendu complet du composant, incluant le formulaire de commande et le récapitulatif
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
