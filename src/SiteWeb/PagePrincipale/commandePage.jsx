@@ -223,7 +223,7 @@ const CommandePage = () => {
         // Tente d'abord l'endpoint par défaut
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
-        // Si le premier appel échoue, utiliser systématiquement l'endpoint de fallback
+        // Utilise l'endpoint de fallback si le premier appel échoue (code 500)
         if (!response.ok) {
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
@@ -234,7 +234,7 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error("Réponse vide du serveur.");
         const data = JSON.parse(responseText);
-        // Vérifie que la marque correspond si la donnée est renseignée
+        // Vérifier que la marque correspond
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -319,7 +319,8 @@ const CommandePage = () => {
             method: 'POST',
             body: formData
           });
-          if (!response.ok) throw new Error("Erreur lors de l'upload du justificatif.");
+          if (!response.ok)
+            throw new Error("Erreur lors de l'upload du justificatif.");
           const data = await response.json();
           setIdCardInfo((prev) => ({ ...prev, domicileJustificatif: data.filePath }));
         } catch (err) {
