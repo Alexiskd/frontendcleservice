@@ -25,7 +25,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
 } from '@mui/material';
 import {
   PhotoCamera,
@@ -37,7 +37,7 @@ import {
   LocationCity,
   Info,
   CheckCircle,
-  Error as ErrorIcon
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -54,7 +54,7 @@ const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent,
         borderRadius: 1,
         border: '1px solid',
         borderColor: 'divider',
-        '&:hover': { backgroundColor: 'action.hover' }
+        '&:hover': { backgroundColor: 'action.hover' },
       }}
     >
       <input type="file" name={name} accept={accept} hidden onChange={onChange} />
@@ -70,7 +70,7 @@ const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent,
 
 const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
   color: theme.palette.grey[500],
-  '&.Mui-checked': { color: theme.palette.primary.main }
+  '&.Mui-checked': { color: theme.palette.primary.main },
 }));
 
 const SectionPaper = styled(Paper)(({ theme }) => ({
@@ -80,7 +80,7 @@ const SectionPaper = styled(Paper)(({ theme }) => ({
   backgroundColor: '#fff',
   marginBottom: theme.spacing(3),
   border: '1px solid',
-  borderColor: theme.palette.divider
+  borderColor: theme.palette.divider,
 }));
 
 const SummaryCard = styled(Card)(({ theme }) => ({
@@ -90,12 +90,12 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   backgroundColor: '#fff',
   border: '1px solid',
   borderColor: theme.palette.divider,
-  color: theme.palette.text.primary
+  color: theme.palette.text.primary,
 }));
 
-// -----------------------------------------------------------------
+// --------------------------------------------------
 // Popup Conditions Générales de Vente (intégrée dans ce fichier)
-// -----------------------------------------------------------------
+// --------------------------------------------------
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
   <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
     <DialogTitle>Conditions Générales de Vente - Cleservice.com</DialogTitle>
@@ -183,14 +183,14 @@ const CommandePage = () => {
     address: '',
     postalCode: '',
     ville: '',
-    additionalInfo: ''
+    additionalInfo: '',
   });
 
   const [keyInfo, setKeyInfo] = useState({
     keyNumber: '',
     propertyCardNumber: '',
     frontPhoto: null,
-    backPhoto: null
+    backPhoto: null,
   });
 
   const [isCleAPasse, setIsCleAPasse] = useState(false);
@@ -198,7 +198,7 @@ const CommandePage = () => {
   const [idCardInfo, setIdCardInfo] = useState({
     idCardFront: null,
     idCardBack: null,
-    domicileJustificatif: ''
+    domicileJustificatif: '',
   });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
 
@@ -223,7 +223,7 @@ const CommandePage = () => {
         // Tente d'abord l'endpoint par défaut
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
-        // Utilise l'endpoint de fallback si le premier appel échoue (code 500)
+        // Utilise systématiquement l'endpoint de fallback si le premier appel échoue
         if (!response.ok) {
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
@@ -234,7 +234,7 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error("Réponse vide du serveur.");
         const data = JSON.parse(responseText);
-        // Vérifier que la marque correspond
+        // Vérifie que la marque correspond (si renseignée)
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -317,7 +317,7 @@ const CommandePage = () => {
         try {
           const response = await fetch('https://cl-back.onrender.com/upload/pdf', {
             method: 'POST',
-            body: formData
+            body: formData,
           });
           if (!response.ok)
             throw new Error("Erreur lors de l'upload du justificatif.");
@@ -386,7 +386,7 @@ const CommandePage = () => {
 
       const commandeResponse = await fetch('https://cl-back.onrender.com/commande/create', {
         method: 'POST',
-        body: commandeFormData
+        body: commandeFormData,
       });
       if (!commandeResponse.ok) {
         const errorText = await commandeResponse.text();
@@ -402,13 +402,13 @@ const CommandePage = () => {
           ? `Veuillez procéder au paiement pour ${userInfo.nom}`
           : 'Veuillez procéder au paiement',
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
       };
 
       const paymentResponse = await fetch('https://cl-back.onrender.com/stripe/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentPayload)
+        body: JSON.stringify(paymentPayload),
       });
       if (!paymentResponse.ok) {
         const errorText = await paymentResponse.text();
@@ -821,9 +821,7 @@ const CommandePage = () => {
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="body2">
-                  {shippingMethod === 'expedition'
-                    ? "Frais d'expédition"
-                    : "Récupération en magasin"}
+                  {shippingMethod === 'expedition' ? "Frais d'expédition" : "Récupération en magasin"}
                 </Typography>
                 <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
               </Box>
@@ -844,9 +842,7 @@ const CommandePage = () => {
                   color: '#e0e0e0',
                   fontWeight: 'bold',
                   border: '1px solid #1B5E20',
-                  '&:hover': {
-                    backgroundImage: 'linear-gradient(145deg, black, #1B5E20)'
-                  }
+                  '&:hover': { backgroundImage: 'linear-gradient(145deg, black, #1B5E20)' },
                 }}
               >
                 {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
@@ -877,7 +873,7 @@ const CommandePage = () => {
           severity={snackbarSeverity}
           iconMapping={{
             success: <CheckCircle fontSize="inherit" sx={{ color: '#1B5E20' }} />,
-            error: <ErrorIcon fontSize="inherit" sx={{ color: '#1B5E20' }} />
+            error: <ErrorIcon fontSize="inherit" sx={{ color: '#1B5E20' }} />,
           }}
           sx={{ width: '100%' }}
         >
