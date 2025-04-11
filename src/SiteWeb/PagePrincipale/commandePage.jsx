@@ -122,7 +122,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 );
 
 const CommandePage = () => {
-  // Gestion du scroll vers le haut lors du chargement
+  // Permet de scroller vers le haut lors du chargement
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -131,15 +131,15 @@ const CommandePage = () => {
   const { brand: brandName, reference: articleType, name: articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode'); // mode "postal" ou "numero"
+  const mode = searchParams.get('mode'); // "postal" ou "numero"
   const navigate = useNavigate();
 
-  // États pour l'article et pour l'erreur/chargement
+  // États pour l'article ainsi que le chargement et l'erreur
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // États pour le modal d'image
+  // État pour le modal d'image
   const [openImageModal, setOpenImageModal] = useState(false);
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
@@ -182,14 +182,14 @@ const CommandePage = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [ordering, setOrdering] = useState(false);
 
-  // États pour la popup CGV et l'acceptation des termes
+  // États pour la popup CGV et l'acceptation des conditions
   const [openCGV, setOpenCGV] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Quantité de copies souhaitée
   const [quantity, setQuantity] = useState(1);
 
-  // Chargement du produit en utilisant les clés préchargées pour la marque (exemple "KESO" si brandName === "KESO")
+  // Chargement du produit en utilisant les clés préchargées pour la marque (ex : KESO)
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -206,7 +206,7 @@ const CommandePage = () => {
           );
         }
         
-        // Si aucune correspondance exacte n'est trouvée, on appelle l'endpoint fallback best-by-name
+        // Si aucune correspondance n'est trouvée, appel de l'endpoint fallback best-by-name
         if (!product) {
           console.log("Aucune correspondance exacte trouvée dans les clés préchargées, appel de best-by-name...");
           const bestResp = await fetch(
@@ -235,11 +235,10 @@ const CommandePage = () => {
         setLoadingArticle(false);
       }
     };
-
     fetchProduct();
   }, [brandName, decodedArticleName]);
 
-  // Calcul des prix et frais de livraison
+  // Calcul des prix et des frais de livraison
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
       ? parseFloat(article.prixCleAPasse)
@@ -429,7 +428,7 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  // Affichage pendant le chargement de l'article
+  // Pendant le chargement du produit
   if (loadingArticle) {
     return (
       <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -438,7 +437,7 @@ const CommandePage = () => {
     );
   }
 
-  // En cas d'erreur, affichage d'un message et bouton de retour
+  // En cas d'erreur lors du chargement du produit
   if (errorArticle || !article) {
     return (
       <Container sx={{ mt: 4 }}>
@@ -452,7 +451,7 @@ const CommandePage = () => {
     );
   }
 
-  // Rendu complet du composant, incluant le formulaire de commande et le récapitulatif
+  // Rendu complet du composant, incluant le formulaire, le récapitulatif et les autres éléments UI
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
@@ -462,7 +461,7 @@ const CommandePage = () => {
             <SectionPaper>
               <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
               <Divider sx={{ mb: 3 }} />
-              
+
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
                 <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
                   Processus de Commande
