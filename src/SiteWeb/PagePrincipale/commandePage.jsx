@@ -41,9 +41,10 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+// Importation de la fonction de préchargement pour les clés par marque
 import { preloadKeysData } from '../brandsApi';
 
-// Fonction de normalisation pour retirer les accents, espaces superflus et mettre en minuscules
+// Fonction de normalisation : supprime les accents, les espaces superflus et transforme en minuscules
 const normalizeString = (str) => {
   return str
     .trim()
@@ -115,7 +116,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
         <Typography variant="body2" paragraph>
           Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
         </Typography>
-        {/* ... Autres articles ... */}
+        {/* Vous pouvez ajouter les autres articles ici */}
       </Box>
     </DialogContent>
     <DialogActions>
@@ -183,21 +184,35 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Précharger les produits pour la marque donnée, puis utiliser la méthode best-by-name si aucune correspondance exacte n'est trouvée
+  // Fonction pour calculer la distance de Levenshtein entre deux chaînes
+  const levenshteinDistance = (a, b) => {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[m][n];
+  };
+
+  // Préchargement des produits pour la marque donnée et utilisation d'un fallback via best-by-name
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Précharger les clés pour la marque
+        // Récupération des produits pour la marque préchargés
         const keys = await preloadKeysData(brandName);
         let product = null;
-
         if (keys && keys.length > 0) {
-          // Chercher une correspondance exacte en normalisant
+          // Recherche d'une correspondance exacte sur le nom
           product = keys.find((p) => normalizeString(p.nom) === normalizeString(decodedArticleName));
         }
-        // Si aucune correspondance exacte n'est trouvée, appeler le endpoint best-by-name
+        // Si aucune correspondance exacte n'est trouvée, appeler l'endpoint best-by-name
         if (!product) {
           const bestResp = await fetch(`https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`);
           if (!bestResp.ok) {
@@ -205,7 +220,7 @@ const CommandePage = () => {
           }
           product = await bestResp.json();
         }
-        // Vérifier que la marque correspond en normalisant
+        // Vérification que le produit a bien la marque attendue après normalisation
         if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
