@@ -25,7 +25,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
+  DialogActions
 } from '@mui/material';
 import {
   PhotoCamera,
@@ -37,7 +37,7 @@ import {
   LocationCity,
   Info,
   CheckCircle,
-  Error as ErrorIcon,
+  Error as ErrorIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -98,7 +98,7 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 }));
 
 // --------------------------------------------------
-// Popup Conditions Générales de Vente (inclus directement)
+// Popup Conditions Générales de Vente (inclus en interne)
 // --------------------------------------------------
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
   return (
@@ -106,7 +106,6 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
       <DialogTitle>Conditions Générales de Vente - Cleservice.com</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ maxHeight: '60vh', overflowY: 'auto', pr: 2 }}>
-          {/* Articles 1 à 4 */}
           <Typography variant="h6" gutterBottom>
             Article 1 : Objet
           </Typography>
@@ -131,8 +130,6 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
           <Typography variant="body2" paragraph>
             Les produits commandés sont livrés à l’adresse indiquée lors de la commande. Le retrait en magasin reste gratuit, tandis que l’expédition entraîne des frais supplémentaires indiqués lors de la commande.
           </Typography>
-
-          {/* Articles suivants */}
           <Typography variant="h6" gutterBottom>
             Article 5 : Responsabilité et Garanties
           </Typography>
@@ -157,8 +154,6 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
           <Typography variant="body2" paragraph>
             Les présentes CGV sont régies par la loi française. En cas de litige, seuls les tribunaux français seront compétents.
           </Typography>
-          
-          {/* Nouveaux articles */}
           <Typography variant="h6" gutterBottom>
             Article 9 : Livraison, Sécurité et Transfert de Risque
           </Typography>
@@ -186,9 +181,9 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
   );
 };
 
-// ---------------------------------
+// --------------------------------------------------
 // Composante CommandePage
-// ---------------------------------
+// --------------------------------------------------
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -258,7 +253,6 @@ const CommandePage = () => {
 
         if (!response.ok) {
           const errorText = await response.text();
-          // Si "Produit introuvable", utilisation d'un endpoint de fallback
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
@@ -271,7 +265,7 @@ const CommandePage = () => {
           throw new Error("Erreur lors du chargement de l'article.");
         }
         const responseText = await response.text();
-        if (!responseText) throw new Error('Réponse vide du serveur.');
+        if (!responseText) throw new Error("Réponse vide du serveur.");
         const data = JSON.parse(responseText);
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
@@ -934,7 +928,7 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Popup Conditions Générales de Vente directement intégré */}
+      {/* La popup Conditions Générales de Vente est incluse directement */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
