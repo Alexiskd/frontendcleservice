@@ -39,10 +39,9 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-// Import corrigé : si le composant ConditionsGeneralesVentePopup se trouve dans src/components/
-import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup.jsx';
+// Import corrigé : on suppose que ConditionsGeneralesVentePopup se trouve dans le même dossier que commande.jsx
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
-// Composant utilitaire pour l'upload de fichiers
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>
@@ -102,24 +101,20 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 // Composant Principal : CommandePage
 // -----------------------------
 const CommandePage = () => {
-  // Gestion du scroll
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres de la route
   const { brand: brandName, reference: articleType, name: articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
 
-  // États pour l'article et son chargement
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // États pour la gestion des modales et informations utilisateur
   const [openImageModal, setOpenImageModal] = useState(false);
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
@@ -164,19 +159,16 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération de l'article via l'API
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Endpoint de recherche exacte
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
 
         if (!response.ok) {
           const errorText = await response.text();
-          // Si le texte d'erreur indique "Produit introuvable", utiliser le fallback
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
@@ -191,7 +183,6 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-        // Vérification optionnelle : vérifier que la marque correspond
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -207,7 +198,6 @@ const CommandePage = () => {
     fetchArticle();
   }, [brandName, decodedArticleName, articleType]);
 
-  // Calcul du prix et frais d'expédition
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
       ? parseFloat(article.prixCleAPasse)
@@ -219,7 +209,6 @@ const CommandePage = () => {
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
   const totalPrice = safeArticlePrice + shippingFee;
 
-  // Validation du formulaire
   const validateForm = () => {
     if (
       !userInfo.nom.trim() ||
