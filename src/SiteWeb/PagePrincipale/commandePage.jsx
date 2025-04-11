@@ -98,7 +98,7 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 }));
 
 // --------------------------------------------------
-// Popup Conditions Générales de Vente (inclus en interne)
+// Popup Conditions Générales de Vente (inclus dans ce fichier)
 // --------------------------------------------------
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
   return (
@@ -175,7 +175,9 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">Fermer</Button>
+        <Button onClick={onClose} color="primary">
+          Fermer
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -928,7 +930,7 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* La popup Conditions Générales de Vente est incluse directement */}
+      {/* Popup Conditions Générales de Vente intégrée */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
