@@ -25,7 +25,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
 } from '@mui/material';
 import {
   PhotoCamera,
@@ -37,7 +37,7 @@ import {
   LocationCity,
   Info,
   CheckCircle,
-  Error as ErrorIcon
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -97,9 +97,9 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// -----------------------------------------------------------
-// Popup Conditions Générales de Vente directement inclus
-// -----------------------------------------------------------
+// --------------------------------------------------
+// Popup Conditions Générales de Vente (inclus directement)
+// --------------------------------------------------
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -934,7 +934,7 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Popup Conditions Générales de Vente incluse directement */}
+      {/* Popup Conditions Générales de Vente directement intégré */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
