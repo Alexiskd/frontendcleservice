@@ -97,9 +97,9 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// ---------------------------------
-// Popup Conditions Générales de Vente
-// ---------------------------------
+// -----------------------------------------------------------
+// Popup Conditions Générales de Vente directement inclus
+// -----------------------------------------------------------
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -157,7 +157,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => {
           <Typography variant="body2" paragraph>
             Les présentes CGV sont régies par la loi française. En cas de litige, seuls les tribunaux français seront compétents.
           </Typography>
-
+          
           {/* Nouveaux articles */}
           <Typography variant="h6" gutterBottom>
             Article 9 : Livraison, Sécurité et Transfert de Risque
@@ -258,6 +258,7 @@ const CommandePage = () => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          // Si "Produit introuvable", utilisation d'un endpoint de fallback
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
@@ -933,7 +934,7 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Popup Conditions Générales de Vente directement inclus */}
+      {/* Popup Conditions Générales de Vente incluse directement */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
