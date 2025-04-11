@@ -39,9 +39,8 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-// Corrigez le chemin d'import suivant selon l'emplacement de ConditionsGeneralesVentePopup.
-// Ici, nous supposons que le composant se trouve dans le dossier "src/components/"
-import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup';
+// Modification apportée : import depuis le même dossier
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
@@ -165,10 +164,12 @@ const CommandePage = () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
+        // Recherche exacte de l'article par nom
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
 
         if (!response.ok) {
+          // En cas de "Produit introuvable", on utilise un endpoint de fallback
           const errorText = await response.text();
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
