@@ -94,7 +94,7 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 }));
 
 // --------------------------------------------------
-// Popup Conditions Générales de Vente (intégrée dans ce fichier)
+// Popup Conditions Générales de Vente
 // --------------------------------------------------
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
   <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -153,9 +153,6 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
   </Dialog>
 );
 
-// --------------------------------------------------
-// Composante CommandePage
-// --------------------------------------------------
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -223,7 +220,7 @@ const CommandePage = () => {
         // Tente d'abord l'endpoint par défaut
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
-        // Utilise systématiquement l'endpoint de fallback si le premier appel échoue
+        // Utilise l'endpoint de fallback si le premier appel échoue
         if (!response.ok) {
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
@@ -881,7 +878,7 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Popup Conditions Générales de Vente intégrée */}
+      {/* Popup CGV */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
