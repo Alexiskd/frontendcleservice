@@ -43,15 +43,11 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { preloadKeysData } from '../brandsApi';
 
-// Fonction de normalisation : supprime les accents, les espaces superflus et met en minuscules
-const normalizeString = (str) => {
-  return str
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, "");
-};
+// Fonction de normalisation utilisée pour la comparaison des chaînes
+const normalizeString = (str) =>
+  str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
+// Composant de téléchargement de fichier aligné
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
@@ -78,11 +74,13 @@ const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent,
   </Box>
 );
 
+// Checkbox au style moderne
 const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
   color: theme.palette.grey[500],
   '&.Mui-checked': { color: theme.palette.primary.main },
 }));
 
+// Paper stylisé pour les sections
 const SectionPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: theme.spacing(1),
@@ -93,6 +91,7 @@ const SectionPaper = styled(Paper)(({ theme }) => ({
   borderColor: theme.palette.divider,
 }));
 
+// Card de résumé stylisée
 const SummaryCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: theme.spacing(2),
@@ -103,7 +102,7 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// Popup Conditions Générales de Vente
+// Popup des Conditions Générales de Vente
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
   <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
     <DialogTitle>Conditions Générales de Vente - Cleservice.com</DialogTitle>
@@ -113,7 +112,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
         <Typography variant="body2" paragraph>
           Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
         </Typography>
-        {/* Vous pouvez ajouter les autres articles si nécessaire */}
+        {/* Vous pouvez ajouter d'autres articles si nécessaire */}
       </Box>
     </DialogContent>
     <DialogActions>
@@ -123,24 +122,29 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 );
 
 const CommandePage = () => {
+  // Gestion du scroll vers le haut lors du chargement
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  // Récupération des paramètres d'URL
   const { brand: brandName, reference: articleType, name: articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode');
+  const mode = searchParams.get('mode'); // mode "postal" ou "numero"
   const navigate = useNavigate();
 
+  // États pour l'article et le chargement/erreur
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
+  // États pour le modal d'image
   const [openImageModal, setOpenImageModal] = useState(false);
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
 
+  // États pour les informations utilisateur
   const [userInfo, setUserInfo] = useState({
     clientType: 'particulier',
     nom: '',
@@ -152,13 +156,13 @@ const CommandePage = () => {
     additionalInfo: '',
   });
 
+  // États pour les informations sur la clé
   const [keyInfo, setKeyInfo] = useState({
     keyNumber: '',
     propertyCardNumber: '',
     frontPhoto: null,
     backPhoto: null,
   });
-
   const [isCleAPasse, setIsCleAPasse] = useState(false);
   const [lostCartePropriete, setLostCartePropriete] = useState(false);
   const [idCardInfo, setIdCardInfo] = useState({
@@ -168,70 +172,52 @@ const CommandePage = () => {
   });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
 
+  // États pour la livraison
   const [deliveryType, setDeliveryType] = useState('');
   const [shippingMethod, setShippingMethod] = useState('magasin');
 
+  // États pour le snackbar de notifications
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [ordering, setOrdering] = useState(false);
 
+  // États pour la popup CGV et l'acceptation des termes
   const [openCGV, setOpenCGV] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // Quantité de copies souhaitée
   const [quantity, setQuantity] = useState(1);
 
-  // Fonction pour calculer la distance de Levenshtein entre deux chaînes
-  const levenshteinDistance = (a, b) => {
-    const m = a.length, n = b.length;
-    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
-      }
-    }
-    return dp[m][n];
-  };
-
-  // Précharge les produits pour la marque et, en l'absence d'une correspondance exacte, utilise l'endpoint best-by-name
+  // Chargement du produit en utilisant les clés préchargées
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Récupérer les produits préchargés pour la marque
         const keys = await preloadKeysData(brandName);
         let product = null;
         if (keys && keys.length > 0) {
-          // Recherche d'une correspondance exacte (après normalisation)
           product = keys.find((p) => normalizeString(p.nom) === normalizeString(decodedArticleName));
         }
-        // Si aucune correspondance exacte n'est trouvée, utiliser best-by-name
         if (!product) {
+          // Appel à l'endpoint fallback best-by-name si pas de correspondance exacte
           const bestResp = await fetch(`https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`);
           if (bestResp.ok) {
             product = await bestResp.json();
+          } else if (keys && keys.length > 0) {
+            product = keys[0];
+            console.warn("Utilisation du premier produit préchargé en fallback.");
           } else {
-            // En cas d'erreur, on utilise le premier produit préchargé comme fallback
-            if (keys && keys.length > 0) {
-              product = keys[0];
-              console.warn("Utilisation d'un produit de fallback depuis les préchargées malgré l'erreur de best-by-name.");
-            } else {
-              throw new Error("Erreur lors du chargement du produit via la méthode best-by-name.");
-            }
+            throw new Error("Erreur lors de la récupération du produit via best-by-name.");
           }
         }
-        // Vérifier que la marque correspond (après normalisation)
         if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
         setArticle(product);
       } catch (err) {
         console.error("Erreur lors de la récupération du produit :", err);
-        // On continue l'affichage même en cas d'erreur, en stockant le message
         setErrorArticle(err.message || "Erreur inconnue");
       } finally {
         setLoadingArticle(false);
@@ -241,6 +227,7 @@ const CommandePage = () => {
     fetchProduct();
   }, [brandName, decodedArticleName]);
 
+  // Calcul des prix et frais de livraison
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
       ? parseFloat(article.prixCleAPasse)
@@ -252,6 +239,7 @@ const CommandePage = () => {
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
   const totalPrice = safeArticlePrice + shippingFee;
 
+  // Validation du formulaire
   const validateForm = () => {
     if (
       !userInfo.nom.trim() ||
@@ -283,6 +271,7 @@ const CommandePage = () => {
     return true;
   };
 
+  // Gestion des changements d'input
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     if (name in userInfo) {
@@ -292,6 +281,7 @@ const CommandePage = () => {
     }
   };
 
+  // Gestion de l'upload des photos de la clé
   const handlePhotoUpload = (event) => {
     const { name, files } = event.target;
     if (files && files[0]) {
@@ -299,6 +289,7 @@ const CommandePage = () => {
     }
   };
 
+  // Gestion de l'upload des documents d'identité
   const handleIdCardUpload = async (event) => {
     const { name, files } = event.target;
     if (files && files[0]) {
@@ -325,6 +316,7 @@ const CommandePage = () => {
     }
   };
 
+  // Gestion de la commande
   const handleOrder = async () => {
     if (!termsAccepted) {
       setSnackbarMessage('Veuillez accepter les Conditions Générales de Vente.');
@@ -341,6 +333,7 @@ const CommandePage = () => {
     setOrdering(true);
     try {
       const commandeFormData = new FormData();
+      // Informations client
       commandeFormData.append('nom', userInfo.nom);
       commandeFormData.append('email', userInfo.email);
       commandeFormData.append('phone', userInfo.phone);
@@ -348,6 +341,7 @@ const CommandePage = () => {
       commandeFormData.append('postalCode', userInfo.postalCode);
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
+      // Détail de la commande
       commandeFormData.append('prix', totalPrice.toFixed(2));
       commandeFormData.append('articleName', article?.nom || '');
       commandeFormData.append('quantity', quantity);
@@ -375,6 +369,7 @@ const CommandePage = () => {
         commandeFormData.append('backPhoto', keyInfo.backPhoto);
       }
 
+      // Création de la commande via l'API backend
       const commandeResponse = await fetch('https://cl-back.onrender.com/commande/create', {
         method: 'POST',
         body: commandeFormData,
@@ -386,6 +381,7 @@ const CommandePage = () => {
       const commandeResult = await commandeResponse.json();
       const { numeroCommande } = commandeResult;
 
+      // Création de la page de paiement
       const paymentPayload = {
         amount: totalPrice * 100,
         currency: 'eur',
@@ -415,11 +411,13 @@ const CommandePage = () => {
     }
   };
 
+  // Fermeture du snackbar
   const handleCloseSnackbar = (event, reason) => {
     if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
 
+  // Affichage pendant le chargement de l'article
   if (loadingArticle) {
     return (
       <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -428,15 +426,31 @@ const CommandePage = () => {
     );
   }
 
-  // Même en cas d'erreur sur le produit, on affiche quand même le formulaire avec une note dans le récapitulatif
+  // En cas d'erreur, affichage d'un message et bouton de retour
+  if (errorArticle || !article) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h4" color="error" gutterBottom>
+          {errorArticle || "Produit non disponible"}
+        </Typography>
+        <Button variant="contained" onClick={() => navigate('/')}>
+          Retour à l’accueil
+        </Button>
+      </Container>
+    );
+  }
+
+  // Rendu complet du composant, incluant le formulaire de commande et le résumé
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
         <Grid container spacing={4}>
+          {/* Section Formulaire */}
           <Grid item xs={12}>
             <SectionPaper>
               <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
               <Divider sx={{ mb: 3 }} />
+              
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
                 <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
                   Processus de Commande
@@ -454,7 +468,7 @@ const CommandePage = () => {
 
               {mode === 'numero' && (
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2 }}>Informations sur la clé</Typography>
+                  <Typography variant="h6" sx={{ mb: 2 }}>Informations sur la Clé</Typography>
                   {article?.estCleAPasse && (
                     <FormControlLabel
                       control={<ModernCheckbox checked={isCleAPasse} onChange={(e) => setIsCleAPasse(e.target.checked)} />}
@@ -600,7 +614,7 @@ const CommandePage = () => {
                       <InputAdornment position="start">
                         <Person sx={{ color: '#1B5E20' }} />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                   required
                   sx={{ mb: 2 }}
@@ -618,7 +632,7 @@ const CommandePage = () => {
                       <InputAdornment position="start">
                         <Email sx={{ color: '#1B5E20' }} />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                   required
                   sx={{ mb: 2 }}
@@ -636,7 +650,7 @@ const CommandePage = () => {
                       <InputAdornment position="start">
                         <Phone sx={{ color: '#1B5E20' }} />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                   required
                   sx={{ mb: 2 }}
@@ -653,7 +667,7 @@ const CommandePage = () => {
                       <InputAdornment position="start">
                         <Home sx={{ color: '#1B5E20' }} />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                   required
                   sx={{ mb: 2 }}
@@ -670,7 +684,7 @@ const CommandePage = () => {
                       <InputAdornment position="start">
                         <LocationCity sx={{ color: '#1B5E20' }} />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                   required
                   sx={{ mb: 2 }}
@@ -687,7 +701,7 @@ const CommandePage = () => {
                       <InputAdornment position="start">
                         <LocationCity sx={{ color: '#1B5E20' }} />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                   required
                   sx={{ mb: 2 }}
@@ -704,7 +718,7 @@ const CommandePage = () => {
                       <InputAdornment position="start">
                         <Info sx={{ color: '#1B5E20' }} />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                   sx={{ mb: 2 }}
                 />
@@ -778,6 +792,7 @@ const CommandePage = () => {
             </SectionPaper>
           </Grid>
 
+          {/* Section Récapitulatif */}
           <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>Récapitulatif</Typography>
@@ -809,7 +824,7 @@ const CommandePage = () => {
                 <Typography variant="body2">
                   {shippingMethod === 'expedition' ? "Frais d'expédition" : "Récupération en magasin"}
                 </Typography>
-                <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
+                <Typography variant="body2">{shippingMethod === 'expedition' ? "8 €" : "0 €"}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Total</Typography>
@@ -838,6 +853,7 @@ const CommandePage = () => {
         </Grid>
       </Container>
 
+      {/* Modal d'affichage de l'image agrandie */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
           <img
@@ -848,6 +864,7 @@ const CommandePage = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Snackbar pour les notifications */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -867,6 +884,7 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
+      {/* Popup des Conditions Générales de Vente */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
