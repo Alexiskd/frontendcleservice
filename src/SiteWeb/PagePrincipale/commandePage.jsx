@@ -40,7 +40,9 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
-// Import corrigé : on suppose que le composant se trouve dans src/components/ConditionsGeneralesVentePopup
+// Corrigez le chemin d'import : 
+// Si votre fichier ConditionsGeneralesVentePopup se trouve dans src/components/,
+// le chemin relatif depuis src/AppAdmin/commande.jsx doit être :
 import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
@@ -167,7 +169,6 @@ const CommandePage = () => {
 
         if (!response.ok) {
           const errorText = await response.text();
-          // Si "Produit introuvable", utilisation d'un endpoint de fallback
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
@@ -763,7 +764,9 @@ const CommandePage = () => {
                   )}
                   <Box>
                     <Typography variant="subtitle1">{article.nom}</Typography>
-                    {article.manufacturer && <Typography variant="body2">Marque : {article.manufacturer}</Typography>}
+                    {article.manufacturer && (
+                      <Typography variant="body2">Marque : {article.manufacturer}</Typography>
+                    )}
                     <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
                   </Box>
                 </Box>
@@ -771,13 +774,19 @@ const CommandePage = () => {
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="body2">
-                  {shippingMethod === 'expedition' ? "Frais d'expédition" : "Récupération en magasin"}
+                  {shippingMethod === 'expedition'
+                    ? "Frais d'expédition"
+                    : "Récupération en magasin"}
                 </Typography>
-                <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
+                <Typography variant="body2">
+                  {`${shippingMethod === 'expedition' ? 8 : 0} €`}
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Total</Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{totalPrice.toFixed(2)} €</Typography>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                  {totalPrice.toFixed(2)} €
+                </Typography>
               </Box>
               <Button
                 variant="contained"
@@ -804,7 +813,11 @@ const CommandePage = () => {
 
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
-          <img src={article?.imageUrl} alt={article?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <img
+            src={article?.imageUrl}
+            alt={article?.nom}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
         </DialogContent>
       </Dialog>
 
