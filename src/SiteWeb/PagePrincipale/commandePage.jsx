@@ -197,21 +197,32 @@ const CommandePage = () => {
         setErrorArticle(null);
         const keys = await preloadKeysData(brandName);
         let product = null;
+
+        // Recherche d'une correspondance exacte via la fonction de normalisation
         if (keys && keys.length > 0) {
-          product = keys.find((p) => normalizeString(p.nom) === normalizeString(decodedArticleName));
+          product = keys.find((p) =>
+            normalizeString(p.nom) === normalizeString(decodedArticleName)
+          );
         }
+        
+        // Si aucune correspondance exacte n'est trouvée, on appelle l'endpoint fallback best-by-name
         if (!product) {
-          // Appel à l'endpoint fallback best-by-name si pas de correspondance exacte
-          const bestResp = await fetch(`https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`);
+          console.log("Aucune correspondance exacte trouvée avec les clés préchargées, appel de best-by-name...");
+          const bestResp = await fetch(
+            `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`
+          );
           if (bestResp.ok) {
             product = await bestResp.json();
+            console.log("Produit retourné par best-by-name :", product);
           } else if (keys && keys.length > 0) {
             product = keys[0];
-            console.warn("Utilisation du premier produit préchargé en fallback.");
+            console.warn("Erreur lors du fallback best-by-name, utilisation du premier produit préchargé.");
           } else {
             throw new Error("Erreur lors de la récupération du produit via best-by-name.");
           }
         }
+
+        // Vérification de la cohérence de la marque
         if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
