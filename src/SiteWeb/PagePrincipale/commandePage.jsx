@@ -41,10 +41,9 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-// Importation de la fonction de préchargement pour les produits de la marque
 import { preloadKeysData } from '../brandsApi';
 
-// Fonction de normalisation : supprime les accents, met en minuscules et retire les espaces superflus
+// Fonction de normalisation : supprime les accents, les espaces superflus et met en minuscules
 const normalizeString = (str) => {
   return str
     .trim()
@@ -114,7 +113,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
         <Typography variant="body2" paragraph>
           Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
         </Typography>
-        {/* Ajoutez ici les autres articles si nécessaire */}
+        {/* Vous pouvez ajouter les autres articles si nécessaire */}
       </Box>
     </DialogContent>
     <DialogActions>
@@ -182,7 +181,7 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Fonction pour calculer la distance de Levenshtein
+  // Fonction pour calculer la distance de Levenshtein entre deux chaînes
   const levenshteinDistance = (a, b) => {
     const m = a.length, n = b.length;
     const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -197,34 +196,42 @@ const CommandePage = () => {
     return dp[m][n];
   };
 
-  // Préchargement des produits pour la marque et utilisation de la méthode best-by-name en fallback
+  // Précharge les produits pour la marque et, en l'absence d'une correspondance exacte, utilise l'endpoint best-by-name
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Récupérer les produits pour la marque préchargés
+        // Récupérer les produits préchargés pour la marque
         const keys = await preloadKeysData(brandName);
         let product = null;
         if (keys && keys.length > 0) {
-          // Recherche d'une correspondance exacte sur le nom normalisé
+          // Recherche d'une correspondance exacte (après normalisation)
           product = keys.find((p) => normalizeString(p.nom) === normalizeString(decodedArticleName));
         }
-        // En absence de correspondance exacte, utiliser l'endpoint best-by-name
+        // Si aucune correspondance exacte n'est trouvée, utiliser best-by-name
         if (!product) {
           const bestResp = await fetch(`https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`);
-          if (!bestResp.ok) {
-            throw new Error("Erreur lors du chargement du produit via la méthode best-by-name.");
+          if (bestResp.ok) {
+            product = await bestResp.json();
+          } else {
+            // En cas d'erreur, on utilise le premier produit préchargé comme fallback
+            if (keys && keys.length > 0) {
+              product = keys[0];
+              console.warn("Utilisation d'un produit de fallback depuis les préchargées malgré l'erreur de best-by-name.");
+            } else {
+              throw new Error("Erreur lors du chargement du produit via la méthode best-by-name.");
+            }
           }
-          product = await bestResp.json();
         }
-        // Vérifier que la marque du produit correspond (après normalisation)
+        // Vérifier que la marque correspond (après normalisation)
         if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
         setArticle(product);
       } catch (err) {
         console.error("Erreur lors de la récupération du produit :", err);
+        // On continue l'affichage même en cas d'erreur, en stockant le message
         setErrorArticle(err.message || "Erreur inconnue");
       } finally {
         setLoadingArticle(false);
@@ -421,14 +428,7 @@ const CommandePage = () => {
     );
   }
 
-  if (errorArticle) {
-    return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="h6" color="error">{errorArticle}</Typography>
-      </Box>
-    );
-  }
-
+  // Même en cas d'erreur sur le produit, on affiche quand même le formulaire avec une note dans le récapitulatif
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
@@ -781,7 +781,7 @@ const CommandePage = () => {
           <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>Récapitulatif</Typography>
-              {article && (
+              {article ? (
                 <Box sx={{ display: 'flex', mb: 2 }}>
                   {article.imageUrl && (
                     <Box onClick={handleOpenImageModal} sx={{ cursor: 'pointer', mr: 2 }}>
@@ -799,6 +799,10 @@ const CommandePage = () => {
                     <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
                   </Box>
                 </Box>
+              ) : (
+                <Typography variant="body2" color="error">
+                  Produit non disponible
+                </Typography>
               )}
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
