@@ -39,8 +39,7 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-
-// Import corrigé : ici, on suppose que le composant se trouve dans src/components/
+// Vérifiez et ajustez le chemin d'import selon la structure de votre projet
 import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
@@ -98,9 +97,6 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// -----------------------------
-// Composant Principal : CommandePage
-// -----------------------------
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -170,6 +166,7 @@ const CommandePage = () => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          // En cas de "Produit introuvable", on utilise un endpoint de fallback
           if (errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
