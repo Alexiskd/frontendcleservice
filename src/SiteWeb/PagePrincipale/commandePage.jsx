@@ -41,6 +41,8 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+// Importation des fonctions de préchargement
+import { preloadKeysData } from 'src/SiteWeb/brandsApi';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
@@ -105,7 +107,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
         <Typography variant="body2" paragraph>
           Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
         </Typography>
-        {/* Autres articles... */}
+        {/* Autres articles */}
       </Box>
     </DialogContent>
     <DialogActions>
@@ -173,42 +175,57 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
+  // Fonction pour calculer la distance de Levenshtein entre deux chaînes
+  const levenshteinDistance = (a, b) => {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[m][n];
+  };
+
+  // Utilisation du préchargement des clés pour la marque donnée
   useEffect(() => {
-    const fetchArticle = async () => {
+    const fetchPreloadedProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Tente d'abord l'endpoint par défaut
-        let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-        let response = await fetch(endpoint);
-        // Si le premier endpoint échoue, on utilise le fallback
-        if (!response.ok) {
-          endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-          response = await fetch(endpoint);
+        // Récupérer la liste des clés pour la marque via le préchargement
+        const keys = await preloadKeysData(brandName);
+        if (!keys || keys.length === 0) {
+          throw new Error("Aucun produit trouvé pour cette marque.");
         }
-        if (!response.ok) {
-          throw new Error("Erreur lors du chargement de l'article.");
+        // Trouver une correspondance exacte sur le nom ; sinon utiliser la meilleure correspondance basée sur la distance de Levenshtein
+        let product = keys.find((p) => p.nom.toLowerCase() === decodedArticleName.toLowerCase());
+        if (!product) {
+          product = keys.sort(
+            (a, b) =>
+              levenshteinDistance(decodedArticleName.toLowerCase(), a.nom.toLowerCase()) -
+              levenshteinDistance(decodedArticleName.toLowerCase(), b.nom.toLowerCase())
+          )[0];
         }
-        const responseText = await response.text();
-        if (!responseText) throw new Error("Réponse vide du serveur.");
-        const data = JSON.parse(responseText);
-        // On vérifie que la marque correspond (on utilise data.marque)
-        if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
+        // Vérifier que la marque correspond
+        if (product && product.marque && product.marque.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
-        setArticle(data);
+        setArticle(product);
       } catch (err) {
-        console.error("Erreur lors de la récupération du produit:", err);
+        console.error("Erreur lors de la récupération du produit préchargé:", err);
         setErrorArticle(err.message || "Erreur inconnue");
       } finally {
         setLoadingArticle(false);
       }
     };
 
-    fetchArticle();
-  }, [brandName, decodedArticleName, articleType]);
+    fetchPreloadedProduct();
+  }, [brandName, decodedArticleName]);
 
-  // Détermination du prix selon le mode et la présence d'une option "clé à passe"
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
       ? parseFloat(article.prixCleAPasse)
