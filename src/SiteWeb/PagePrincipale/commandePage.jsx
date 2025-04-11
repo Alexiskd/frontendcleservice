@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -34,15 +34,15 @@ import {
   Home,
   LocationCity,
   Info,
-  VpnKey,
   CheckCircle,
   Error as ErrorIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
-// Composant utilitaire pour l'upload de fichiers
+// Import corrigé : on suppose que le composant se trouve dans src/components/ConditionsGeneralesVentePopup
+import ConditionsGeneralesVentePopup from '../components/ConditionsGeneralesVentePopup';
+
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>
@@ -98,15 +98,11 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// -----------------------------
-// Composant Principal : CommandePage
-// -----------------------------
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraire les paramètres de la route définie (brand, reference, name)
   const { brand: brandName, reference: articleType, name: articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
@@ -117,7 +113,6 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Les états pour les modales et informations utilisateur, etc.
   const [openImageModal, setOpenImageModal] = useState(false);
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
@@ -162,21 +157,18 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération de l'article avec gestion du fallback en cas d'erreur
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Endpoint de recherche exacte
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
 
         if (!response.ok) {
-          // Si l'erreur semble être "Produit introuvable", essayer le fallback
           const errorText = await response.text();
+          // Si "Produit introuvable", utilisation d'un endpoint de fallback
           if (errorText.includes("Produit introuvable")) {
-            // Utiliser l'endpoint de recherche flexible
             endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
           } else {
@@ -190,7 +182,6 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-        // Optionnel : vérifier que la marque correspond si le back-end renvoie un champ manufacturer
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -202,10 +193,10 @@ const CommandePage = () => {
         setLoadingArticle(false);
       }
     };
+
     fetchArticle();
   }, [brandName, decodedArticleName, articleType]);
 
-  // Calcul du prix
   const articlePrice = article
     ? isCleAPasse && article.prixCleAPasse
       ? parseFloat(article.prixCleAPasse)
@@ -696,7 +687,9 @@ const CommandePage = () => {
                       inputProps={{ 'aria-label': "Type d'expédition" }}
                       required
                     >
-                      <MenuItem value="" disabled>Sélectionnez un type d'expédition</MenuItem>
+                      <MenuItem value="" disabled>
+                        Sélectionnez un type d'expédition
+                      </MenuItem>
                       <MenuItem value="lettre">
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <CloudUpload sx={{ mr: 1, color: '#1B5E20' }} />
@@ -730,7 +723,15 @@ const CommandePage = () => {
                   label={
                     <>
                       J'accepte les{' '}
-                      <Button variant="text" color="primary" onClick={(e) => { e.preventDefault(); setOpenCGV(true); }} sx={{ textTransform: 'none' }}>
+                      <Button
+                        variant="text"
+                        color="primary"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenCGV(true);
+                        }}
+                        sx={{ textTransform: 'none' }}
+                      >
                         Conditions Générales de Vente
                       </Button>
                     </>
