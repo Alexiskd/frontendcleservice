@@ -44,6 +44,15 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 // Importation des fonctions de préchargement via chemin relatif
 import { preloadKeysData } from '../brandsApi';
 
+// Fonction de normalisation pour retirer les accents, espaces superflus et mettre en minuscules
+const normalizeString = (str) => {
+  return str
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
@@ -122,7 +131,6 @@ const CommandePage = () => {
   }, []);
 
   const { brand: brandName, reference: articleType, name: articleName } = useParams();
-  // Remplacement des tirets par des espaces, par exemple "Clé-Abus-XP-1" devient "Clé Abus XP 1"
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
@@ -176,7 +184,7 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Fonction simple pour calculer la distance de Levenshtein entre deux chaînes
+  // Fonction pour calculer la distance de Levenshtein
   const levenshteinDistance = (a, b) => {
     const m = a.length, n = b.length;
     const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -191,29 +199,29 @@ const CommandePage = () => {
     return dp[m][n];
   };
 
-  // Précharger les clés pour la marque donnée et sélectionner le produit correspondant
+  // Précharger les produits pour la marque et sélectionner le produit correspondant
   useEffect(() => {
     const fetchPreloadedProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Utiliser le préchargement pour récupérer tous les produits de la marque
+        // Récupération des produits de la marque via le préchargement
         const keys = await preloadKeysData(brandName);
         if (!keys || keys.length === 0) {
           throw new Error("Aucun produit trouvé pour cette marque.");
         }
         // Chercher une correspondance exacte sur le nom
-        let product = keys.find((p) => p.nom.toLowerCase() === decodedArticleName.toLowerCase());
+        let product = keys.find((p) => normalizeString(p.nom) === normalizeString(decodedArticleName));
         // Sinon, utiliser la meilleure correspondance basée sur la distance de Levenshtein
         if (!product) {
           product = keys.sort(
             (a, b) =>
-              levenshteinDistance(decodedArticleName.toLowerCase(), a.nom.toLowerCase()) -
-              levenshteinDistance(decodedArticleName.toLowerCase(), b.nom.toLowerCase())
+              levenshteinDistance(normalizeString(decodedArticleName), normalizeString(a.nom)) -
+              levenshteinDistance(normalizeString(decodedArticleName), normalizeString(b.nom))
           )[0];
         }
         // Valider que le produit a bien la marque attendue
-        if (product && product.marque && product.marque.toLowerCase() !== brandName.toLowerCase()) {
+        if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
         setArticle(product);
