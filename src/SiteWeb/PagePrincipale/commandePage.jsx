@@ -189,7 +189,7 @@ const CommandePage = () => {
   // Quantité de copies souhaitée
   const [quantity, setQuantity] = useState(1);
 
-  // Chargement du produit en utilisant les clés préchargées pour la marque (ex : KESO)
+  // Chargement du produit en utilisant les clés préchargées pour la marque (ex. "KESO")
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -206,9 +206,9 @@ const CommandePage = () => {
           );
         }
         
-        // Si aucune correspondance n'est trouvée, appel de l'endpoint fallback best-by-name
+        // Si aucune correspondance n'est trouvée, on appelle l'endpoint fallback best-by-name
         if (!product) {
-          console.log("Aucune correspondance exacte trouvée dans les clés préchargées, appel de best-by-name...");
+          console.log("Aucune correspondance exacte trouvée, appel de best-by-name...");
           const bestResp = await fetch(
             `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`
           );
@@ -428,7 +428,7 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  // Pendant le chargement du produit
+  // Affichage pendant le chargement du produit
   if (loadingArticle) {
     return (
       <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -451,7 +451,7 @@ const CommandePage = () => {
     );
   }
 
-  // Rendu complet du composant, incluant le formulaire, le récapitulatif et les autres éléments UI
+  // Rendu complet du composant, incluant le formulaire, le récapitulatif, le modal d'image et le snackbar
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
