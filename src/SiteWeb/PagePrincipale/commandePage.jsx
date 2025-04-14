@@ -8,7 +8,7 @@ const CommandePage = () => {
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
 
-  // Nettoyage du paramètre "brand" (suppression de l'extension ".html")
+  // Nettoyage du paramètre "brand" : suppression de l'extension ".html"
   const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
 
   // URL de base du back-end
@@ -25,19 +25,19 @@ const CommandePage = () => {
       try {
         let url = '';
 
-        // Si le mode est "numero" et que reference est fournie et différente de "null",
-        // on tente l'endpoint par index
+        // Si le mode est "numero" et que la référence est fournie et différente de "null",
+        // on tente l'endpoint par index.
         if (mode === 'numero' && reference && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
-          // Sinon, on utilise directement l'endpoint 'closest'
+          // Sinon, on utilise directement l'endpoint 'closest'.
           url = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
         }
 
         console.log('Appel vers URL:', url);
         let response = await fetch(url);
 
-        // Si la réponse est 404 lors de l'appel par index, on effectue le fallback vers "closest"
+        // Si la réponse est 404 lors de l'appel par index, on effectue le fallback vers 'closest'
         if (!response.ok && response.status === 404 && mode === 'numero' && reference && reference !== 'null') {
           const fallbackUrl = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
           console.warn('Fallback vers URL:', fallbackUrl);
