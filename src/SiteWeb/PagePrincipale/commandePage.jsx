@@ -8,13 +8,13 @@ const CommandePage = () => {
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
 
-  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent.
+  // Nettoyage du paramètre "brand" (suppression de l'extension ".html")
   const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
 
   // URL de base du back-end
   const API_BASE = 'https://cl-back.onrender.com';
 
-  // États pour gérer le produit, le chargement et les erreurs
+  // États pour le produit, le chargement et les erreurs
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,21 +24,23 @@ const CommandePage = () => {
       setLoading(true);
       try {
         let url = '';
-        // Si le mode est "numero" et que la référence est valide, on tente l'endpoint par index.
+
+        // Si le mode est "numero" et que reference est fournie et différente de "null",
+        // on tente l'endpoint par index
         if (mode === 'numero' && reference && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
-          // Sinon, on utilise l'endpoint pour trouver la clé la plus proche par nom.
+          // Sinon, on utilise directement l'endpoint 'closest'
           url = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
         }
 
         console.log('Appel vers URL:', url);
         let response = await fetch(url);
 
-        // Si l'endpoint par index n'a rien trouvé, on tente le fallback vers /closest.
+        // Si la réponse est 404 lors de l'appel par index, on effectue le fallback vers "closest"
         if (!response.ok && response.status === 404 && mode === 'numero' && reference && reference !== 'null') {
           const fallbackUrl = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
-          console.warn('Aucun produit trouvé via l’index, fallback vers URL:', fallbackUrl);
+          console.warn('Fallback vers URL:', fallbackUrl);
           response = await fetch(fallbackUrl);
         }
 
