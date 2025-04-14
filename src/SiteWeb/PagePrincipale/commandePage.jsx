@@ -3,10 +3,15 @@ import { useParams, useLocation } from 'react-router-dom';
 
 const CommandePage = () => {
   // Extraction des paramètres de l’URL
-  const { brand, reference, name } = useParams();
+  let { brand, reference, name } = useParams();
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
+
+  // Si le paramètre "brand" contient ".html", on le nettoie
+  if (brand && brand.endsWith('.html')) {
+    brand = brand.replace('.html', '');
+  }
 
   // Définition de l'URL de base pour le back-end
   const API_BASE = 'https://cl-back.onrender.com';
@@ -82,3 +87,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
