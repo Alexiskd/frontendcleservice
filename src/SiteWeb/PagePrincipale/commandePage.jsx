@@ -131,9 +131,9 @@ const CommandePage = () => {
   }, []);
 
   // Extraction des paramètres depuis l'URL
-  const { brand, reference, name } = useParams();
-  // Décodage et transformation du nom pour retrouver les espaces à la place des tirets
-  const decodedProductName = name ? decodeURIComponent(name).replace(/-/g, ' ') : '';
+  // Remarquez ici l'utilisation de "articleName" au lieu de "name"
+  const { brand, reference, articleName } = useParams();
+  const decodedProductName = articleName ? decodeURIComponent(articleName).replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
@@ -146,10 +146,8 @@ const CommandePage = () => {
   // Clé préchargée correspondant à la marque et la meilleure correspondance du nom
   const [preloadedKey, setPreloadedKey] = useState(null);
 
-  // Déclaration de l'état pour le type de livraison (utile pour le mode "postal")
   const [deliveryType, setDeliveryType] = useState('');
 
-  // Autres états utilisateurs et informations de commande
   const [userInfo, setUserInfo] = useState({
     clientType: 'particulier',
     nom: '',
@@ -193,7 +191,7 @@ const CommandePage = () => {
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
 
-  // Fonction de chargement de l'article depuis l'API
+  // Chargement de l'article via l'API (en utilisant le nom décodé)
   const loadArticle = useCallback(async () => {
     try {
       setLoadingArticle(true);
@@ -209,7 +207,7 @@ const CommandePage = () => {
       const responseText = await response.text();
       if (!responseText) throw new Error('Réponse vide du serveur.');
       const data = JSON.parse(responseText);
-      // Vérifier que la marque correspond à celle de l'URL
+      // Vérification que la marque correspond à celle indiquée dans l'URL
       if (data && data.marque && data.marque.toLowerCase() !== brand.toLowerCase()) {
         throw new Error("La marque de l'article ne correspond pas.");
       }
@@ -225,7 +223,7 @@ const CommandePage = () => {
     loadArticle();
   }, [loadArticle]);
 
-  // Préchargement des clés pour la marque et recherche de la meilleure correspondance
+  // Préchargement des clés pour la marque et sélection de la meilleure correspondance
   useEffect(() => {
     if (brand && article) {
       preloadKeysData(brand)
@@ -250,7 +248,7 @@ const CommandePage = () => {
     }
   }, [brand, article, decodedProductName]);
 
-  // Utilisation de la clé préchargée si trouvée, sinon on utilise l'article chargé
+  // Utilisation de la clé préchargée si disponible, sinon utilisation de l'article chargé
   const productDetails = preloadedKey || article;
   const articlePrice = productDetails
     ? isCleAPasse && productDetails.prixCleAPasse
@@ -430,7 +428,7 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  if (errorArticle === 'Réponse vide du serveur.') {
+  if (errorArticle === 'Réponse vide du serveur.' || errorArticle === 'Article non trouvé.') {
     return (
       <Box
         sx={{
@@ -446,7 +444,7 @@ const CommandePage = () => {
       >
         <ErrorIcon color="error" sx={{ fontSize: 40 }} />
         <Typography variant="h6" color="error">
-          Réponse vide du serveur.
+          {errorArticle}
         </Typography>
         <Typography variant="body1" color="text.secondary" align="center">
           Aucune donnée n'a été renvoyée par le serveur. Veuillez vérifier votre connexion ou réessayer.
