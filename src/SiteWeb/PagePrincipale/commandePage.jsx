@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';  
+import React, { useState, useEffect, useCallback } from 'react';  
 import {
   Box,
   Typography,
@@ -41,7 +41,6 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Importation de la fonction de préchargement des clés
 import { preloadKeysData } from './brandsApi';
 
 // Composant utilitaire pour l'upload de fichiers
@@ -104,10 +103,6 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 // Composant Principal : CommandePage
 // -----------------------------
 const CommandePage = () => {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   const { brandName, articleType, articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
@@ -138,7 +133,7 @@ const CommandePage = () => {
 
   // Pour le mode "numero", le champ keyNumber recevra automatiquement le nom du produit commandé
   const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '', // Rempli automatiquement avec article.nom
+    keyNumber: '',
     propertyCardNumber: '',
     frontPhoto: null,
     backPhoto: null,
@@ -166,40 +161,40 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération de l'article par son nom
-  useEffect(() => {
-    const fetchArticle = async () => {
-      try {
-        setLoadingArticle(true);
-        setErrorArticle(null);
-        const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          if (response.status === 404) throw new Error('Article non trouvé.');
-          throw new Error("Erreur lors du chargement de l'article.");
-        }
-        const responseText = await response.text();
-        if (!responseText) throw new Error('Réponse vide du serveur.');
-        const data = JSON.parse(responseText);
-        if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
-          throw new Error("La marque de l'article ne correspond pas.");
-        }
-        setArticle(data);
-      } catch (err) {
-        setErrorArticle(err.message);
-      } finally {
-        setLoadingArticle(false);
+  // Fonction de chargement de l'article
+  const loadArticle = useCallback(async () => {
+    try {
+      setLoadingArticle(true);
+      setErrorArticle(null);
+      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        if (response.status === 404) throw new Error('Article non trouvé.');
+        throw new Error("Erreur lors du chargement de l'article.");
       }
-    };
-    fetchArticle();
-  }, [brandName, decodedArticleName, articleType]);
+      const responseText = await response.text();
+      if (!responseText) throw new Error('Réponse vide du serveur.');
+      const data = JSON.parse(responseText);
+      if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
+        throw new Error("La marque de l'article ne correspond pas.");
+      }
+      setArticle(data);
+    } catch (err) {
+      setErrorArticle(err.message);
+    } finally {
+      setLoadingArticle(false);
+    }
+  }, [brandName, decodedArticleName]);
+
+  useEffect(() => {
+    loadArticle();
+  }, [loadArticle]);
 
   // Préchargement des clés pour la marque et recherche de la clé correspondant à l'article
   useEffect(() => {
     if (brandName && article) {
       preloadKeysData(brandName)
         .then((keys) => {
-          // Recherche d'une clé dont le nom correspond (en ignorant la casse)
           const found = keys.find(
             (key) => key.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
           );
@@ -213,7 +208,6 @@ const CommandePage = () => {
     }
   }, [brandName, article]);
 
-  // Utilisation de l'objet produit provenant soit du préchargement soit du fetch initial
   const productDetails = preloadedKey || article;
 
   const articlePrice = productDetails
@@ -322,7 +316,6 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
-      // Enregistrer le nom du produit commandé
       commandeFormData.append('articleName', productDetails?.nom || '');
       commandeFormData.append('quantity', quantity);
 
@@ -394,6 +387,35 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
+  // Affichage d'une vue d'erreur personnalisée en cas d'erreur "Réponse vide du serveur."
+  if (errorArticle === 'Réponse vide du serveur.') {
+    return (
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          p: 2,
+        }}
+      >
+        <ErrorIcon color="error" sx={{ fontSize: 40 }} />
+        <Typography variant="h6" color="error">
+          Réponse vide du serveur.
+        </Typography>
+        <Typography variant="body1" color="text.secondary" align="center">
+          Aucune donnée n'a été renvoyée par le serveur. Veuillez vérifier votre connexion ou réessayer.
+        </Typography>
+        <Button variant="contained" onClick={loadArticle}>
+          Réessayer
+        </Button>
+      </Box>
+    );
+  }
+
   if (loadingArticle) {
     return (
       <Box
@@ -406,24 +428,6 @@ const CommandePage = () => {
         }}
       >
         <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (errorArticle) {
-    return (
-      <Box
-        sx={{
-          backgroundColor: '#fff',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Typography variant="h6" color="error">
-          {errorArticle}
-        </Typography>
       </Box>
     );
   }
@@ -619,8 +623,16 @@ const CommandePage = () => {
                 </Typography>
                 <FormControl component="fieldset" sx={{ mb: 2 }}>
                   <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
-                    <FormControlLabel value="particulier" control={<Radio sx={{ color: '#1B5E20' }} />} label="Particulier" />
-                    <FormControlLabel value="entreprise" control={<Radio sx={{ color: '#1B5E20' }} />} label="Entreprise" />
+                    <FormControlLabel
+                      value="particulier"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Particulier"
+                    />
+                    <FormControlLabel
+                      value="entreprise"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Entreprise"
+                    />
                   </RadioGroup>
                 </FormControl>
                 <TextField
@@ -854,7 +866,6 @@ const CommandePage = () => {
                     {productDetails.manufacturer && (
                       <Typography variant="body2">Marque : {productDetails.manufacturer}</Typography>
                     )}
-                    {/* Affichage de la description générale si présente */}
                     {productDetails.descriptionProduit && (
                       <Typography variant="body2" color="text.secondary">
                         {productDetails.descriptionProduit}
