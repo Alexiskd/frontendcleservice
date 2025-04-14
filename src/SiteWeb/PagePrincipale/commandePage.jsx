@@ -8,28 +8,29 @@ const CommandePage = () => {
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
 
-  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent
+  // Nettoyage du paramètre "brand": suppression de l'extension ".html" si présente.
   const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
 
-  // Définition de l'URL de base pour le back-end
+  // URL de base du back-end
   const API_BASE = 'https://cl-back.onrender.com';
 
-  // États pour le produit, le chargement et les erreurs
+  // États pour gérer le produit, le chargement et les erreurs
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Récupération du produit dès le chargement ou lors du changement des paramètres
+  // Récupération du produit dès le chargement ou lors du changement de paramètres
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
         let url = '';
-        // Si le mode est "numero" ET que le paramètre "reference" est valide (différent de "null")
+
+        // Si le mode est "numero" ET que reference est fournie et valide (différente de "null")
         if (mode === 'numero' && reference && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
-          // Dans les autres cas, on utilise l'endpoint pour trouver la clé la plus proche par nom
+          // Dans tous les autres cas, on utilise l'endpoint pour la clé la plus proche basée sur le nom
           url = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
         }
 
@@ -49,8 +50,9 @@ const CommandePage = () => {
     fetchProduct();
   }, [cleanedBrand, reference, name, mode]);
 
-  // Fonction de validation
+  // Fonction pour gérer l'action "Valider"
   const handleValidate = () => {
+    // Ajouter ici la logique de validation ou d'enregistrement de commande
     alert('Produit validé !');
   };
 
@@ -82,3 +84,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
