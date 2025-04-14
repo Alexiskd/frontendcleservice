@@ -2,34 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction des paramètres de l’URL
+  // Extraction des paramètres de l'URL
   const { brand, reference, name } = useParams();
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
 
-  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent.
+  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent
   const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
 
-  // Définition de l'URL de base pour le back-end
+  // URL de base de l'API
   const API_BASE = 'https://cl-back.onrender.com';
 
-  // États pour gérer le produit, le chargement et les erreurs
+  // États pour le produit, le chargement et les erreurs
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Récupération du produit dès le chargement ou lorsque les paramètres changent
+  // Lors du chargement ou du changement de paramètres, effectuer la recherche
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
         let url = '';
-        // Si mode "numero" ET que "reference" n'est pas "null", on utilise l'endpoint par index.
-        // Sinon, on utilise l'endpoint par nom.
-        if (mode === 'numero' && reference !== 'null') {
+
+        // Si le mode est "numero" et que la référence est valide (différente de "null"),
+        // on utilise l'endpoint par index pour la marque.
+        if (mode === 'numero' && reference && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
+          // Sinon, on utilise l'endpoint de recherche par nom
           url = `${API_BASE}/produit/cles/by-name?nom=${encodeURIComponent(name)}`;
         }
 
@@ -49,9 +51,8 @@ const CommandePage = () => {
     fetchProduct();
   }, [cleanedBrand, reference, name, mode]);
 
-  // Gestion du clic sur le bouton "Valider"
+  // Fonction de validation (à adapter selon la logique métier)
   const handleValidate = () => {
-    // Vous pouvez ajouter ici la logique de validation ou de création de commande
     alert('Produit validé !');
   };
 
@@ -74,7 +75,6 @@ const CommandePage = () => {
           <p>
             <strong>Description :</strong> {product.descriptionProduit || 'Aucune description disponible.'}
           </p>
-          {/* D'autres champs du produit peuvent être affichés ici */}
         </div>
       ) : (!loading && !error && <p>Aucun produit trouvé pour "{name}".</p>)}
 
