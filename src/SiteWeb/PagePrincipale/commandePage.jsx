@@ -41,7 +41,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Fonction de préchargement des clés pour une marque (assurez-vous que le chemin est correct)
+// Importation de la fonction de préchargement des clés
 import { preloadKeysData } from './brandsApi';
 
 // Composant utilitaire pour l'upload de fichiers
@@ -440,7 +440,10 @@ const CommandePage = () => {
               <Divider sx={{ mb: 3 }} />
 
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
-                <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}
+                >
                   Processus de Commande
                 </Typography>
                 {mode === 'postal' ? (
@@ -851,6 +854,7 @@ const CommandePage = () => {
                     {productDetails.manufacturer && (
                       <Typography variant="body2">Marque : {productDetails.manufacturer}</Typography>
                     )}
+                    {/* Affichage de la description générale si présente */}
                     {productDetails.descriptionProduit && (
                       <Typography variant="body2" color="text.secondary">
                         {productDetails.descriptionProduit}
