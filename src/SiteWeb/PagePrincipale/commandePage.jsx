@@ -24,16 +24,24 @@ const CommandePage = () => {
       setLoading(true);
       try {
         let url = '';
-
-        // Si le mode est "numero" et que la référence est fournie et différente de "null", on utilise l'endpoint par index
+        // Si le mode est "numero" et que la référence est valide, on tente l'endpoint par index.
         if (mode === 'numero' && reference && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
-          // Sinon, on utilise l'endpoint pour trouver la clé la plus proche par nom
+          // Sinon, on utilise l'endpoint pour trouver la clé la plus proche par nom.
           url = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
         }
 
-        const response = await fetch(url);
+        console.log('Appel vers URL:', url);
+        let response = await fetch(url);
+
+        // Si l'endpoint par index n'a rien trouvé, on tente le fallback vers /closest.
+        if (!response.ok && response.status === 404 && mode === 'numero' && reference && reference !== 'null') {
+          const fallbackUrl = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
+          console.warn('Aucun produit trouvé via l’index, fallback vers URL:', fallbackUrl);
+          response = await fetch(fallbackUrl);
+        }
+
         if (!response.ok) {
           throw new Error(`Erreur lors de la récupération du produit : ${response.statusText}`);
         }
@@ -81,3 +89,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
