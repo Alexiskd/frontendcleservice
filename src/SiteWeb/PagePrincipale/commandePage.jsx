@@ -1,23 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 
 const CommandePage = () => {
   // Extraction des paramètres de l'URL
   const { brand, reference, name } = useParams();
-  
-  // États pour la gestion des données, du chargement et des erreurs
+  // Extraction du mode depuis les query params (ex. ?mode=numero)
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const mode = queryParams.get('mode');
+
+  // États pour la gestion du produit, du chargement et des erreurs
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Hook pour récupérer les données du produit dès le chargement du composant
+  // Récupération des données produit dès le chargement du composant ou lors d'un changement de paramètres
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        // Appel de l’API back-end pour récupérer le produit par nom
-        // Vous pouvez adapter l'URL en fonction de votre configuration (port, chemin, etc.)
-        const response = await fetch(`http://localhost:3000/produit/cles/by-name?nom=${encodeURIComponent(name)}`);
+        let url = '';
+        // Si le mode est "numero", on utilise l'endpoint par index de marque
+        if (mode === 'numero') {
+          url = `https://cl-back.onrender.com/produit/cles/brand/${encodeURIComponent(brand)}/index/${encodeURIComponent(reference)}`;
+        } else {
+          // Sinon, on utilise l'endpoint de recherche par nom
+          url = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`;
+        }
+  
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Erreur lors de la récupération du produit : ${response.statusText}`);
         }
@@ -31,12 +42,11 @@ const CommandePage = () => {
     };
 
     fetchProduct();
-  }, [name]);
+  }, [brand, reference, name, mode]);
 
-  // Gestion du clic sur le bouton « Valider »
+  // Fonction appelée lors du clic sur le bouton "Valider"
   const handleValidate = () => {
-    // Vous pouvez ici appeler une fonction pour enregistrer la commande
-    // Par exemple : appeler un endpoint back-end pour créer la commande
+    // Ici, vous pouvez ajouter votre logique de validation ou création de commande
     alert('Produit validé !');
   };
 
@@ -59,10 +69,10 @@ const CommandePage = () => {
           <p>
             <strong>Description :</strong> {product.descriptionProduit || "Aucune description disponible."}
           </p>
-          {/* Vous pouvez ajouter d'autres champs disponibles dans l'objet product */}
+          {/* Vous pouvez ajouter d'autres champs du produit ici */}
         </div>
       ) : (
-        !loading && !error && <p>Aucun produit trouvé pour le nom "{name}".</p>
+        !loading && !error && <p>Aucun produit trouvé pour "{name}".</p>
       )}
 
       <button onClick={handleValidate}>Valider</button>
