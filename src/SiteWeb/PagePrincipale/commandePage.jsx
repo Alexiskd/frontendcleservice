@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';  
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -41,6 +41,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Importation de la fonction de préchargement des clés
 import { preloadKeysData } from './brandsApi';
 
 // Composant utilitaire pour l'upload de fichiers
@@ -103,6 +104,11 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 // Composant Principal : CommandePage
 // -----------------------------
 const CommandePage = () => {
+  // Lors du montage, scroll en haut de la page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const { brandName, articleType, articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
@@ -113,7 +119,7 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // État pour stocker la clé préchargée correspondant à la marque
+  // Stockage de la clé préchargée correspondant à la marque
   const [preloadedKey, setPreloadedKey] = useState(null);
 
   const [openImageModal, setOpenImageModal] = useState(false);
@@ -131,7 +137,7 @@ const CommandePage = () => {
     additionalInfo: '',
   });
 
-  // Pour le mode "numero", le champ keyNumber recevra automatiquement le nom du produit commandé
+  // Pour le mode "numero", le champ keyNumber sera rempli avec le nom du produit
   const [keyInfo, setKeyInfo] = useState({
     keyNumber: '',
     propertyCardNumber: '',
@@ -190,7 +196,7 @@ const CommandePage = () => {
     loadArticle();
   }, [loadArticle]);
 
-  // Préchargement des clés pour la marque et recherche de la clé correspondant à l'article
+  // Préchargement des clés pour la marque et recherche d'une correspondance par nom
   useEffect(() => {
     if (brandName && article) {
       preloadKeysData(brandName)
@@ -208,6 +214,7 @@ const CommandePage = () => {
     }
   }, [brandName, article]);
 
+  // Utilisation des détails produits issus du préchargement si disponible, sinon de la réponse de l'API
   const productDetails = preloadedKey || article;
 
   const articlePrice = productDetails
@@ -236,7 +243,8 @@ const CommandePage = () => {
       return false;
     }
     if (mode === 'numero') {
-      if (productDetails?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim()) return false;
+      if (productDetails?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim())
+        return false;
       if (lostCartePropriete) {
         if (
           !idCardInfo.idCardFront ||
@@ -387,7 +395,7 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  // Affichage d'une vue d'erreur personnalisée en cas d'erreur "Réponse vide du serveur."
+  // Vue d'erreur personnalisée pour "Réponse vide du serveur."
   if (errorArticle === 'Réponse vide du serveur.') {
     return (
       <Box
@@ -436,13 +444,13 @@ const CommandePage = () => {
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
         <Grid container spacing={4}>
+          {/* Formulaire de commande */}
           <Grid item xs={12}>
             <SectionPaper>
               <Typography variant="h5" gutterBottom>
                 Informations de Commande
               </Typography>
               <Divider sx={{ mb: 3 }} />
-
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
                 <Typography
                   variant="h6"
@@ -465,11 +473,10 @@ const CommandePage = () => {
                   </Typography>
                 )}
               </Box>
-
               {mode === 'numero' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
-                    Informations sur la clé
+                    Informations sur la Clé
                   </Typography>
                   {productDetails?.estCleAPasse && (
                     <FormControlLabel
@@ -483,7 +490,6 @@ const CommandePage = () => {
                       sx={{ mb: 2 }}
                     />
                   )}
-
                   {productDetails?.besoinNumeroCle && (
                     <>
                       <TextField
@@ -502,7 +508,6 @@ const CommandePage = () => {
                       )}
                     </>
                   )}
-
                   {productDetails?.besoinNumeroCarte && (
                     <Box sx={{ mb: 2 }}>
                       <FormControlLabel
@@ -577,7 +582,6 @@ const CommandePage = () => {
                   )}
                 </Box>
               )}
-
               {productDetails?.besoinPhoto && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
@@ -601,7 +605,6 @@ const CommandePage = () => {
                   />
                 </Box>
               )}
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Quantité de copies souhaitée
@@ -616,23 +619,14 @@ const CommandePage = () => {
                   fullWidth
                 />
               </Box>
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Informations Client
                 </Typography>
                 <FormControl component="fieldset" sx={{ mb: 2 }}>
                   <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
-                    <FormControlLabel
-                      value="particulier"
-                      control={<Radio sx={{ color: '#1B5E20' }} />}
-                      label="Particulier"
-                    />
-                    <FormControlLabel
-                      value="entreprise"
-                      control={<Radio sx={{ color: '#1B5E20' }} />}
-                      label="Entreprise"
-                    />
+                    <FormControlLabel value="particulier" control={<Radio sx={{ color: '#1B5E20' }} />} label="Particulier" />
+                    <FormControlLabel value="entreprise" control={<Radio sx={{ color: '#1B5E20' }} />} label="Entreprise" />
                   </RadioGroup>
                 </FormControl>
                 <TextField
@@ -756,7 +750,6 @@ const CommandePage = () => {
                   sx={{ mb: 2 }}
                 />
               </Box>
-
               {mode === 'postal' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 1 }}>
@@ -793,7 +786,6 @@ const CommandePage = () => {
                   </FormControl>
                 </Box>
               )}
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Mode de Récupération
@@ -809,7 +801,6 @@ const CommandePage = () => {
                   </RadioGroup>
                 </FormControl>
               </Box>
-
               <Box>
                 <FormControlLabel
                   control={
@@ -838,7 +829,7 @@ const CommandePage = () => {
               </Box>
             </SectionPaper>
           </Grid>
-
+          {/* Récapitulatif du produit et du prix */}
           <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>
@@ -863,8 +854,8 @@ const CommandePage = () => {
                   )}
                   <Box>
                     <Typography variant="subtitle1">{productDetails.nom}</Typography>
-                    {productDetails.manufacturer && (
-                      <Typography variant="body2">Marque : {productDetails.manufacturer}</Typography>
+                    {productDetails.marque && (
+                      <Typography variant="body2">Marque : {productDetails.marque}</Typography>
                     )}
                     {productDetails.descriptionProduit && (
                       <Typography variant="body2" color="text.secondary">
@@ -914,13 +905,11 @@ const CommandePage = () => {
           </Grid>
         </Grid>
       </Container>
-
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
           <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
         </DialogContent>
       </Dialog>
-
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -939,7 +928,6 @@ const CommandePage = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
