@@ -1,91 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const CommandePage = () => {
-  // Extraction des paramètres de l’URL
-  const { brand, reference, name } = useParams();
-  const { search } = useLocation();
-  const queryParams = new URLSearchParams(search);
-  const mode = queryParams.get('mode');
-
-  // Nettoyage du paramètre "brand" : suppression de l'extension ".html"
-  const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
-
-  // URL de base du back-end
-  const API_BASE = 'https://cl-back.onrender.com';
-
-  // États pour le produit, le chargement et les erreurs
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [keyData, setKeyData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Paramètres de la requête initiale
+  const marque = 'abus_1_reproduction_cle';
+  const indexParam = 7;
+  // Paramètre de fallback (nom de la clé) si la première requête échoue
+  const nomKeyFallback = 'Clé-Abus-XP-1';
+
   useEffect(() => {
-    const fetchProduct = async () => {
-      setLoading(true);
+    async function fetchKeyByBrandIndex() {
       try {
-        let url = '';
-
-        // Si le mode est "numero" et que la référence est fournie et différente de "null",
-        // on tente l'endpoint par index.
-        if (mode === 'numero' && reference && reference !== 'null') {
-          url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
-        } else {
-          // Sinon, on utilise directement l'endpoint 'closest'.
-          url = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
-        }
-
-        console.log('Appel vers URL:', url);
-        let response = await fetch(url);
-
-        // Si la réponse est 404 lors de l'appel par index, on effectue le fallback vers 'closest'
-        if (!response.ok && response.status === 404 && mode === 'numero' && reference && reference !== 'null') {
-          const fallbackUrl = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
-          console.warn('Fallback vers URL:', fallbackUrl);
-          response = await fetch(fallbackUrl);
-        }
-
-        if (!response.ok) {
-          throw new Error(`Erreur lors de la récupération du produit : ${response.statusText}`);
-        }
-        const data = await response.json();
-        setProduct(data);
+        // Essai de récupérer la clé par marque et index
+        const response = await axios.get(
+          `https://cl-back.onrender.com/produit/cles/brand/${encodeURIComponent(marque)}/index/${indexParam}`
+        );
+        setKeyData(response.data);
       } catch (err) {
-        setError(err.message);
+        console.error('Erreur lors de la récupération par marque et index:', err);
+        // Si le endpoint par marque/index ne renvoie rien, on passe au fallback
+        try {
+          const responseFallback = await axios.get(
+            `https://cl-back.onrender.com/produit/cles/closest`,
+            { params: { nom: nomKeyFallback } }
+          );
+          setKeyData(responseFallback.data);
+        } catch (fallbackErr) {
+          console.error('Fallback vers /cles/closest échoué:', fallbackErr);
+          setError(fallbackErr);
+        }
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchProduct();
-  }, [cleanedBrand, reference, name, mode]);
+    fetchKeyByBrandIndex();
+  }, []);
 
-  const handleValidate = () => {
-    alert('Produit validé !');
-  };
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
+
+  if (error) {
+    return <div>Erreur : {error.message}</div>;
+  }
 
   return (
     <div>
       <h1>Commande Page</h1>
-
-      {loading && <p>Chargement du produit…</p>}
-      {error && <p style={{ color: 'red' }}>Erreur : {error}</p>}
-
-      {!loading && !error && product ? (
+      {keyData ? (
         <div>
-          <h2>{product.descriptionProduit || name}</h2>
-          <p>
-            <strong>Marque :</strong> {cleanedBrand}
-          </p>
-          <p>
-            <strong>Référence :</strong> {reference}
-          </p>
-          <p>
-            <strong>Description :</strong> {product.descriptionProduit || 'Aucune description disponible.'}
-          </p>
+          <h2>Détails de la clé :</h2>
+          <p><strong>Nom :</strong> {keyData.nom}</p>
+          <p><strong>Marque :</strong> {keyData.marque}</p>
+          <p><strong>Prix :</strong> {keyData.prix}</p>
+          {/* Vous pouvez ajouter ici d'autres informations issues de l'objet keyData */}
         </div>
-      ) : (!loading && !error && <p>Aucun produit trouvé pour "{name}".</p>)}
-
-      <button onClick={handleValidate}>Valider</button>
+      ) : (
+        <div>Aucune clé trouvée.</div>
+      )}
     </div>
   );
 };
