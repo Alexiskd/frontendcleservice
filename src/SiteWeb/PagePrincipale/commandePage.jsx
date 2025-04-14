@@ -9,14 +9,12 @@ const CommandePage = () => {
   const mode = queryParams.get('mode');
 
   // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent.
-  const cleanedBrand = brand && brand.endsWith('.html')
-    ? brand.replace('.html', '')
-    : brand;
+  const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
 
   // Définition de l'URL de base pour le back-end
   const API_BASE = 'https://cl-back.onrender.com';
 
-  // États pour le produit, le chargement et la gestion des erreurs
+  // États pour gérer le produit, le chargement et les erreurs
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,7 +26,7 @@ const CommandePage = () => {
       try {
         let url = '';
         if (mode === 'numero') {
-          // Utilisation de l'endpoint pour une recherche par index dans la marque
+          // Utilisation de l'endpoint pour une recherche par index pour une marque donnée
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
           // Utilisation de l'endpoint pour une recherche par nom
@@ -51,9 +49,9 @@ const CommandePage = () => {
     fetchProduct();
   }, [cleanedBrand, reference, name, mode]);
 
-  // Fonction pour gérer l'action "Valider"
+  // Gestion du clic sur le bouton "Valider"
   const handleValidate = () => {
-    // Ici, vous pouvez déclencher une logique de commande ou d'autres actions
+    // Vous pouvez ajouter ici la logique de validation ou de création de commande
     alert('Produit validé !');
   };
 
@@ -74,10 +72,9 @@ const CommandePage = () => {
             <strong>Référence :</strong> {reference}
           </p>
           <p>
-            <strong>Description :</strong>{' '}
-            {product.descriptionProduit || 'Aucune description disponible.'}
+            <strong>Description :</strong> {product.descriptionProduit || 'Aucune description disponible.'}
           </p>
-          {/* Vous pouvez afficher d'autres champs du produit ici */}
+          {/* D'autres champs du produit peuvent être affichés ici */}
         </div>
       ) : (!loading && !error && <p>Aucun produit trouvé pour "{name}".</p>)}
 
