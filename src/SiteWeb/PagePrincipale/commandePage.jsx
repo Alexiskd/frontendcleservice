@@ -8,7 +8,7 @@ const CommandePage = () => {
 
   // Paramètres de requête
   const marque = 'abus_1_reproduction_cle'; // valeur attendue dans la base
-  const indexParam = 7; // index de la clé recherchée (la 8ème clé, indexé à partir de 0)
+  const indexParam = 7; // index de la clé recherchée (la 8ème clé, indexée à partir de 0)
   const fallbackNom = 'Clé-Abus-XP-1'; // nom utilisé en fallback
 
   useEffect(() => {
@@ -58,12 +58,9 @@ const CommandePage = () => {
       <p><strong>Nom :</strong> {keyData.nom}</p>
       <p><strong>Marque :</strong> {keyData.marque}</p>
       <p><strong>Prix :</strong> {keyData.prix}</p>
-      {/* Ajoutez ici d'autres informations souhaitées */}
+      {/* Vous pouvez ajouter ici d'autres informations issues de l'objet keyData */}
     </div>
   );
 };
 
 export default CommandePage;
-
-
-
