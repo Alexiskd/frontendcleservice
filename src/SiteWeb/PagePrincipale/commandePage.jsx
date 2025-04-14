@@ -187,7 +187,7 @@ const CommandePage = () => {
   // Quantité de copies souhaitée
   const [quantity, setQuantity] = useState(1);
 
-  // Chargement du produit avec les clés préchargées pour la marque
+  // Chargement du produit en utilisant les clés préchargées pour la marque (exemple : "KESO")
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -204,7 +204,7 @@ const CommandePage = () => {
           );
         }
         
-        // Si aucune correspondance exacte n'est trouvée, on tente le fallback via best-by-name
+        // Si aucune correspondance n'est trouvée, on tente le fallback via best-by-name
         if (!product) {
           console.log("Aucune correspondance exacte trouvée, appel de best-by-name...");
           const bestResp = await fetch(
@@ -214,7 +214,7 @@ const CommandePage = () => {
             product = await bestResp.json();
             console.log("Produit retourné par best-by-name :", product);
           } else if (keys && keys.length > 0) {
-            // Fallback : utiliser la première clé préchargée
+            // En cas d'erreur sur best-by-name, utiliser la première clé préchargée
             product = keys[0];
             console.warn("Erreur lors du fallback best-by-name, utilisation du premier produit préchargé.");
           } else {
@@ -427,7 +427,7 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  // Affichage pendant le chargement du produit
+  // Si le produit est en cours de chargement
   if (loadingArticle) {
     return (
       <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
