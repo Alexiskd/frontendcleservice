@@ -40,7 +40,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Ajustez le chemin en fonction de votre projet
+// Importation du module d'API depuis le dossier approprié.
+// Assurez-vous que le fichier est bien à l'emplacement : src/api/brandsApi.js.
 import { preloadKeysData } from '../../api/brandsApi';
 
 // Composant utilitaire pour l'upload de fichier
@@ -130,24 +131,26 @@ const CommandePage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres depuis l'URL
-  // Remarquez ici l'utilisation de "articleName" au lieu de "name"
+  // Extraction des paramètres depuis l'URL.
+  // Ici, on récupère "brand", "reference" et "articleName" depuis l'URL.
   const { brand, reference, articleName } = useParams();
+  // Décodage et transformation du nom : remplacement des tirets par des espaces
   const decodedProductName = articleName ? decodeURIComponent(articleName).replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
 
-  // États liés au produit
+  // États pour gérer le produit
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Clé préchargée correspondant à la marque et la meilleure correspondance du nom
+  // Clé préchargée pour la marque
   const [preloadedKey, setPreloadedKey] = useState(null);
 
   const [deliveryType, setDeliveryType] = useState('');
 
+  // États pour les informations utilisateur et de commande
   const [userInfo, setUserInfo] = useState({
     clientType: 'particulier',
     nom: '',
@@ -191,7 +194,7 @@ const CommandePage = () => {
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
 
-  // Chargement de l'article via l'API (en utilisant le nom décodé)
+  // Fonction de chargement de l'article via l'API (/produit/cles/by-name)
   const loadArticle = useCallback(async () => {
     try {
       setLoadingArticle(true);
@@ -207,7 +210,7 @@ const CommandePage = () => {
       const responseText = await response.text();
       if (!responseText) throw new Error('Réponse vide du serveur.');
       const data = JSON.parse(responseText);
-      // Vérification que la marque correspond à celle indiquée dans l'URL
+      // Vérifier que la marque du produit correspond à celle de l'URL (insensible à la casse)
       if (data && data.marque && data.marque.toLowerCase() !== brand.toLowerCase()) {
         throw new Error("La marque de l'article ne correspond pas.");
       }
@@ -223,7 +226,7 @@ const CommandePage = () => {
     loadArticle();
   }, [loadArticle]);
 
-  // Préchargement des clés pour la marque et sélection de la meilleure correspondance
+  // Précharger les clés pour la marque et sélectionner la meilleure correspondance
   useEffect(() => {
     if (brand && article) {
       preloadKeysData(brand)
