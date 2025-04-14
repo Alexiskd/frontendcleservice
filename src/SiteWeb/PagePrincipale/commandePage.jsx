@@ -2,37 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction des paramètres de l'URL
+  // Extraction des paramètres de l’URL
   const { brand, reference, name } = useParams();
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
 
-  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent.
+  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent
   const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
 
-  // URL de base de l'API
+  // Définition de l'URL de base pour le back-end
   const API_BASE = 'https://cl-back.onrender.com';
 
-  // États pour gérer le produit, le chargement et les erreurs
+  // États pour le produit, le chargement et les erreurs
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Lors du chargement ou du changement de paramètres, effectuer la recherche
+  // Récupération du produit dès le chargement ou lors du changement des paramètres
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
         let url = '';
-
-        // Si mode "numero" ET que la référence est fournie (différente de "null"),
-        // on utilise l'endpoint par index pour la marque.
+        // Si le mode est "numero" ET que le paramètre "reference" est valide (différent de "null")
         if (mode === 'numero' && reference && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
-          // Sinon, on utilise l'endpoint pour chercher la meilleure correspondance par nom.
-          url = `${API_BASE}/produit/cles/best-by-name?nom=${encodeURIComponent(name)}`;
+          // Dans les autres cas, on utilise l'endpoint pour trouver la clé la plus proche par nom
+          url = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
         }
 
         const response = await fetch(url);
@@ -51,7 +49,7 @@ const CommandePage = () => {
     fetchProduct();
   }, [cleanedBrand, reference, name, mode]);
 
-  // Fonction de validation (à adapter selon votre logique métier)
+  // Fonction de validation
   const handleValidate = () => {
     alert('Produit validé !');
   };
@@ -84,4 +82,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
