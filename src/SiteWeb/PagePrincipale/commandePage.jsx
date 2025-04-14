@@ -112,7 +112,6 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
         <Typography variant="body2" paragraph>
           Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
         </Typography>
-        {/* Vous pouvez ajouter d'autres articles si nécessaire */}
       </Box>
     </DialogContent>
     <DialogActions>
@@ -122,7 +121,6 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 );
 
 const CommandePage = () => {
-  // Scrolling vers le haut lors du chargement
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -216,7 +214,7 @@ const CommandePage = () => {
             product = await bestResp.json();
             console.log("Produit retourné par best-by-name :", product);
           } else if (keys && keys.length > 0) {
-            // Au lieu de lancer une erreur, on utilise la première clé préchargée
+            // En cas d'erreur sur best-by-name, utiliser la première clé préchargée
             product = keys[0];
             console.warn("Erreur lors du fallback best-by-name, utilisation du premier produit préchargé.");
           } else {
@@ -462,7 +460,6 @@ const CommandePage = () => {
             <SectionPaper>
               <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
               <Divider sx={{ mb: 3 }} />
-
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
                 <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
                   Processus de Commande
@@ -477,7 +474,6 @@ const CommandePage = () => {
                   </Typography>
                 )}
               </Box>
-
               {mode === 'numero' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>Informations sur la Clé</Typography>
@@ -570,7 +566,6 @@ const CommandePage = () => {
                   )}
                 </Box>
               )}
-
               {article?.besoinPhoto && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>Téléchargement des Photos de la Clé</Typography>
@@ -592,7 +587,6 @@ const CommandePage = () => {
                   />
                 </Box>
               )}
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>Quantité de copies souhaitée</Typography>
                 <TextField
@@ -605,7 +599,6 @@ const CommandePage = () => {
                   fullWidth
                 />
               </Box>
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>Informations Client</Typography>
                 <FormControl component="fieldset" sx={{ mb: 2 }}>
@@ -735,7 +728,6 @@ const CommandePage = () => {
                   sx={{ mb: 2 }}
                 />
               </Box>
-
               {mode === 'postal' && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 1 }}>Type d'expédition</Typography>
@@ -769,7 +761,6 @@ const CommandePage = () => {
                   </FormControl>
                 </Box>
               )}
-
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>Mode de Récupération</Typography>
                 <FormControl component="fieldset">
@@ -779,7 +770,6 @@ const CommandePage = () => {
                   </RadioGroup>
                 </FormControl>
               </Box>
-
               <Box>
                 <FormControlLabel
                   control={<ModernCheckbox checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />}
@@ -803,7 +793,6 @@ const CommandePage = () => {
               </Box>
             </SectionPaper>
           </Grid>
-
           {/* Section Récapitulatif */}
           <Grid item xs={12}>
             <SummaryCard>
@@ -864,7 +853,6 @@ const CommandePage = () => {
           </Grid>
         </Grid>
       </Container>
-
       {/* Modal d'affichage de l'image agrandie */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
@@ -875,7 +863,6 @@ const CommandePage = () => {
           />
         </DialogContent>
       </Dialog>
-
       {/* Snackbar pour les notifications */}
       <Snackbar
         open={snackbarOpen}
@@ -895,7 +882,6 @@ const CommandePage = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-
       {/* Popup des Conditions Générales de Vente */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
