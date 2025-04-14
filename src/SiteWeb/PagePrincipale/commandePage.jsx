@@ -122,7 +122,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 );
 
 const CommandePage = () => {
-  // Permet de scroller vers le haut lors du chargement
+  // Scrolling vers le haut lors du chargement
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -134,7 +134,7 @@ const CommandePage = () => {
   const mode = searchParams.get('mode'); // "postal" ou "numero"
   const navigate = useNavigate();
 
-  // États pour l'article ainsi que le chargement et l'erreur
+  // États pour le produit, le chargement et l'erreur
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
@@ -189,7 +189,7 @@ const CommandePage = () => {
   // Quantité de copies souhaitée
   const [quantity, setQuantity] = useState(1);
 
-  // Chargement du produit en utilisant les clés préchargées pour la marque (ex. "KESO")
+  // Chargement du produit en utilisant les clés préchargées pour la marque (exemple : "KESO")
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -206,7 +206,7 @@ const CommandePage = () => {
           );
         }
         
-        // Si aucune correspondance n'est trouvée, on appelle l'endpoint fallback best-by-name
+        // Si aucune correspondance exacte n'est trouvée, on tente le fallback via best-by-name
         if (!product) {
           console.log("Aucune correspondance exacte trouvée, appel de best-by-name...");
           const bestResp = await fetch(
@@ -216,6 +216,7 @@ const CommandePage = () => {
             product = await bestResp.json();
             console.log("Produit retourné par best-by-name :", product);
           } else if (keys && keys.length > 0) {
+            // Au lieu de lancer une erreur, on utilise la première clé préchargée
             product = keys[0];
             console.warn("Erreur lors du fallback best-by-name, utilisation du premier produit préchargé.");
           } else {
@@ -428,7 +429,7 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  // Affichage pendant le chargement du produit
+  // Si le produit est en cours de chargement
   if (loadingArticle) {
     return (
       <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -451,7 +452,7 @@ const CommandePage = () => {
     );
   }
 
-  // Rendu complet du composant, incluant le formulaire, le récapitulatif, le modal d'image et le snackbar
+  // Rendu complet du composant (formulaire, récapitulatif, modal d'image et snackbar)
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
