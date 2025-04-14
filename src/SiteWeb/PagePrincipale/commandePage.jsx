@@ -41,10 +41,10 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Correction de l'import : ajustez le chemin d'accès selon votre arborescence de projet
+
+// Ajustez le chemin ci-dessous en fonction de la localisation réelle de brandsApi.js dans votre projet
 import { preloadKeysData } from '../../api/brandsApi';
 
-// Composant utilitaire pour l'upload de fichiers
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>
@@ -101,7 +101,6 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 }));
 
 const CommandePage = () => {
-  // Au montage, on scroll vers le haut
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -116,7 +115,7 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Stockage de la clé préchargée correspondant à la marque
+  // État pour stocker la clé préchargée pour la marque
   const [preloadedKey, setPreloadedKey] = useState(null);
 
   const [openImageModal, setOpenImageModal] = useState(false);
@@ -134,7 +133,6 @@ const CommandePage = () => {
     additionalInfo: '',
   });
 
-  // Pour le mode "numero", le champ keyNumber sera automatiquement rempli avec le nom du produit
   const [keyInfo, setKeyInfo] = useState({
     keyNumber: '',
     propertyCardNumber: '',
@@ -195,7 +193,7 @@ const CommandePage = () => {
     loadArticle();
   }, [loadArticle]);
 
-  // Préchargement des clés pour la marque et recherche d'une clé correspondant exactement au nom de l'article
+  // Préchargement des clés pour la marque et recherche d'une correspondance par nom
   useEffect(() => {
     if (brandName && article) {
       preloadKeysData(brandName)
@@ -213,9 +211,7 @@ const CommandePage = () => {
     }
   }, [brandName, article]);
 
-  // Utilisation de la clé préchargée si disponible, sinon on utilise l'article chargé directement
   const productDetails = preloadedKey || article;
-
   const articlePrice = productDetails
     ? isCleAPasse && productDetails.prixCleAPasse
       ? parseFloat(productDetails.prixCleAPasse)
@@ -394,7 +390,6 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  // Vue d'erreur personnalisée en cas de "Réponse vide du serveur."
   if (errorArticle === 'Réponse vide du serveur.') {
     return (
       <Box
@@ -456,16 +451,11 @@ const CommandePage = () => {
                 </Typography>
                 {mode === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous
-                    recevrez un email contenant l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue,
-                    notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé
-                    classique).
+                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email contenant l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé classique).
                   </Typography>
                 ) : (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire
-                    d'envoyer votre clé préalablement. La commande sera directement traitée par le fabricant grâce au
-                    numéro.
+                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire d'envoyer votre clé préalablement. La commande sera directement traitée par le fabricant grâce au numéro.
                   </Typography>
                 )}
               </Box>
@@ -476,12 +466,7 @@ const CommandePage = () => {
                   </Typography>
                   {productDetails?.estCleAPasse && (
                     <FormControlLabel
-                      control={
-                        <ModernCheckbox
-                          checked={isCleAPasse}
-                          onChange={(e) => setIsCleAPasse(e.target.checked)}
-                        />
-                      }
+                      control={<ModernCheckbox checked={isCleAPasse} onChange={(e) => setIsCleAPasse(e.target.checked)} />}
                       label="Clé à passe ? (Ouvre plusieurs serrures)"
                       sx={{ mb: 2 }}
                     />
@@ -507,12 +492,7 @@ const CommandePage = () => {
                   {productDetails?.besoinNumeroCarte && (
                     <Box sx={{ mb: 2 }}>
                       <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={lostCartePropriete}
-                            onChange={(e) => setLostCartePropriete(e.target.checked)}
-                          />
-                        }
+                        control={<Checkbox checked={lostCartePropriete} onChange={(e) => setLostCartePropriete(e.target.checked)} />}
                         label="J'ai perdu ma carte de propriété"
                         sx={{ mr: 2 }}
                       />
@@ -563,12 +543,7 @@ const CommandePage = () => {
                             file={idCardInfo.domicileJustificatif}
                           />
                           <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={attestationPropriete}
-                                onChange={(e) => setAttestationPropriete(e.target.checked)}
-                              />
-                            }
+                            control={<Checkbox checked={attestationPropriete} onChange={(e) => setAttestationPropriete(e.target.checked)} />}
                             label="J'atteste être le propriétaire"
                             sx={{ mt: 1 }}
                           />
@@ -833,7 +808,7 @@ const CommandePage = () => {
               </Box>
             </SectionPaper>
           </Grid>
-          {/* Récapitulatif du produit et du prix */}
+          {/* Récapitulatif du produit */}
           <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>
@@ -911,7 +886,11 @@ const CommandePage = () => {
       </Container>
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
-          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <img
+            src={productDetails?.imageUrl}
+            alt={productDetails?.nom}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
         </DialogContent>
       </Dialog>
       <Snackbar
