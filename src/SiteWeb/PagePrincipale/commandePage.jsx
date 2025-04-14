@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';  
 import {
   Box,
   Typography,
@@ -41,6 +41,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Importation de la fonction de préchargement des clés
+import { preloadKeysData } from './brandsApi';
 
 // Composant utilitaire pour l'upload de fichiers
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
@@ -116,6 +118,9 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
+  // État pour stocker la clé préchargée correspondant à la marque
+  const [preloadedKey, setPreloadedKey] = useState(null);
+
   const [openImageModal, setOpenImageModal] = useState(false);
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
@@ -133,7 +138,7 @@ const CommandePage = () => {
 
   // Pour le mode "numero", le champ keyNumber recevra automatiquement le nom du produit commandé
   const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '', // Ce champ sera automatiquement rempli avec article.nom
+    keyNumber: '', // Rempli automatiquement avec article.nom
     propertyCardNumber: '',
     frontPhoto: null,
     backPhoto: null,
@@ -161,6 +166,7 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
+  // Récupération de l'article par son nom
   useEffect(() => {
     const fetchArticle = async () => {
       try {
@@ -188,12 +194,34 @@ const CommandePage = () => {
     fetchArticle();
   }, [brandName, decodedArticleName, articleType]);
 
-  const articlePrice = article
-    ? isCleAPasse && article.prixCleAPasse
-      ? parseFloat(article.prixCleAPasse)
+  // Préchargement des clés pour la marque et recherche de la clé correspondant à l'article
+  useEffect(() => {
+    if (brandName && article) {
+      preloadKeysData(brandName)
+        .then((keys) => {
+          // Recherche d'une clé dont le nom correspond (en ignorant la casse)
+          const found = keys.find(
+            (key) => key.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+          );
+          if (found) {
+            setPreloadedKey(found);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
+  }, [brandName, article]);
+
+  // Utilisation de l'objet produit provenant soit du préchargement soit du fetch initial
+  const productDetails = preloadedKey || article;
+
+  const articlePrice = productDetails
+    ? isCleAPasse && productDetails.prixCleAPasse
+      ? parseFloat(productDetails.prixCleAPasse)
       : mode === 'postal'
-      ? parseFloat(article.prixSansCartePropriete)
-      : parseFloat(article.prix)
+      ? parseFloat(productDetails.prixSansCartePropriete)
+      : parseFloat(productDetails.prix)
     : 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
@@ -207,15 +235,14 @@ const CommandePage = () => {
       !userInfo.address.trim() ||
       !userInfo.postalCode.trim() ||
       !userInfo.ville.trim() ||
-      (article?.besoinPhoto && (!keyInfo.frontPhoto || !keyInfo.backPhoto)) ||
+      (productDetails?.besoinPhoto && (!keyInfo.frontPhoto || !keyInfo.backPhoto)) ||
       !shippingMethod ||
       (mode === 'postal' && !deliveryType)
     ) {
       return false;
     }
     if (mode === 'numero') {
-      // Pour "numero", keyNumber n'est pas vérifié car il sera rempli automatiquement
-      if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim()) return false;
+      if (productDetails?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim()) return false;
       if (lostCartePropriete) {
         if (
           !idCardInfo.idCardFront ||
@@ -295,16 +322,15 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
-      // Enregistrer le nom du produit commandé dans "articleName"
-      commandeFormData.append('articleName', article?.nom || '');
+      // Enregistrer le nom du produit commandé
+      commandeFormData.append('articleName', productDetails?.nom || '');
       commandeFormData.append('quantity', quantity);
 
       if (mode === 'numero') {
-        // Pour les commandes de type "numero", nous remplaçons le numéro de clé par le nom du produit commandé
-        if (article?.besoinNumeroCle) {
-          commandeFormData.append('keyNumber', article?.nom || '');
+        if (productDetails?.besoinNumeroCle) {
+          commandeFormData.append('keyNumber', productDetails?.nom || '');
         }
-        if (article?.besoinNumeroCarte) {
+        if (productDetails?.besoinNumeroCarte) {
           if (!lostCartePropriete) {
             commandeFormData.append('propertyCardNumber', keyInfo.propertyCardNumber);
           } else {
@@ -318,7 +344,7 @@ const CommandePage = () => {
       commandeFormData.append('deliveryType', deliveryType);
       commandeFormData.append('shippingMethod', shippingMethod);
       commandeFormData.append('isCleAPasse', isCleAPasse.toString());
-      if (article?.besoinPhoto) {
+      if (productDetails?.besoinPhoto) {
         commandeFormData.append('frontPhoto', keyInfo.frontPhoto);
         commandeFormData.append('backPhoto', keyInfo.backPhoto);
       }
@@ -337,7 +363,7 @@ const CommandePage = () => {
       const paymentPayload = {
         amount: totalPrice * 100,
         currency: 'eur',
-        description: article
+        description: productDetails
           ? `Veuillez procéder au paiement pour ${userInfo.nom}`
           : 'Veuillez procéder au paiement',
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
@@ -416,22 +442,22 @@ const CommandePage = () => {
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
                 <Typography
                   variant="h6"
-                  sx={{
-                    color: '#000',
-                    fontWeight: 'bold',
-                    fontSize: '1.2rem',
-                    mb: 1,
-                  }}
+                  sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}
                 >
                   Processus de Commande
                 </Typography>
                 {mode === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé classique).
+                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement,
+                    vous recevrez un email contenant l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue,
+                    notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé
+                    classique).
                   </Typography>
                 ) : (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire d'envoyer votre clé préalablement. La commande sera directement traitée par le fabricant grâce au numéro.
+                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire
+                    d'envoyer votre clé préalablement. La commande sera directement traitée par le fabricant grâce au
+                    numéro.
                   </Typography>
                 )}
               </Box>
@@ -441,7 +467,7 @@ const CommandePage = () => {
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     Informations sur la clé
                   </Typography>
-                  {article?.estCleAPasse && (
+                  {productDetails?.estCleAPasse && (
                     <FormControlLabel
                       control={
                         <ModernCheckbox
@@ -454,27 +480,26 @@ const CommandePage = () => {
                     />
                   )}
 
-                  {article?.besoinNumeroCle && (
+                  {productDetails?.besoinNumeroCle && (
                     <>
-                      {/* Affichage du nom du produit comme numéro de clé */}
                       <TextField
                         disabled
                         placeholder="Le nom du produit sera utilisé comme numéro de clé"
                         variant="outlined"
                         name="keyNumber"
-                        value={article?.nom || ''}
+                        value={productDetails?.nom || ''}
                         fullWidth
                         sx={{ mb: 2 }}
                       />
-                      {article.numeroCleDescription && (
+                      {productDetails?.numeroCleDescription && (
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                          {article.numeroCleDescription}
+                          {productDetails.numeroCleDescription}
                         </Typography>
                       )}
                     </>
                   )}
 
-                  {article?.besoinNumeroCarte && (
+                  {productDetails?.besoinNumeroCarte && (
                     <Box sx={{ mb: 2 }}>
                       <FormControlLabel
                         control={
@@ -497,9 +522,9 @@ const CommandePage = () => {
                             required
                             fullWidth
                           />
-                          {article.numeroCarteDescription && (
+                          {productDetails?.numeroCarteDescription && (
                             <Typography variant="body2" color="text.secondary">
-                              {article.numeroCarteDescription}
+                              {productDetails.numeroCarteDescription}
                             </Typography>
                           )}
                         </>
@@ -549,7 +574,7 @@ const CommandePage = () => {
                 </Box>
               )}
 
-              {article?.besoinPhoto && (
+              {productDetails?.besoinPhoto && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     Téléchargement des Photos de la Clé
@@ -594,16 +619,8 @@ const CommandePage = () => {
                 </Typography>
                 <FormControl component="fieldset" sx={{ mb: 2 }}>
                   <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
-                    <FormControlLabel
-                      value="particulier"
-                      control={<Radio sx={{ color: '#1B5E20' }} />}
-                      label="Particulier"
-                    />
-                    <FormControlLabel
-                      value="entreprise"
-                      control={<Radio sx={{ color: '#1B5E20' }} />}
-                      label="Entreprise"
-                    />
+                    <FormControlLabel value="particulier" control={<Radio sx={{ color: '#1B5E20' }} />} label="Particulier" />
+                    <FormControlLabel value="entreprise" control={<Radio sx={{ color: '#1B5E20' }} />} label="Entreprise" />
                   </RadioGroup>
                 </FormControl>
                 <TextField
@@ -815,14 +832,14 @@ const CommandePage = () => {
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Récapitulatif
               </Typography>
-              {article && (
+              {productDetails && (
                 <Box sx={{ display: 'flex', mb: 2 }}>
-                  {article.imageUrl && (
+                  {productDetails.imageUrl && (
                     <Box onClick={handleOpenImageModal} sx={{ cursor: 'pointer', mr: 2 }}>
                       <CardMedia
                         component="img"
-                        image={article.imageUrl}
-                        alt={article.nom}
+                        image={productDetails.imageUrl}
+                        alt={productDetails.nom}
                         sx={{
                           width: 80,
                           height: 80,
@@ -833,9 +850,15 @@ const CommandePage = () => {
                     </Box>
                   )}
                   <Box>
-                    <Typography variant="subtitle1">{article.nom}</Typography>
-                    {article.manufacturer && (
-                      <Typography variant="body2">Marque : {article.manufacturer}</Typography>
+                    <Typography variant="subtitle1">{productDetails.nom}</Typography>
+                    {productDetails.manufacturer && (
+                      <Typography variant="body2">Marque : {productDetails.manufacturer}</Typography>
+                    )}
+                    {/* Affichage de la description générale si présente */}
+                    {productDetails.descriptionProduit && (
+                      <Typography variant="body2" color="text.secondary">
+                        {productDetails.descriptionProduit}
+                      </Typography>
                     )}
                     <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
                   </Box>
@@ -883,7 +906,7 @@ const CommandePage = () => {
 
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
-          <img src={article?.imageUrl} alt={article?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
         </DialogContent>
       </Dialog>
 
