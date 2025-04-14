@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@api': '/src/api'
-    }
-  }
+      '@api': '/src/api',
+    },
+  },
 });
