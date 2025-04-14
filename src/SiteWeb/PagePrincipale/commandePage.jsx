@@ -206,7 +206,7 @@ const CommandePage = () => {
           );
         }
         
-        // Si aucune correspondance exacte n'est trouvée, on tente le fallback via best-by-name
+        // Si aucune correspondance n'est trouvée, on tente le fallback via best-by-name
         if (!product) {
           console.log("Aucune correspondance exacte trouvée, appel de best-by-name...");
           const bestResp = await fetch(
@@ -903,3 +903,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
