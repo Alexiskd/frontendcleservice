@@ -25,11 +25,11 @@ const CommandePage = () => {
       setLoading(true);
       try {
         let url = '';
-        if (mode === 'numero') {
-          // Utilisation de l'endpoint pour une recherche par index pour une marque donnée
+        // Si mode "numero" ET que "reference" n'est pas "null", on utilise l'endpoint par index.
+        // Sinon, on utilise l'endpoint par nom.
+        if (mode === 'numero' && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
-          // Utilisation de l'endpoint pour une recherche par nom
           url = `${API_BASE}/produit/cles/by-name?nom=${encodeURIComponent(name)}`;
         }
 
