@@ -1,5 +1,4 @@
-// src/src/SiteWeb/brandsApi.js
-
+// brandsApi.js
 let preloadedBrands = null;
 let preloadedBrandsPromise = null;
 
