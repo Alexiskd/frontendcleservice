@@ -3,15 +3,15 @@ import { useParams, useLocation } from 'react-router-dom';
 
 const CommandePage = () => {
   // Extraction des paramètres de l’URL
-  let { brand, reference, name } = useParams();
+  const { brand, reference, name } = useParams();
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
 
-  // Si le paramètre "brand" contient ".html", on le nettoie
-  if (brand && brand.endsWith('.html')) {
-    brand = brand.replace('.html', '');
-  }
+  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent.
+  const cleanedBrand = brand && brand.endsWith('.html')
+    ? brand.replace('.html', '')
+    : brand;
 
   // Définition de l'URL de base pour le back-end
   const API_BASE = 'https://cl-back.onrender.com';
@@ -29,7 +29,7 @@ const CommandePage = () => {
         let url = '';
         if (mode === 'numero') {
           // Utilisation de l'endpoint pour une recherche par index dans la marque
-          url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(brand)}/index/${encodeURIComponent(reference)}`;
+          url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
           // Utilisation de l'endpoint pour une recherche par nom
           url = `${API_BASE}/produit/cles/by-name?nom=${encodeURIComponent(name)}`;
@@ -49,7 +49,7 @@ const CommandePage = () => {
     };
 
     fetchProduct();
-  }, [brand, reference, name, mode]);
+  }, [cleanedBrand, reference, name, mode]);
 
   // Fonction pour gérer l'action "Valider"
   const handleValidate = () => {
@@ -68,7 +68,7 @@ const CommandePage = () => {
         <div>
           <h2>{product.descriptionProduit || name}</h2>
           <p>
-            <strong>Marque :</strong> {brand}
+            <strong>Marque :</strong> {cleanedBrand}
           </p>
           <p>
             <strong>Référence :</strong> {reference}
@@ -87,4 +87,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
