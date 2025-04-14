@@ -8,7 +8,7 @@ const CommandePage = () => {
   const queryParams = new URLSearchParams(search);
   const mode = queryParams.get('mode');
 
-  // Nettoyage du paramètre "brand": suppression de l'extension ".html" si présente.
+  // Nettoyage du paramètre "brand" : suppression de l'extension ".html" s'il est présent.
   const cleanedBrand = brand ? brand.replace(/\.html$/, '') : brand;
 
   // URL de base du back-end
@@ -19,18 +19,17 @@ const CommandePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Récupération du produit dès le chargement ou lors du changement de paramètres
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
         let url = '';
 
-        // Si le mode est "numero" ET que reference est fournie et valide (différente de "null")
+        // Si le mode est "numero" et que la référence est fournie et différente de "null", on utilise l'endpoint par index
         if (mode === 'numero' && reference && reference !== 'null') {
           url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(cleanedBrand)}/index/${encodeURIComponent(reference)}`;
         } else {
-          // Dans tous les autres cas, on utilise l'endpoint pour la clé la plus proche basée sur le nom
+          // Sinon, on utilise l'endpoint pour trouver la clé la plus proche par nom
           url = `${API_BASE}/produit/cles/closest?nom=${encodeURIComponent(name)}`;
         }
 
@@ -50,9 +49,7 @@ const CommandePage = () => {
     fetchProduct();
   }, [cleanedBrand, reference, name, mode]);
 
-  // Fonction pour gérer l'action "Valider"
   const handleValidate = () => {
-    // Ajouter ici la logique de validation ou d'enregistrement de commande
     alert('Produit validé !');
   };
 
