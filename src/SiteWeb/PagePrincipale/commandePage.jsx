@@ -41,8 +41,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Importation de la fonction de préchargement des clés
-import { preloadKeysData } from './brandsApi';
+// Correction de l'import : ajustez le chemin d'accès selon votre arborescence de projet
+import { preloadKeysData } from '../../api/brandsApi';
 
 // Composant utilitaire pour l'upload de fichiers
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
@@ -100,11 +100,8 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// -----------------------------
-// Composant Principal : CommandePage
-// -----------------------------
 const CommandePage = () => {
-  // Lors du montage, scroll en haut de la page
+  // Au montage, on scroll vers le haut
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -137,7 +134,7 @@ const CommandePage = () => {
     additionalInfo: '',
   });
 
-  // Pour le mode "numero", le champ keyNumber sera rempli avec le nom du produit
+  // Pour le mode "numero", le champ keyNumber sera automatiquement rempli avec le nom du produit
   const [keyInfo, setKeyInfo] = useState({
     keyNumber: '',
     propertyCardNumber: '',
@@ -167,12 +164,14 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Fonction de chargement de l'article
+  // Fonction de chargement de l'article depuis l'API
   const loadArticle = useCallback(async () => {
     try {
       setLoadingArticle(true);
       setErrorArticle(null);
-      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
+        decodedArticleName
+      )}`;
       const response = await fetch(endpoint);
       if (!response.ok) {
         if (response.status === 404) throw new Error('Article non trouvé.');
@@ -196,7 +195,7 @@ const CommandePage = () => {
     loadArticle();
   }, [loadArticle]);
 
-  // Préchargement des clés pour la marque et recherche d'une correspondance par nom
+  // Préchargement des clés pour la marque et recherche d'une clé correspondant exactement au nom de l'article
   useEffect(() => {
     if (brandName && article) {
       preloadKeysData(brandName)
@@ -214,7 +213,7 @@ const CommandePage = () => {
     }
   }, [brandName, article]);
 
-  // Utilisation des détails produits issus du préchargement si disponible, sinon de la réponse de l'API
+  // Utilisation de la clé préchargée si disponible, sinon on utilise l'article chargé directement
   const productDetails = preloadedKey || article;
 
   const articlePrice = productDetails
@@ -395,7 +394,7 @@ const CommandePage = () => {
     setSnackbarOpen(false);
   };
 
-  // Vue d'erreur personnalisée pour "Réponse vide du serveur."
+  // Vue d'erreur personnalisée en cas de "Réponse vide du serveur."
   if (errorArticle === 'Réponse vide du serveur.') {
     return (
       <Box
@@ -452,16 +451,13 @@ const CommandePage = () => {
               </Typography>
               <Divider sx={{ mb: 3 }} />
               <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
-                <Typography
-                  variant="h6"
-                  sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}
-                >
+                <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
                   Processus de Commande
                 </Typography>
                 {mode === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement,
-                    vous recevrez un email contenant l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue,
+                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous
+                    recevrez un email contenant l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue,
                     notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé
                     classique).
                   </Typography>
@@ -625,8 +621,16 @@ const CommandePage = () => {
                 </Typography>
                 <FormControl component="fieldset" sx={{ mb: 2 }}>
                   <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
-                    <FormControlLabel value="particulier" control={<Radio sx={{ color: '#1B5E20' }} />} label="Particulier" />
-                    <FormControlLabel value="entreprise" control={<Radio sx={{ color: '#1B5E20' }} />} label="Entreprise" />
+                    <FormControlLabel
+                      value="particulier"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Particulier"
+                    />
+                    <FormControlLabel
+                      value="entreprise"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Entreprise"
+                    />
                   </RadioGroup>
                 </FormControl>
                 <TextField
