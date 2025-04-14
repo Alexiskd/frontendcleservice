@@ -1,43 +1,64 @@
-// brandsApi.js
+// src/api/brandsApi.js
+
 let preloadedBrands = null;
 let preloadedBrandsPromise = null;
 
-export function preloadBrandsData() {
+/**
+ * Charge les données des marques.
+ */
+export async function preloadBrandsData() {
+  // Si les marques ont déjà été chargées, on les retourne immédiatement.
+  if (preloadedBrands) {
+    return preloadedBrands;
+  }
+  // Si aucun appel n'a encore été lancé, on lance l'appel.
   if (!preloadedBrandsPromise) {
-    preloadedBrandsPromise = fetch('https://cl-back.onrender.com/brands')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Erreur lors de la récupération des marques');
-        }
-        return res.json();
-      })
-      .then((data) => {
-        preloadedBrands = data;
-        return data;
-      });
+    preloadedBrandsPromise = (async () => {
+      const res = await fetch('https://cl-back.onrender.com/brands');
+      if (!res.ok) {
+        throw new Error('Erreur lors de la récupération des marques');
+      }
+      const data = await res.json();
+      preloadedBrands = data;
+      return data;
+    })().catch((error) => {
+      // En cas d'erreur, réinitialiser la promesse pour permettre de retenter l'appel
+      preloadedBrandsPromise = null;
+      throw error;
+    });
   }
   return preloadedBrandsPromise;
 }
 
-// Préchargement des clés pour une marque donnée
 let preloadedKeys = {};
 let preloadedKeysPromises = {};
 
-export function preloadKeysData(brand) {
+/**
+ * Charge les clés pour une marque donnée.
+ *
+ * @param {string} brand - Le nom de la marque
+ */
+export async function preloadKeysData(brand) {
+  // Si pour cette marque les clés sont déjà chargées, retourne-les
+  if (preloadedKeys[brand]) {
+    return preloadedKeys[brand];
+  }
+  // Lance l'appel si aucune promesse n'existe pour cette marque.
   if (!preloadedKeysPromises[brand]) {
-    preloadedKeysPromises[brand] = fetch(
-      `https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(brand)}`
-    )
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Erreur lors de la récupération des clés pour ${brand}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        preloadedKeys[brand] = data;
-        return data;
-      });
+    preloadedKeysPromises[brand] = (async () => {
+      const res = await fetch(
+        `https://cl-back.onrender.com/produit/cles?marque=${encodeURIComponent(brand)}`
+      );
+      if (!res.ok) {
+        throw new Error(`Erreur lors de la récupération des clés pour ${brand}`);
+      }
+      const data = await res.json();
+      preloadedKeys[brand] = data;
+      return data;
+    })().catch((error) => {
+      preloadedKeysPromises[brand] = null;
+      throw error;
+    });
   }
   return preloadedKeysPromises[brand];
 }
