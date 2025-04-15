@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction du paramètre "nom" dans l'URL (exemple : /commande/:nom)
-  const { nom } = useParams();
+  // Extraction des paramètres de l'URL
+  const { brand, reference, name } = useParams();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const mode = searchParams.get('mode') || '';
+
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
@@ -23,15 +27,15 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    console.log('Paramètre "nom" reçu :', nom);
-    // Vérification du paramètre "nom"
-    if (!nom || nom.trim() === '') {
-      setError("Le nom du produit n'est pas fourni.");
+    console.log('Paramètres reçus :', { brand, reference, name, mode });
+    // Vérification des paramètres obligatoires
+    if (!brand || !reference || !name || !name.trim()) {
+      setError("Les paramètres de la commande sont incomplets.");
       return;
     }
 
     // Construction de l'URL de l'API pour récupérer les informations du produit
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
+    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-details?brand=${encodeURIComponent(brand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode)}`;
     console.log("URL API construite :", apiUrl);
 
     fetch(apiUrl)
@@ -49,19 +53,15 @@ const CommandePage = () => {
         console.error("Erreur lors du fetch :", err);
         setError(err.message);
       });
-  }, [nom]);
+  }, [brand, reference, name, mode]);
 
-  // Affichage du message d'erreur s'il y en a un
   if (error) {
     return <div>Erreur : {error}</div>;
   }
-
-  // Affichage d'un indicateur de chargement tant que le produit n'est pas récupéré
   if (!produit) {
     return <div>Chargement...</div>;
   }
 
-  // Rendu final des informations du produit
   return (
     <div>
       <h1>Détails de la clé</h1>
@@ -89,5 +89,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
-
