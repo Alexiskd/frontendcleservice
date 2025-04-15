@@ -217,14 +217,15 @@ const CleDynamicPage = () => {
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      const formattedBrand = extractedBrandFull.toLowerCase().replace(/\s+/g, '-');
+      // Utiliser actualBrandName qui ne contient plus '_1_reproduction_cle.html'
+      const formattedBrand = actualBrandName.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       navigate(url);
     } catch (error) {
       console.error("Erreur lors de la navigation vers la commande:", error);
     }
-  }, [extractedBrandFull, navigate]);
+  }, [actualBrandName, navigate]);
 
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
@@ -497,3 +498,4 @@ const CleDynamicPage = () => {
 };
 
 export default CleDynamicPage;
+
