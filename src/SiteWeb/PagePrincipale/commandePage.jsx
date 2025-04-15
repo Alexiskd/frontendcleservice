@@ -23,29 +23,30 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    console.log('Paramètre "nom" reçu :', nom);
-    // Si le paramètre "nom" est manquant ou vide, on affiche une erreur et on stoppe l'exécution
-    if (!nom || nom.trim() === '') {
-      setError("Le nom du produit n'est pas fourni.");
-      return;
-    }
+    const fetchProduit = async () => {
+      console.log('Paramètre "nom" reçu :', nom);
+      // Si le paramètre "nom" est manquant ou vide, on affiche une erreur et on stoppe l'exécution
+      if (!nom || nom.trim() === '') {
+        setError("Le nom du produit n'est pas fourni.");
+        return;
+      }
 
-    // Construction de l'URL de l'API pour récupérer les infos de la clé, en encodant le paramètre "nom"
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
+      // Construction de l'URL de l'API pour récupérer les infos de la clé, en encodant le paramètre "nom"
+      const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
-    fetch(apiUrl)
-      .then((res) => {
+      try {
+        const res = await fetch(apiUrl);
         if (!res.ok) {
           throw new Error("Erreur lors de la récupération des informations de la clé.");
         }
-        return res.json();
-      })
-      .then((data) => {
+        const data = await res.json();
         setProduit(data);
-      })
-      .catch((err) => {
+      } catch (err) {
         setError(err.message);
-      });
+      }
+    };
+
+    fetchProduit();
   }, [nom]);
 
   // Affichage d'un message d'erreur le cas échéant
