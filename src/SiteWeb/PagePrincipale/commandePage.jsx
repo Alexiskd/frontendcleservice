@@ -97,12 +97,13 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
+// Composant principal CommandePage
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des paramètres depuis l'URL (exemple : brandName, articleType, articleName)
+  // Extraction des paramètres (exemple : brandName, articleType, articleName)
   const { brandName, articleType, articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
@@ -113,24 +114,20 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const handleOpenImageModal = () => setOpenImageModal(true);
-  const handleCloseImageModal = () => setOpenImageModal(false);
+  // Autres états pour formulaire, photos, etc. (non modifiés ici)
 
-  // Pour simplifier, d'autres états (userInfo, keyInfo, etc.) ne sont pas modifiés ici
-
-  // Récupération du produit depuis le backend
+  // Récupération du produit via le backend
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Tentative de récupération exacte par nom (/cles/by-name)
+        // Tentative via l'endpoint exact (/cles/by-name)
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
-          console.warn('Produit introuvable avec /by-name. Essai via /cles/best-by-name.');
-          // Si l'endpoint by-name échoue, utilisation de l'endpoint pour la meilleure correspondance (/cles/best-by-name)
+          console.warn("Produit introuvable avec /by-name. Essai via /cles/best-by-name.");
+          // Si la recherche exacte échoue, utiliser le fallback pour la meilleure correspondance
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -138,7 +135,7 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Vérification optionnelle de la correspondance de la marque
+        // Vérification optionnelle de la marque
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -154,7 +151,7 @@ const CommandePage = () => {
     fetchArticle();
   }, [brandName, decodedArticleName]);
 
-  // Utilisation du produit récupéré (ici renommé en productDetails pour clarté)
+  // Renommage pour clarté dans l'affichage
   const productDetails = article;
 
   const articlePrice = productDetails
@@ -163,11 +160,8 @@ const CommandePage = () => {
       : parseFloat(productDetails.prix)
     : 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
-  const shippingFee = 8; // Exemple fixe pour l'expédition (modifiez selon vos besoins)
+  const shippingFee = 8; // Exemple fixe pour l'expédition (à adapter)
   const totalPrice = safeArticlePrice + shippingFee;
-
-  // Ici, d'autres fonctions pour le formulaire, validation, commande, etc. restent inchangées.
-  // Pour cet exemple, nous nous concentrons sur la récupération et l'affichage du produit.
 
   if (loadingArticle) {
     return (
@@ -216,6 +210,7 @@ const CommandePage = () => {
               )}
             </SectionPaper>
           </Grid>
+          {/* Autres sections du formulaire peuvent être ajoutées ici */}
         </Grid>
       </Container>
     </Box>
