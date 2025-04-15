@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Récupération du paramètre "nom" défini dans la route (ex: /commande/:nom)
+  // Récupération du paramètre "nom" dans l'URL (ex: /commande/:nom)
   const { nom } = useParams();
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Vérifie si l'URL d'image est correctement formée
+  // Fonction utilitaire pour vérifier si l'URL d'image est correctement formée
   const isValidImageUrl = (url) => {
     return typeof url === 'string' &&
            url.trim() !== '' &&
@@ -20,6 +20,7 @@ const CommandePage = () => {
       return;
     }
 
+    // Construction de l'URL de l'API avec encodage du nom
     const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
     fetch(apiUrl)
