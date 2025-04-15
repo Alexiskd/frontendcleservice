@@ -13,18 +13,17 @@ const CommandePage = () => {
   const [erreur, setErreur] = useState('');
 
   useEffect(() => {
-    console.log("Recherche du produit avec le nom:", name);
-
+    console.log("Recherche du produit avec le nom :", name);
     const fetchProduit = async () => {
       try {
         const response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
         if (!response.ok) {
-          throw new Error(`Erreur lors de la récupération du produit: ${response.status}`);
+          throw new Error(`Erreur lors de la récupération du produit : ${response.status}`);
         }
         const data = await response.json();
-        console.log("Produit récupéré:", data);
+        console.log("Produit récupéré :", data);
         setProduit(data);
       } catch (err) {
         console.error(err);
@@ -38,7 +37,6 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Rediriger vers la page de finalisation de commande en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
