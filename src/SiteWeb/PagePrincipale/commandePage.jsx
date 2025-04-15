@@ -12,7 +12,7 @@ import {
 
 const CommandePage = () => {
   // Récupération des paramètres depuis l'URL
-  // Exemples de paramètres attendus : brand, reference, name et mode
+  // On attend par exemple : brand, reference, name et mode
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
 
@@ -25,7 +25,6 @@ const CommandePage = () => {
 
     const fetchProduit = async () => {
       try {
-        // Utilisation de l'endpoint existant pour récupérer le produit par son nom
         const response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
@@ -47,7 +46,7 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Par exemple, redirige vers une page de finalisation en utilisant l'id du produit
+    // Rediriger vers la finalisation de commande en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
