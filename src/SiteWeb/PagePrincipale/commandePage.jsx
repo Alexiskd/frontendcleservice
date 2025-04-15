@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Box, Container, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL (ex. : brand, reference, name, mode)
+  // Extraction des paramètres depuis l'URL (ex.: brand, reference, name, mode)
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
 
@@ -14,7 +14,6 @@ const CommandePage = () => {
 
   useEffect(() => {
     console.log("Recherche du produit avec le nom:", name);
-
     const fetchProduit = async () => {
       try {
         const response = await fetch(
@@ -33,12 +32,11 @@ const CommandePage = () => {
         setLoading(false);
       }
     };
-
     fetchProduit();
   }, [name]);
 
   const handleCommander = () => {
-    // Redirection vers la page de finalisation de commande en utilisant l'id du produit
+    // Redirige vers la page de finalisation en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
@@ -88,4 +86,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
