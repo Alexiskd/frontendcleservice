@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Box, Container, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL (exemple : brand, reference, name, mode)
+  // Extraction des paramètres depuis l'URL (par exemple, brand, reference, name, mode)
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
 
@@ -17,13 +17,13 @@ const CommandePage = () => {
 
     const fetchProduit = async () => {
       try {
-        // Tentative de recherche exacte
+        // Première tentative : recherche exacte sur /cles/by-name
         let response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
-        // Si le produit n'est pas trouvé, utiliser l'endpoint de recherche approximative
         if (response.status === 404) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/closest.");
+          // Seconde tentative : recherche approximative via /cles/closest
           response = await fetch(
             `https://cl-back.onrender.com/produit/cles/closest?nom=${encodeURIComponent(name)}`
           );
