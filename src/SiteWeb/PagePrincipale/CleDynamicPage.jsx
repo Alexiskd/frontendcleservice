@@ -84,9 +84,9 @@ const CleDynamicPage = () => {
       if (parts.length >= 3) {
         const brand = parts[0];
         const productName = parts.slice(2).join("-");
-        navigate(/produit/${brand}/${encodeURIComponent(productName)});
+        navigate(`/produit/${brand}/${encodeURIComponent(productName)}`);
       } else {
-        navigate(/produit/${encodeURIComponent(extractedBrandFull)});
+        navigate(`/produit/${encodeURIComponent(extractedBrandFull)}`);
       }
     }
   }, [extractedBrandFull, navigate]);
@@ -109,21 +109,21 @@ const CleDynamicPage = () => {
   const adjustedBrandNameDisplay = brandNameFromUrl ? formatBrandName(brandNameFromUrl) : "";
   const adjustedBrandNameAPI = brandNameFromUrl ? brandNameFromUrl.toUpperCase() : "";
 
-  const pageTitle = ${adjustedBrandNameDisplay} – Clés et reproductions de qualité;
-  const pageDescription = Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.;
+  const pageTitle = `${adjustedBrandNameDisplay} – Clés et reproductions de qualité`;
+  const pageDescription = `Découvrez les clés et reproductions authentiques de ${adjustedBrandNameDisplay}. Commandez directement chez le fabricant ou dans nos ateliers pour bénéficier d'un produit de qualité et d'un service personnalisé.`;
 
   const getImageSrc = useCallback((imageUrl) => {
     if (!imageUrl || imageUrl.trim() === '') return '';
     if (imageUrl.startsWith('data:')) return imageUrl;
-    if (!imageUrl.startsWith('http')) return https://cl-back.onrender.com/${imageUrl};
+    if (!imageUrl.startsWith('http')) return `https://cl-back.onrender.com/${imageUrl}`;
     return imageUrl;
   }, []);
 
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": ${adjustedBrandNameDisplay} – Catalogue de clés,
-    "description": Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.,
+    "name": `${adjustedBrandNameDisplay} – Catalogue de clés`,
+    "description": `Catalogue des clés et reproductions pour ${adjustedBrandNameDisplay}. Commandez en ligne la reproduction de votre clé.`,
     "itemListElement": keys.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -150,10 +150,10 @@ const CleDynamicPage = () => {
   useEffect(() => {
     if (/^\d+-/.test(extractedBrandFull)) return;
     if (!adjustedBrandNameAPI) return;
-    fetch(https://cl-back.onrender.com/brands/logo/${encodeURIComponent(adjustedBrandNameAPI)})
+    fetch(`https://cl-back.onrender.com/brands/logo/${encodeURIComponent(adjustedBrandNameAPI)}`)
       .then((res) => {
         if (res.ok) return res.blob();
-        throw new Error(Logo non trouvé pour ${adjustedBrandNameAPI});
+        throw new Error(`Logo non trouvé pour ${adjustedBrandNameAPI}`);
       })
       .then((blob) => {
         const logoUrl = URL.createObjectURL(blob);
@@ -217,14 +217,15 @@ const CleDynamicPage = () => {
       if (!reference) {
         throw new Error("Référence introuvable pour cet article");
       }
-      const formattedBrand = extractedBrandFull.toLowerCase().replace(/\s+/g, '-');
+      // Utiliser actualBrandName qui ne contient plus '_1_reproduction_cle.html'
+      const formattedBrand = actualBrandName.toLowerCase().replace(/\s+/g, '-');
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
-      const url = /commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode};
+      const url = `/commande/${formattedBrand}/cle/${reference}/${encodeURIComponent(formattedName)}?mode=${mode}`;
       navigate(url);
     } catch (error) {
       console.error("Erreur lors de la navigation vers la commande:", error);
     }
-  }, [extractedBrandFull, navigate]);
+  }, [actualBrandName, navigate]);
 
   const handleViewProduct = useCallback((item) => {
     if (item.nom.trim().toLowerCase() === normalizeString("Clé Izis Cavers Reparation de clé")) {
@@ -232,7 +233,7 @@ const CleDynamicPage = () => {
     } else {
       const formattedName = item.nom.trim().replace(/\s+/g, '-');
       const formattedBrand = item.marque.trim().replace(/\s+/g, '-');
-      navigate(/produit/${formattedBrand}/${encodeURIComponent(formattedName)});
+      navigate(`/produit/${formattedBrand}/${encodeURIComponent(formattedName)}`);
     }
   }, [navigate]);
 
@@ -345,7 +346,7 @@ const CleDynamicPage = () => {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={${adjustedBrandNameDisplay}, clés, reproduction, commande, qualité, produit authentique} />
+        <meta name="keywords" content={`${adjustedBrandNameDisplay}, clés, reproduction, commande, qualité, produit authentique`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -487,7 +488,7 @@ const CleDynamicPage = () => {
         <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="lg">
           <DialogContent>
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} onWheel={handleWheel}>
-              <img src={modalImageSrc} alt="Agrandissement de la clé" style={{ transform: scale(${scale}), transition: 'transform 0.2s', width: '100%', height: 'auto' }} />
+              <img src={modalImageSrc} alt="Agrandissement de la clé" style={{ transform: `scale(${scale})`, transition: 'transform 0.2s', width: '100%', height: 'auto' }} />
             </Box>
           </DialogContent>
         </Dialog>
@@ -495,5 +496,5 @@ const CleDynamicPage = () => {
     </HelmetProvider>
   );
 };
- 
+
 export default CleDynamicPage;
