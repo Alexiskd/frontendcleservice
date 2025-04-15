@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Récupération du paramètre "nom" défini dans la route (par ex. /commande/:nom)
+  // Récupération du paramètre "nom" défini dans la route (ex: /commande/:nom)
   const { nom } = useParams();
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fonction utilitaire pour vérifier si l'URL d'image est correctement formée
+  // Vérifie si l'URL d'image est correctement formée
   const isValidImageUrl = (url) => {
     return typeof url === 'string' &&
            url.trim() !== '' &&
@@ -15,13 +15,11 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    // Si le nom du produit est absent ou vide, on affiche une erreur et on arrête le traitement.
     if (!nom || nom.trim() === '') {
       setError("Le nom du produit n'est pas fourni.");
       return;
     }
 
-    // Construction de l'URL d'appel à l'API en encodant le nom
     const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
     fetch(apiUrl)
@@ -74,4 +72,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
