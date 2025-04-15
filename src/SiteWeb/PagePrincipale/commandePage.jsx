@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  CircularProgress,
-  Alert
-} from '@mui/material';
+import { Box, Container, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const CommandePage = () => {
   // Extraction des paramètres (brand, reference, name, mode) depuis l'URL
@@ -46,7 +38,7 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Rediriger vers la page de finalisation avec l'id du produit
+    // Rediriger vers la page de finalisation de commande en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
