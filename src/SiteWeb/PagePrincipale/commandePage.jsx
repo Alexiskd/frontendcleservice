@@ -2,21 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction des paramètres dans l'URL
+  // Extraction des paramètres de l'URL selon la nouvelle route :
+  // /commande/:brand/cle/:reference/:name?mode=numero
   const { brand, reference, name } = useParams();
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode'); // récupère le paramètre "mode" depuis l'URL (exemple ?mode=numero)
+  const mode = searchParams.get('mode'); // Optionnellement récupère le paramètre "mode"
 
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fonction pour valider une Data URI pour une image autorisée (png, jpeg/jpg ou gif)
+  // Fonction pour valider une Data URI correspondant à un format d'image autorisé (png, jpeg/jpg ou gif)
   const isValidDataUri = (url) => {
     const regex = /^data:image\/(png|jpe?g|gif);base64,/;
     return regex.test(url);
   };
 
-  // Vérifie que l'URL d'image est correcte (commence par "http" ou correspond à une Data URI valide)
+  // Vérifie que l'URL d'image n'est pas vide et commence par "http" ou correspond à une Data URI valide
   const isValidImageUrl = (url) => {
     return (
       typeof url === 'string' &&
@@ -27,13 +28,12 @@ const CommandePage = () => {
 
   useEffect(() => {
     console.log('Paramètres reçus :', { brand, reference, name, mode });
-    // Vérifier que tous les paramètres requis sont présents
     if (!brand || !reference || !name) {
       setError("Les paramètres requis ne sont pas fournis.");
       return;
     }
 
-    // Construction de l'URL de l'API du back end en fonction des nouveaux paramètres
+    // Construction de l'URL de l'API pour récupérer les informations du produit en fonction des nouveaux paramètres
     const apiUrl = `https://cl-back.onrender.com/produit/cles/by-brand-ref?brand=${encodeURIComponent(brand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode || '')}`;
     console.log("URL API construite :", apiUrl);
 
