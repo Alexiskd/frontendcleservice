@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // On récupère le paramètre "nom" dans l'URL (ex: /commande/:nom)
-  const { nom } = useParams();
+  // Récupération des paramètres dynamiques de l'URL
+  // La route est définie comme : /commande/:brand/cle/:reference/:name
+  const { brand, reference, name } = useParams();
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fonction de validation de l'URL d'image (vérifie que la chaîne est non vide et commence par data:image/ ou http)
+  // Vérifie si l'URL d'image est correctement formée
   const isValidImageUrl = (url) => {
     return typeof url === 'string' &&
            url.trim() !== '' &&
@@ -15,14 +16,15 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    // Si le paramètre "nom" est absent ou vide, on affiche une erreur et on stoppe l'exécution
-    if (!nom || nom.trim() === '') {
+    // On vérifie que le paramètre "name" (nom du produit) est présent
+    if (!name || name.trim() === '') {
       setError("Le nom du produit n'est pas fourni.");
       return;
     }
-
-    // Construction de l'URL de l'API avec encodage du paramètre "nom"
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
+    
+    // Construction de l'URL de l'API en utilisant le paramètre "name"
+    // L'endpoint "/produit/cles/by-name" attend un paramètre "nom"
+    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`;
 
     fetch(apiUrl)
       .then((res) => {
@@ -37,14 +39,12 @@ const CommandePage = () => {
       .catch((err) => {
         setError(err.message);
       });
-  }, [nom]);
+  }, [name]);
 
-  // Affichage d'un message d'erreur le cas échéant
   if (error) {
     return <div>Erreur : {error}</div>;
   }
 
-  // Affichage d'un indicateur de chargement jusqu'à la réception des données
   if (!produit) {
     return <div>Chargement...</div>;
   }
@@ -54,11 +54,18 @@ const CommandePage = () => {
       <h1>Détails de la clé</h1>
       <ul>
         <li><strong>Nom :</strong> {produit.nom}</li>
-        <li><strong>Marque :</strong> {produit.marque}</li>
+        <li><strong>Marque :</strong> {brand}</li>
+        <li><strong>Référence :</strong> {reference}</li>
         <li><strong>Prix :</strong> {produit.prix} €</li>
-        <li><strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €</li>
-        <li><strong>Type de reproduction :</strong> {produit.typeReproduction}</li>
-        <li><strong>Description :</strong> {produit.descriptionProduit}</li>
+        <li>
+          <strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €
+        </li>
+        <li>
+          <strong>Type de reproduction :</strong> {produit.typeReproduction}
+        </li>
+        <li>
+          <strong>Description :</strong> {produit.descriptionProduit}
+        </li>
         {isValidImageUrl(produit.imageUrl) ? (
           <li>
             <strong>Image :</strong>
@@ -74,3 +81,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
