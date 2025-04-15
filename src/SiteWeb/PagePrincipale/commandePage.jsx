@@ -161,7 +161,7 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  // Récupération directe de la clé via son nom (endpoint getKeyByName)
+  // Récupération directe de la clé via son nom (endpoint /cles/by-name)
   useEffect(() => {
     const fetchArticle = async () => {
       try {
@@ -176,7 +176,6 @@ const CommandePage = () => {
         const responseText = await response.text();
         if (!responseText) throw new Error('Réponse vide du serveur.');
         const data = JSON.parse(responseText);
-        // Optionnel : vérification de la marque si nécessaire
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -190,7 +189,7 @@ const CommandePage = () => {
     fetchArticle();
   }, [brandName, decodedArticleName]);
 
-  // Ici, on utilise directement l'objet récupéré
+  // Utilisation directe des données récupérées
   const productDetails = article;
 
   const articlePrice = productDetails
@@ -299,7 +298,6 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
-      // Enregistrement du nom du produit commandé
       commandeFormData.append('articleName', productDetails?.nom || '');
       commandeFormData.append('quantity', quantity);
 
@@ -887,7 +885,11 @@ const CommandePage = () => {
 
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
-          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <img
+            src={productDetails?.imageUrl}
+            alt={productDetails?.nom}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -916,5 +918,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
-
