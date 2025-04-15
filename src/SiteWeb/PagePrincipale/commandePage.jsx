@@ -1,57 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import { preloadKeysData } from '../api/brandsApi'; // ajustez le chemin selon votre organisation
 
 const CommandePage = () => {
-  const { marque, index, produitnom } = useParams();
-  console.log('Paramètres extraits :', { marque, index, produitnom });
-  
-  const [keyData, setKeyData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // On suppose que l’URL comporte un paramètre "brand" (ex: /commande/:brand)
+  const { brand } = useParams();
+  const [product, setProduct] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchKey() {
-      if (!marque || !index) {
-        setError(new Error("Les paramètres 'marque' ou 'index' sont manquants."));
-        setLoading(false);
-        return;
-      }
+    // On lance le chargement des clés pour la marque spécifiée
+    const fetchProduct = async () => {
       try {
-        const response = await axios.get(
-          `https://cl-back.onrender.com/produit/cles/brand/${encodeURIComponent(marque)}/index/${index}`
-        );
-        setKeyData(response.data);
-      } catch (err) {
-        console.error('Erreur lors de la récupération par marque et index:', err);
-        try {
-          const fallbackResponse = await axios.get(
-            'https://cl-back.onrender.com/produit/cles/closest',
-            { params: { nom: produitnom } }  // Assurez-vous que produitnom est défini
-          );
-          setKeyData(fallbackResponse.data);
-        } catch (fallbackErr) {
-          console.error('Fallback vers /cles/closest échoué:', fallbackErr);
-          setError(fallbackErr);
+        const keysData = await preloadKeysData(brand);
+        if (keysData && keysData.length > 0) {
+          // On affiche ici le premier produit/key retourné
+          setProduct(keysData[0]);
+        } else {
+          setError("Aucun produit trouvé pour cette marque.");
         }
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        setError(err.message);
       }
-    }
-    fetchKey();
-  }, [marque, index, produitnom]);
+    };
 
-  if (loading) return <div>Chargement...</div>;
-  if (error) return <div>Erreur : {error.message}</div>;
-  if (!keyData) return <div>Aucune clé trouvée.</div>;
+    if (brand) {
+      fetchProduct();
+    }
+  }, [brand]);
+
+  if (error) {
+    return <div>Erreur : {error}</div>;
+  }
+
+  if (!product) {
+    return <div>Chargement...</div>;
+  }
 
   return (
     <div>
-      <h1>Commande Page</h1>
-      <h2>Détails de la clé :</h2>
-      <p><strong>Nom :</strong> {keyData.nom}</p>
-      <p><strong>Marque :</strong> {keyData.marque}</p>
-      <p><strong>Prix :</strong> {keyData.prix}</p>
+      <h1>Commande pour {brand}</h1>
+      <div>
+        {/* Si le produit possède une propriété "name", on l'affiche, sinon on affiche l'objet complet */}
+        <p>Produit : {product.name ? product.name : JSON.stringify(product)}</p>
+      </div>
     </div>
   );
 };
