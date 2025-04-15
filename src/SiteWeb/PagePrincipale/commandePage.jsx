@@ -7,9 +7,9 @@ const CommandePage = () => {
   const [error, setError] = useState(null);
 
   // Paramètres de requête
-  const marque = 'abus_1_reproduction_cle'; // valeur attendue dans la base
-  const indexParam = 7; // index de la clé recherchée (la 8ème clé, indexée à partir de 0)
-  const fallbackNom = 'Clé-Abus-XP-1'; // nom utilisé en fallback
+  const marque = 'abus_1_reproduction_cle'; // Valeur attendue dans la base
+  const indexParam = 7; // L'index 7 correspond au 8ème élément (indexation commençant à 0)
+  const fallbackNom = 'Clé-Abus-XP-1'; // Nom utilisé pour le fallback
 
   useEffect(() => {
     async function fetchKey() {
@@ -21,7 +21,7 @@ const CommandePage = () => {
         setKeyData(response.data);
       } catch (err) {
         console.error('Erreur lors de la récupération par marque et index:', err);
-        // En cas d'erreur, passage au fallback via la recherche par similarité de nom
+        // En cas d'échec, passage au fallback avec la recherche par similarité de nom
         try {
           const fallbackResponse = await axios.get(
             'https://cl-back.onrender.com/produit/cles/closest',
