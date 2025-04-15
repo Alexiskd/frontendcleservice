@@ -38,7 +38,7 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Rediriger vers la page de finalisation de commande en utilisant l'id du produit
+    // Redirection vers la page de finalisation de commande en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
@@ -88,3 +88,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
