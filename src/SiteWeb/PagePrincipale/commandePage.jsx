@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction du paramètre "nom" depuis l'URL (exemple de route : /commande/:nom)
+  // Extraction du paramètre "nom" dans l'URL (par exemple : /commande/:nom)
   const { nom } = useParams();
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Vérifie si une Data URI correspond à un format image autorisé (png, jpeg/jpg ou gif)
+  // Fonction pour valider une Data URI correspondant à un format d'image autorisé (png, jpeg/jpg ou gif)
   const isValidDataUri = (url) => {
     const regex = /^data:image\/(png|jpe?g|gif);base64,/;
     return regex.test(url);
   };
 
-  // Vérifie que l'URL d'image est non vide et commence par "http" ou correspond à une Data URI valide
+  // Vérifie que l'URL d'image n'est pas vide et commence par "http" ou correspond à un Data URI valide
   const isValidImageUrl = (url) => {
     return (
       typeof url === 'string' &&
@@ -24,13 +24,13 @@ const CommandePage = () => {
 
   useEffect(() => {
     console.log('Paramètre "nom" reçu :', nom);
-    // Si le paramètre "nom" est absent ou vide, on affiche une erreur.
+    // Si le paramètre "nom" est manquant ou vide, on affiche une erreur et on stoppe l'exécution
     if (!nom || nom.trim() === '') {
       setError("Le nom du produit n'est pas fourni.");
       return;
     }
 
-    // Construction de l'URL de l'API en encodant la valeur du paramètre "nom"
+    // Construction de l'URL de l'API pour récupérer les infos de la clé, en encodant le paramètre "nom"
     const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
     fetch(apiUrl)
@@ -53,7 +53,7 @@ const CommandePage = () => {
     return <div>Erreur : {error}</div>;
   }
 
-  // Affichage d'un indicateur de chargement tant que les données ne sont pas reçues
+  // Affichage d'un indicateur de chargement en attendant la réponse de l'API
   if (!produit) {
     return <div>Chargement...</div>;
   }
@@ -86,6 +86,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
-
-
