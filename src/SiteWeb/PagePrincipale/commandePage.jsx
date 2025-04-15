@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction du paramètre "nom" dans l'URL (par exemple : /commande/:nom)
+  // Extraction du paramètre "nom" dans l'URL (exemple : /commande/:nom)
   const { nom } = useParams();
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Vérifie si une Data URI correspond à un format d'image autorisé (png, jpeg/jpg ou gif)
+  // Fonction pour valider une Data URI correspondant à un format d'image autorisé (png, jpeg/jpg ou gif)
   const isValidDataUri = (url) => {
     const regex = /^data:image\/(png|jpe?g|gif);base64,/;
     return regex.test(url);
@@ -23,40 +23,38 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    // Affichage dans la console du paramètre reçu (utile pour le débogage)
-    console.log('Paramètre "nom" reçu :', nom);
+    const fetchProduit = async () => {
+      console.log('Paramètre "nom" reçu :', nom);
+      // Si le paramètre "nom" est manquant ou vide, on affiche une erreur et on arrête l'exécution
+      if (!nom || nom.trim() === '') {
+        setError("Le nom du produit n'est pas fourni.");
+        return;
+      }
 
-    // Si le paramètre "nom" est manquant ou vide, une erreur est enregistrée et la fonction s'arrête
-    if (!nom || nom.trim() === '') {
-      setError("Le nom du produit n'est pas fourni.");
-      return;
-    }
+      // Construction de l'URL de l'API en encodant le paramètre "nom"
+      const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
-    // Construction de l'URL de l'API pour récupérer les infos du produit, en encodant le paramètre "nom"
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
-
-    // Appel de l'API via fetch
-    fetch(apiUrl)
-      .then((res) => {
+      try {
+        const res = await fetch(apiUrl);
         if (!res.ok) {
           throw new Error("Erreur lors de la récupération des informations de la clé.");
         }
-        return res.json();
-      })
-      .then((data) => {
+        const data = await res.json();
         setProduit(data);
-      })
-      .catch((err) => {
+      } catch (err) {
         setError(err.message);
-      });
+      }
+    };
+
+    fetchProduit();
   }, [nom]);
 
-  // Si une erreur a été détectée (par exemple, nom vide ou échec de l'appel API), on l'affiche
+  // Affichage d'un message d'erreur en cas de problème
   if (error) {
     return <div>Erreur : {error}</div>;
   }
 
-  // Tant que le produit n'a pas été récupéré, on affiche un indicateur de chargement
+  // Affichage d'un indicateur de chargement tant que les données ne sont pas récupérées
   if (!produit) {
     return <div>Chargement...</div>;
   }
@@ -89,6 +87,7 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
 
 
 
