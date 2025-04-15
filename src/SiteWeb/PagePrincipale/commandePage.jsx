@@ -7,7 +7,7 @@ const CommandePage = () => {
   // Nettoyage de la valeur du paramètre "name"
   const name = rawName ? rawName.trim() : '';
   
-  // Extraction du paramètre "mode" depuis la query string, par exemple ?mode=numero
+  // Extraction du paramètre "mode" depuis la query string, ex: ?mode=numero
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
 
@@ -37,7 +37,7 @@ const CommandePage = () => {
       return;
     }
 
-    // Construction de l'URL de l'API
+    // Construction de l'URL de l'API pour récupérer les informations du produit
     const apiUrl = `https://cl-back.onrender.com/produit/cles/by-brand-ref?brand=${encodeURIComponent(brand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode || '')}`;
     console.log("URL API construite :", apiUrl);
 
