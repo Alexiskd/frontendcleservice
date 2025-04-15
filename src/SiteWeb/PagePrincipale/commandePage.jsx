@@ -1,95 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL
-  const { brand, reference, name: rawName } = useParams();
-  // Nettoyage de la valeur du paramètre "name"
-  const name = rawName ? rawName.trim() : '';
-  
-  // Extraction du paramètre "mode" depuis la query string, ex: ?mode=numero
-  const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode');
+  const { brand: brandName, name: articleName } = useParams();
+  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
 
-  const [produit, setProduit] = useState(null);
-  const [error, setError] = useState(null);
-
-  // Fonction pour valider qu'une Data URI correspond à une image autorisée (png, jpeg/jpg ou gif)
-  const isValidDataUri = (url) => {
-    const regex = /^data:image\/(png|jpe?g|gif);base64,/;
-    return regex.test(url);
-  };
-
-  // Vérifie que l'URL d'image n'est pas vide et qu'elle commence par "http" ou correspond à une Data URI valide
-  const isValidImageUrl = (url) => {
-    return (
-      typeof url === 'string' &&
-      url.trim() !== '' &&
-      (url.startsWith('http') || isValidDataUri(url))
-    );
-  };
+  const [article, setArticle] = useState(null);
+  const [loadingArticle, setLoadingArticle] = useState(true);
+  const [errorArticle, setErrorArticle] = useState(null);
 
   useEffect(() => {
-    console.log('Paramètres reçus :', { brand, reference, name, mode });
-    // Vérifier que tous les paramètres requis sont présents
-    if (!brand || !reference || !name) {
-      setError("Les paramètres requis ne sont pas fournis.");
-      return;
-    }
+    const fetchArticle = async () => {
+      try {
+        setLoadingArticle(true);
+        setErrorArticle(null);
 
-    // Construction de l'URL de l'API pour récupérer les informations du produit
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-brand-ref?brand=${encodeURIComponent(brand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode || '')}`;
-    console.log("URL API construite :", apiUrl);
+        let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        let response = await fetch(endpoint);
 
-    fetch(apiUrl)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Erreur lors de la récupération des informations de la clé.");
+        if (!response.ok) {
+          const errorText = await response.text();
+          if (errorText.includes("Produit introuvable")) {
+            endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
+            response = await fetch(endpoint);
+          } else {
+            throw new Error("Erreur lors du chargement de l'article.");
+          }
         }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Données récupérées :", data);
-        setProduit(data);
-      })
-      .catch((err) => {
-        console.error("Erreur lors du fetch :", err);
-        setError(err.message);
-      });
-  }, [brand, reference, name, mode]);
 
-  if (error) {
-    return <div>Erreur : {error}</div>;
-  }
+        if (!response.ok) {
+          throw new Error("Erreur lors du chargement de l'article.");
+        }
 
-  if (!produit) {
-    return <div>Chargement...</div>;
-  }
+        const data = await response.json();
+
+        if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
+          throw new Error("La marque de l'article ne correspond pas.");
+        }
+
+        setArticle(data);
+      } catch (err) {
+        console.error("Erreur lors de la récupération du produit:", err);
+        setErrorArticle(err.message || "Erreur inconnue");
+      } finally {
+        setLoadingArticle(false);
+      }
+    };
+
+    fetchArticle();
+  }, [brandName, decodedArticleName]);
+
+  if (loadingArticle) return <div>Chargement...</div>;
+  if (errorArticle) return <div>Erreur : {errorArticle}</div>;
 
   return (
     <div>
-      <h1>Détails de la clé</h1>
-      <ul>
-        <li><strong>Nom :</strong> {produit.nom}</li>
-        <li><strong>Marque :</strong> {produit.marque}</li>
-        <li><strong>Prix :</strong> {produit.prix} €</li>
-        <li>
-          <strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €
-        </li>
-        <li><strong>Type de reproduction :</strong> {produit.typeReproduction}</li>
-        <li><strong>Description :</strong> {produit.descriptionProduit}</li>
-        {isValidImageUrl(produit.imageUrl) ? (
-          <li>
-            <strong>Image :</strong>
-            <br />
-            <img src={produit.imageUrl} alt={produit.nom} style={{ maxWidth: '300px' }} />
-          </li>
-        ) : (
-          <li>Aucune image disponible</li>
-        )}
-      </ul>
+      <h1>{article.nom}</h1>
+      <p>Marque : {article.marque}</p>
+      <p>Prix : {article.prix} €</p>
     </div>
   );
 };
 
 export default CommandePage;
+
