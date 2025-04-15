@@ -11,16 +11,21 @@ import {
 } from '@mui/material';
 
 const CommandePage = () => {
+  // Récupération des paramètres depuis l'URL
+  // Exemples de paramètres attendus : brand, reference, name et mode
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
+
   const [produit, setProduit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState('');
 
   useEffect(() => {
-    // Utilisation de l'endpoint correct "by-name" pour récupérer le produit via son nom.
+    console.log("Recherche du produit avec le nom:", name);
+
     const fetchProduit = async () => {
       try {
+        // Utilisation de l'endpoint existant pour récupérer le produit par son nom
         const response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
@@ -28,6 +33,7 @@ const CommandePage = () => {
           throw new Error(`Erreur lors de la récupération du produit: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Produit récupéré:", data);
         setProduit(data);
       } catch (err) {
         console.error(err);
@@ -41,9 +47,10 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Ici, vous pouvez intégrer la logique pour lancer le processus de commande
-    // en utilisant, par exemple, l'id du produit ou toute autre donnée pertinente.
-    navigate(`/finaliser-commande/${produit.id}`);
+    // Par exemple, redirige vers une page de finalisation en utilisant l'id du produit
+    if (produit && produit.id) {
+      navigate(`/finaliser-commande/${produit.id}`);
+    }
   };
 
   return (
@@ -78,11 +85,7 @@ const CommandePage = () => {
               </Typography>
             )}
             <Box sx={{ mt: 3 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleCommander}
-              >
+              <Button variant="contained" color="primary" onClick={handleCommander}>
                 Procéder à la commande
               </Button>
             </Box>
