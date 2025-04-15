@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Récupération du paramètre "nom" dans l'URL (ex: /commande/:nom)
+  // On récupère le paramètre "nom" dans l'URL (ex: /commande/:nom)
   const { nom } = useParams();
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fonction utilitaire pour vérifier si l'URL d'image est correctement formée
+  // Fonction de validation de l'URL d'image (vérifie que la chaîne est non vide et commence par data:image/ ou http)
   const isValidImageUrl = (url) => {
     return typeof url === 'string' &&
            url.trim() !== '' &&
@@ -15,12 +15,13 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
+    // Si le paramètre "nom" est absent ou vide, on affiche une erreur et on stoppe l'exécution
     if (!nom || nom.trim() === '') {
       setError("Le nom du produit n'est pas fourni.");
       return;
     }
 
-    // Construction de l'URL de l'API avec encodage du nom
+    // Construction de l'URL de l'API avec encodage du paramètre "nom"
     const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
     fetch(apiUrl)
@@ -38,10 +39,12 @@ const CommandePage = () => {
       });
   }, [nom]);
 
+  // Affichage d'un message d'erreur le cas échéant
   if (error) {
     return <div>Erreur : {error}</div>;
   }
 
+  // Affichage d'un indicateur de chargement jusqu'à la réception des données
   if (!produit) {
     return <div>Chargement...</div>;
   }
@@ -53,9 +56,7 @@ const CommandePage = () => {
         <li><strong>Nom :</strong> {produit.nom}</li>
         <li><strong>Marque :</strong> {produit.marque}</li>
         <li><strong>Prix :</strong> {produit.prix} €</li>
-        <li>
-          <strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €
-        </li>
+        <li><strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €</li>
         <li><strong>Type de reproduction :</strong> {produit.typeReproduction}</li>
         <li><strong>Description :</strong> {produit.descriptionProduit}</li>
         {isValidImageUrl(produit.imageUrl) ? (
