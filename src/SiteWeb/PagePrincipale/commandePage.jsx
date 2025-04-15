@@ -21,7 +21,7 @@ const CommandePage = () => {
         setKeyData(response.data);
       } catch (err) {
         console.error('Erreur lors de la récupération par marque et index:', err);
-        // En cas d'erreur, passage au fallback avec la recherche par similarité de nom
+        // En cas d'échec, passage au fallback avec la recherche par similarité de nom
         try {
           const fallbackResponse = await axios.get(
             'https://cl-back.onrender.com/produit/cles/closest',
