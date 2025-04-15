@@ -1,99 +1,96 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  CircularProgress,
+  Alert
+} from '@mui/material';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL
-  const { brand, reference, name: rawName } = useParams();
-  // Nettoyage de la marque pour enlever le suffixe (_1_reproduction_cle.html) et ne garder que la première partie
-  const cleanedBrand = brand ? brand.split('_')[0] : '';
-  
-  // Nettoyage du paramètre "name"
-  const name = rawName ? rawName.trim() : '';
-
-  // Extraction du paramètre "mode" depuis la query string (ex: ?mode=numero)
-  const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode');
-
+  const { brand, reference, name, mode } = useParams();
+  const navigate = useNavigate();
   const [produit, setProduit] = useState(null);
-  const [error, setError] = useState(null);
-
-  // Fonction pour valider une Data URI correspondant à un format d'image autorisé (png, jpeg/jpg ou gif)
-  const isValidDataUri = (url) => {
-    const regex = /^data:image\/(png|jpe?g|gif);base64,/;
-    return regex.test(url);
-  };
-
-  // Vérifie que l'URL d'image n'est pas vide et qu'elle commence par "http" ou correspond à une Data URI valide
-  const isValidImageUrl = (url) => {
-    return (
-      typeof url === 'string' &&
-      url.trim() !== '' &&
-      (url.startsWith('http') || isValidDataUri(url))
-    );
-  };
+  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState('');
 
   useEffect(() => {
-    console.log('Paramètres reçus :', { brand, cleanedBrand, reference, name, mode });
-    // Vérifier que tous les paramètres requis sont présents
-    if (!cleanedBrand || !reference || !name) {
-      setError("Les paramètres requis ne sont pas fournis.");
-      return;
-    }
-
-    // Construction de l'URL de l'API en utilisant cleanedBrand
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-brand-ref?brand=${encodeURIComponent(cleanedBrand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode || '')}`;
-    console.log("URL API construite :", apiUrl);
-
-    fetch(apiUrl)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Erreur lors de la récupération des informations de la clé.");
+    // Utilisation de l'endpoint correct "by-name" pour récupérer le produit via son nom.
+    const fetchProduit = async () => {
+      try {
+        const response = await fetch(
+          `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
+        );
+        if (!response.ok) {
+          throw new Error(`Erreur lors de la récupération du produit: ${response.status}`);
         }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Données récupérées :", data);
+        const data = await response.json();
         setProduit(data);
-      })
-      .catch((err) => {
-        console.error("Erreur lors du fetch :", err);
-        setError(err.message);
-      });
-  }, [brand, cleanedBrand, reference, name, mode]);
+      } catch (err) {
+        console.error(err);
+        setErreur(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (error) {
-    return <div>Erreur : {error}</div>;
-  }
+    fetchProduit();
+  }, [name]);
 
-  if (!produit) {
-    return <div>Chargement...</div>;
-  }
+  const handleCommander = () => {
+    // Ici, vous pouvez intégrer la logique pour lancer le processus de commande
+    // en utilisant, par exemple, l'id du produit ou toute autre donnée pertinente.
+    navigate(`/finaliser-commande/${produit.id}`);
+  };
 
   return (
-    <div>
-      <h1>Détails de la clé</h1>
-      <ul>
-        <li><strong>Nom :</strong> {produit.nom}</li>
-        <li><strong>Marque :</strong> {produit.marque}</li>
-        <li><strong>Prix :</strong> {produit.prix} €</li>
-        <li>
-          <strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €
-        </li>
-        <li><strong>Type de reproduction :</strong> {produit.typeReproduction}</li>
-        <li><strong>Description :</strong> {produit.descriptionProduit}</li>
-        {isValidImageUrl(produit.imageUrl) ? (
-          <li>
-            <strong>Image :</strong>
-            <br />
-            <img src={produit.imageUrl} alt={produit.nom} style={{ maxWidth: '300px' }} />
-          </li>
+    <HelmetProvider>
+      <Helmet>
+        <title>Commande - {produit ? produit.nom : 'Produit'}</title>
+        <meta name="description" content="Page de commande du produit" />
+      </Helmet>
+      <Container sx={{ mt: 4 }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress />
+          </Box>
+        ) : erreur ? (
+          <Alert severity="error">{erreur}</Alert>
+        ) : !produit ? (
+          <Typography>Aucun produit trouvé.</Typography>
         ) : (
-          <li>Aucune image disponible</li>
+          <Box>
+            <Typography variant="h4" gutterBottom>
+              {produit.nom}
+            </Typography>
+            <Typography variant="subtitle1" gutterBottom>
+              Marque : {produit.marque}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              Prix : {produit.prix} €
+            </Typography>
+            {produit.descriptionProduit && (
+              <Typography variant="body2" gutterBottom>
+                {produit.descriptionProduit}
+              </Typography>
+            )}
+            <Box sx={{ mt: 3 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCommander}
+              >
+                Procéder à la commande
+              </Button>
+            </Box>
+          </Box>
         )}
-      </ul>
-    </div>
+      </Container>
+    </HelmetProvider>
   );
 };
 
 export default CommandePage;
-
