@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Box, Container, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL (par exemple, brand, reference, name, mode)
+  // Extraction des paramètres depuis l'URL (exemple : brand, reference, name, mode)
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
 
@@ -16,9 +16,17 @@ const CommandePage = () => {
     console.log("Recherche du produit avec le nom :", name);
     const fetchProduit = async () => {
       try {
-        const response = await fetch(
+        // On tente d'abord de récupérer le produit par nom exact
+        let response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
+        // Si la recherche exacte ne retourne rien (404), on utilise l'endpoint "closest"
+        if (response.status === 404) {
+          console.warn("Produit introuvable avec /by-name. Essai via /cles/closest.");
+          response = await fetch(
+            `https://cl-back.onrender.com/produit/cles/closest?nom=${encodeURIComponent(name)}`
+          );
+        }
         if (!response.ok) {
           throw new Error(`Erreur lors de la récupération du produit : ${response.status}`);
         }
@@ -32,12 +40,11 @@ const CommandePage = () => {
         setLoading(false);
       }
     };
-
     fetchProduit();
   }, [name]);
 
   const handleCommander = () => {
-    // Rediriger vers la page de finalisation de commande en utilisant l'id du produit
+    // Redirige vers la page de finalisation de commande en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
@@ -87,4 +94,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
