@@ -17,13 +17,13 @@ const CommandePage = () => {
 
     const fetchProduit = async () => {
       try {
-        // Tentative de récupération par recherche exacte
+        // Première tentative : recherche exacte via /cles/by-name
         let response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
-        // Si le produit n'est pas trouvé (status 404), on essaie avec le endpoint 'closest'
         if (response.status === 404) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/closest.");
+          // Seconde tentative : recherche approximative via /cles/closest
           response = await fetch(
             `https://cl-back.onrender.com/produit/cles/closest?nom=${encodeURIComponent(name)}`
           );
