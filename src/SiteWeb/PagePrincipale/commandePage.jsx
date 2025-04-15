@@ -17,11 +17,11 @@ const CommandePage = () => {
 
     const fetchProduit = async () => {
       try {
-        // Tentative de récupération par recherche exacte avec /cles/by-name
+        // Tentative de recherche exacte
         let response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
-        // Si le produit n'est pas trouvé (404), on tente la recherche approximative via /cles/closest
+        // Si le produit n'est pas trouvé, utiliser l'endpoint de recherche approximative
         if (response.status === 404) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/closest.");
           response = await fetch(
@@ -46,7 +46,7 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Rediriger vers la page de finalisation de commande en utilisant l'ID du produit
+    // Redirige vers la page de finalisation de commande en utilisant l'ID du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
@@ -96,5 +96,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
-
