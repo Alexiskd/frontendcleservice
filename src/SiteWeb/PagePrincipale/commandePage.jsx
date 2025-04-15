@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Récupération des paramètres dynamiques de l'URL
-  // La route est définie comme : /commande/:brand/cle/:reference/:name
-  const { brand, reference, name } = useParams();
+  // Récupération du paramètre "nom" depuis l'URL (ex: /commande/:nom)
+  const { nom } = useParams();
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
@@ -16,15 +15,14 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    // On vérifie que le paramètre "name" (nom du produit) est présent
-    if (!name || name.trim() === '') {
+    // Si "nom" est absent ou vide, on affiche l'erreur et on interrompt l'exécution.
+    if (!nom || nom.trim() === '') {
       setError("Le nom du produit n'est pas fourni.");
       return;
     }
-    
-    // Construction de l'URL de l'API en utilisant le paramètre "name"
-    // L'endpoint "/produit/cles/by-name" attend un paramètre "nom"
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`;
+
+    // Construction de l'URL de l'API avec la valeur de "nom"
+    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
     fetch(apiUrl)
       .then((res) => {
@@ -39,7 +37,7 @@ const CommandePage = () => {
       .catch((err) => {
         setError(err.message);
       });
-  }, [name]);
+  }, [nom]);
 
   if (error) {
     return <div>Erreur : {error}</div>;
@@ -54,18 +52,11 @@ const CommandePage = () => {
       <h1>Détails de la clé</h1>
       <ul>
         <li><strong>Nom :</strong> {produit.nom}</li>
-        <li><strong>Marque :</strong> {brand}</li>
-        <li><strong>Référence :</strong> {reference}</li>
+        <li><strong>Marque :</strong> {produit.marque}</li>
         <li><strong>Prix :</strong> {produit.prix} €</li>
-        <li>
-          <strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €
-        </li>
-        <li>
-          <strong>Type de reproduction :</strong> {produit.typeReproduction}
-        </li>
-        <li>
-          <strong>Description :</strong> {produit.descriptionProduit}
-        </li>
+        <li><strong>Prix sans carte de propriété :</strong> {produit.prixSansCartePropriete} €</li>
+        <li><strong>Type de reproduction :</strong> {produit.typeReproduction}</li>
+        <li><strong>Description :</strong> {produit.descriptionProduit}</li>
         {isValidImageUrl(produit.imageUrl) ? (
           <li>
             <strong>Image :</strong>
@@ -81,6 +72,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
-
-
