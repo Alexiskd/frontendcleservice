@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Box, Container, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL (exemple : brand, reference, name, mode)
+  // Extraction des paramètres depuis l'URL (par exemple, brand, reference, name, mode)
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
 
@@ -13,17 +13,18 @@ const CommandePage = () => {
   const [erreur, setErreur] = useState('');
 
   useEffect(() => {
-    console.log("Recherche du produit avec le nom :", name);
+    console.log("Recherche du produit avec le nom:", name);
+
     const fetchProduit = async () => {
       try {
         const response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
         if (!response.ok) {
-          throw new Error(`Erreur lors de la récupération du produit : ${response.status}`);
+          throw new Error(`Erreur lors de la récupération du produit: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Produit récupéré :", data);
+        console.log("Produit récupéré:", data);
         setProduit(data);
       } catch (err) {
         console.error(err);
@@ -37,6 +38,7 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
+    // Redirection vers la page de finalisation de commande en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
@@ -86,4 +88,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
