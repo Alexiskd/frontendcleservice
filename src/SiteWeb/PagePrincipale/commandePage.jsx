@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL
   const { marque, index, produitnom } = useParams();
+  console.log('Paramètres extraits :', { marque, index, produitnom });
   
   const [keyData, setKeyData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,19 +12,22 @@ const CommandePage = () => {
 
   useEffect(() => {
     async function fetchKey() {
+      if (!marque || !index) {
+        setError(new Error("Les paramètres 'marque' ou 'index' sont manquants."));
+        setLoading(false);
+        return;
+      }
       try {
-        // Essai de récupérer la clé via l'endpoint par marque et index
         const response = await axios.get(
           `https://cl-back.onrender.com/produit/cles/brand/${encodeURIComponent(marque)}/index/${index}`
         );
         setKeyData(response.data);
       } catch (err) {
         console.error('Erreur lors de la récupération par marque et index:', err);
-        // En cas d'erreur, passage au fallback via la recherche par similarité de nom
         try {
           const fallbackResponse = await axios.get(
             'https://cl-back.onrender.com/produit/cles/closest',
-            { params: { nom: produitnom } } // Utilise le paramètre produitnom
+            { params: { nom: produitnom } }  // Assurez-vous que produitnom est défini
           );
           setKeyData(fallbackResponse.data);
         } catch (fallbackErr) {
@@ -49,7 +52,6 @@ const CommandePage = () => {
       <p><strong>Nom :</strong> {keyData.nom}</p>
       <p><strong>Marque :</strong> {keyData.marque}</p>
       <p><strong>Prix :</strong> {keyData.prix}</p>
-      {/* D'autres informations peuvent être affichées */}
     </div>
   );
 };
