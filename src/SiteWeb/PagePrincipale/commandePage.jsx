@@ -8,7 +8,7 @@ const CommandePage = () => {
 
   // Paramètres de requête
   const marque = 'abus_1_reproduction_cle'; // Valeur attendue dans la base
-  const indexParam = 7; // 8ᵉ élément (index commençant à 0)
+  const indexParam = 7; // 8ᵉ élément (indexé à partir de 0)
   const fallbackNom = 'Clé-Abus-XP-1'; // Nom utilisé pour le fallback
 
   useEffect(() => {
