@@ -14,13 +14,14 @@ const CommandePage = () => {
 
   useEffect(() => {
     console.log("Recherche du produit avec le nom :", name);
+
     const fetchProduit = async () => {
       try {
-        // On tente d'abord de récupérer le produit par nom exact
+        // Tentative de récupération par recherche exacte
         let response = await fetch(
           `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(name)}`
         );
-        // Si la recherche exacte ne retourne rien (404), on utilise l'endpoint "closest"
+        // Si le produit n'est pas trouvé (status 404), on essaie avec le endpoint 'closest'
         if (response.status === 404) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/closest.");
           response = await fetch(
@@ -40,11 +41,12 @@ const CommandePage = () => {
         setLoading(false);
       }
     };
+
     fetchProduit();
   }, [name]);
 
   const handleCommander = () => {
-    // Redirige vers la page de finalisation de commande en utilisant l'id du produit
+    // Redirige vers la page de finalisation de commande en utilisant l'ID du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
