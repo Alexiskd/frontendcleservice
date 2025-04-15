@@ -7,18 +7,23 @@ import {
   Button,
   Snackbar,
   Alert,
-  CircularProgress,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormControl,
+  Select,
+  MenuItem,
+  IconButton,
+  InputAdornment,
   Card,
   CardMedia,
   Grid,
   Divider,
-  IconButton,
-  InputAdornment
+  CircularProgress,
+  Checkbox,
+  Paper,
+  Dialog,
+  DialogContent,
 } from '@mui/material';
 import {
   PhotoCamera,
@@ -29,11 +34,48 @@ import {
   Home,
   LocationCity,
   Info,
+  VpnKey,
   CheckCircle,
-  Error as ErrorIcon
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+
+const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
+    <Typography variant="body2" sx={{ minWidth: '150px' }}>
+      {label}
+    </Typography>
+    <IconButton
+      color="primary"
+      aria-label={label}
+      component="label"
+      sx={{
+        backgroundColor: 'background.paper',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        '&:hover': { backgroundColor: 'action.hover' },
+      }}
+    >
+      <input type="file" name={name} accept={accept} hidden onChange={onChange} />
+      <IconComponent sx={{ color: '#1B5E20' }} />
+    </IconButton>
+    {file && (
+      <Typography variant="caption" color="success.main">
+        {typeof file === 'string' ? file : file.name}
+      </Typography>
+    )}
+  </Box>
+);
+
+const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
+  color: theme.palette.grey[500],
+  '&.Mui-checked': {
+    color: theme.palette.primary.main,
+  },
+}));
 
 const SectionPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -42,7 +84,7 @@ const SectionPaper = styled(Paper)(({ theme }) => ({
   backgroundColor: '#fff',
   marginBottom: theme.spacing(3),
   border: '1px solid',
-  borderColor: theme.palette.divider
+  borderColor: theme.palette.divider,
 }));
 
 const SummaryCard = styled(Card)(({ theme }) => ({
@@ -52,29 +94,43 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   backgroundColor: '#fff',
   border: '1px solid',
   borderColor: theme.palette.divider,
-  color: theme.palette.text.primary
+  color: theme.palette.text.primary,
 }));
 
-// Composante principale
 const CommandePage = () => {
-  // Pour cet exemple, nous nous concentrons sur l'affichage du produit
-  const { name: encodedArticleName, brand: brandName } = useParams();
-  const decodedArticleName = encodedArticleName ? encodedArticleName.replace(/-/g, ' ') : '';
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Récupération des paramètres depuis l'URL (exemple : brandName, articleType, articleName)
+  const { brandName, articleType, articleName } = useParams();
+  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  const navigate = useNavigate();
+
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
-  const navigate = useNavigate();
 
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const handleOpenImageModal = () => setOpenImageModal(true);
+  const handleCloseImageModal = () => setOpenImageModal(false);
+
+  // Pour simplifier, d'autres états (userInfo, keyInfo, etc.) ne sont pas modifiés ici
+
+  // Récupération du produit depuis le backend
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Recherche exacte par nom (endpoint "by-name")
+        // Tentative de récupération exacte par nom (/cles/by-name)
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
-          // S'il n'y a pas de correspondance exacte, utiliser le fallback "best-by-name"
+          console.warn('Produit introuvable avec /by-name. Essai via /cles/best-by-name.');
+          // Si l'endpoint by-name échoue, utilisation de l'endpoint pour la meilleure correspondance (/cles/best-by-name)
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -82,8 +138,8 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Vous pouvez vérifier ici si la marque correspond, par exemple
-        if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
+        // Vérification optionnelle de la correspondance de la marque
+        if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
         setArticle(data);
@@ -97,6 +153,21 @@ const CommandePage = () => {
 
     fetchArticle();
   }, [brandName, decodedArticleName]);
+
+  // Utilisation du produit récupéré (ici renommé en productDetails pour clarté)
+  const productDetails = article;
+
+  const articlePrice = productDetails
+    ? mode === 'postal'
+      ? parseFloat(productDetails.prixSansCartePropriete)
+      : parseFloat(productDetails.prix)
+    : 0;
+  const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
+  const shippingFee = 8; // Exemple fixe pour l'expédition (modifiez selon vos besoins)
+  const totalPrice = safeArticlePrice + shippingFee;
+
+  // Ici, d'autres fonctions pour le formulaire, validation, commande, etc. restent inchangées.
+  // Pour cet exemple, nous nous concentrons sur la récupération et l'affichage du produit.
 
   if (loadingArticle) {
     return (
@@ -124,17 +195,17 @@ const CommandePage = () => {
                 Détails du Produit
               </Typography>
               <Divider sx={{ mb: 3 }} />
-              {article ? (
+              {productDetails ? (
                 <Box>
-                  <Typography variant="h6">{article.nom}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}>Marque : {article.marque}</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Prix : {article.prix} €</Typography>
-                  {article.imageUrl && (
+                  <Typography variant="h6">{productDetails.nom}</Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>Marque : {productDetails.marque}</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Prix : {productDetails.prix} €</Typography>
+                  {productDetails.imageUrl && (
                     <Box sx={{ mt: 2 }}>
                       <CardMedia
                         component="img"
-                        image={article.imageUrl}
-                        alt={article.nom}
+                        image={productDetails.imageUrl}
+                        alt={productDetails.nom}
                         sx={{ width: 200, height: 200, objectFit: 'cover' }}
                       />
                     </Box>
