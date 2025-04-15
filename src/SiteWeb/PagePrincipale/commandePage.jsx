@@ -7,7 +7,7 @@ const CommandePage = () => {
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fonction pour valider une Data URI correspondant à un format d'image autorisé (png, jpeg/jpg ou gif)
+  // Vérifie si une Data URI correspond à un format d'image autorisé (png, jpeg/jpg ou gif)
   const isValidDataUri = (url) => {
     const regex = /^data:image\/(png|jpe?g|gif);base64,/;
     return regex.test(url);
@@ -23,38 +23,40 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    const fetchProduit = async () => {
-      console.log('Paramètre "nom" reçu :', nom);
-      // Si le paramètre "nom" est manquant ou vide, on affiche une erreur et on arrête l'exécution
-      if (!nom || nom.trim() === '') {
-        setError("Le nom du produit n'est pas fourni.");
-        return;
-      }
+    // Affichage dans la console du paramètre reçu (utile pour le débogage)
+    console.log('Paramètre "nom" reçu :', nom);
 
-      // Construction de l'URL de l'API pour récupérer les infos du produit, en encodant le paramètre "nom"
-      const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
+    // Si le paramètre "nom" est manquant ou vide, une erreur est enregistrée et la fonction s'arrête
+    if (!nom || nom.trim() === '') {
+      setError("Le nom du produit n'est pas fourni.");
+      return;
+    }
 
-      try {
-        const res = await fetch(apiUrl);
+    // Construction de l'URL de l'API pour récupérer les infos du produit, en encodant le paramètre "nom"
+    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
+
+    // Appel de l'API via fetch
+    fetch(apiUrl)
+      .then((res) => {
         if (!res.ok) {
           throw new Error("Erreur lors de la récupération des informations de la clé.");
         }
-        const data = await res.json();
+        return res.json();
+      })
+      .then((data) => {
         setProduit(data);
-      } catch (err) {
+      })
+      .catch((err) => {
         setError(err.message);
-      }
-    };
-
-    fetchProduit();
+      });
   }, [nom]);
 
-  // Affichage d'un message d'erreur le cas échéant
+  // Si une erreur a été détectée (par exemple, nom vide ou échec de l'appel API), on l'affiche
   if (error) {
     return <div>Erreur : {error}</div>;
   }
 
-  // Affichage d'un indicateur de chargement en attendant la réponse de l'API
+  // Tant que le produit n'a pas été récupéré, on affiche un indicateur de chargement
   if (!produit) {
     return <div>Chargement...</div>;
   }
