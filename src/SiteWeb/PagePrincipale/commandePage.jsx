@@ -1,31 +1,32 @@
-// Modification du chemin d'import (ajustez avec l'extension si nécessaire)
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { preloadKeysData } from '../../api/brandsApi.js'; // Chemin corrigé
 
 const CommandePage = () => {
-  const { brand } = useParams();
+  // Récupère le paramètre "nom" dans l'URL (exemple de route : /commande/:nom)
+  const { nom } = useParams();
   const [product, setProduct] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const keysData = await preloadKeysData(brand);
-        if (keysData && keysData.length > 0) {
-          setProduct(keysData[0]);
-        } else {
-          setError("Aucun produit trouvé pour cette marque.");
-        }
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-
-    if (brand) {
-      fetchProduct();
+    if (!nom) {
+      setError("Le nom du produit n'est pas fourni.");
+      return;
     }
-  }, [brand]);
+    // Requête vers l'API pour obtenir la clé la plus proche du nom fourni
+    fetch(`https://cl-back.onrender.com/produit/cles/closest?nom=${encodeURIComponent(nom)}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Erreur lors de la récupération des informations du produit");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setProduct(data);
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
+  }, [nom]);
 
   if (error) {
     return <div>Erreur : {error}</div>;
@@ -37,10 +38,34 @@ const CommandePage = () => {
 
   return (
     <div>
-      <h1>Commande pour {brand}</h1>
-      <div>
-        <p>Produit : {product.name ? product.name : JSON.stringify(product)}</p>
-      </div>
+      <h1>Détails du produit</h1>
+      <ul>
+        <li>
+          <strong>Nom :</strong> {product.nom}
+        </li>
+        <li>
+          <strong>Marque :</strong> {product.marque}
+        </li>
+        <li>
+          <strong>Prix :</strong> {product.prix} €
+        </li>
+        <li>
+          <strong>Prix sans carte de propriété :</strong> {product.prixSansCartePropriete} €
+        </li>
+        <li>
+          <strong>Type de reproduction :</strong> {product.typeReproduction}
+        </li>
+        <li>
+          <strong>Description :</strong> {product.descriptionProduit}
+        </li>
+        {product.imageUrl && (
+          <li>
+            <strong>Image :</strong>
+            <br />
+            <img src={product.imageUrl} alt={product.nom} style={{ maxWidth: '300px' }} />
+          </li>
+        )}
+      </ul>
     </div>
   );
 };
