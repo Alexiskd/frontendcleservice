@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 
 const CommandePage = () => {
-  // Récupération des paramètres depuis l'URL (exemple : brand, reference, name, mode)
+  // Extraction des paramètres depuis l'URL (exemple : brand, reference, name, mode)
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
 
@@ -45,7 +45,7 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Redirige vers la page de finalisation de commande en utilisant l'id du produit
+    // Redirection vers la page de finalisation de commande en utilisant l'id du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
@@ -95,4 +95,5 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
 
