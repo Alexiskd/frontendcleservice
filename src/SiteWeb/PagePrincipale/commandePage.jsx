@@ -7,13 +7,13 @@ const CommandePage = () => {
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fonction pour valider une Data URI correspondant à un format d'image autorisé (png, jpeg/jpg ou gif)
+  // Vérifie qu'une Data URI correspond à un format image autorisé (png, jpeg/jpg ou gif)
   const isValidDataUri = (url) => {
     const regex = /^data:image\/(png|jpe?g|gif);base64,/;
     return regex.test(url);
   };
 
-  // Fonction de validation de l'URL d'image : on accepte une URL HTTP(S) ou un Data URI valide
+  // Vérifie que l'URL d'image est non vide et commence par "http" ou correspond à un Data URI valide
   const isValidImageUrl = (url) => {
     return (
       typeof url === 'string' &&
@@ -23,14 +23,14 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    console.log('Paramètre "nom" reçu :', nom);
-    // Vérifie la présence du paramètre "nom"
+    // Vérification de la présence du paramètre "nom"
     if (!nom || nom.trim() === '') {
       setError("Le nom du produit n'est pas fourni.");
       return;
     }
+
     // Construction de l'URL de l'API pour récupérer les informations de la clé,
-    // en encodant la valeur du paramètre "nom"
+    // en encodant le paramètre "nom"
     const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
 
     fetch(apiUrl)
@@ -48,12 +48,12 @@ const CommandePage = () => {
       });
   }, [nom]);
 
-  // Si une erreur est présente, elle est affichée ici.
+  // Affichage d'une erreur s'il y en a une
   if (error) {
     return <div>Erreur : {error}</div>;
   }
 
-  // Affiche "Chargement..." tant que la réponse de l'API n'est pas reçue.
+  // Indicateur de chargement en attendant la réponse de l'API
   if (!produit) {
     return <div>Chargement...</div>;
   }
@@ -86,7 +86,5 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
-
 
 
