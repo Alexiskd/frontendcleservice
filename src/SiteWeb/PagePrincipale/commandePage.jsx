@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Box, Container, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const CommandePage = () => {
-  // Extraction des paramètres depuis l'URL (par exemple, brand, reference, name, mode)
+  // Extraction des paramètres depuis l'URL (exemple : brand, reference, name, mode)
   const { brand, reference, name, mode } = useParams();
   const navigate = useNavigate();
 
@@ -23,7 +23,7 @@ const CommandePage = () => {
         );
         if (response.status === 404) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/closest.");
-          // Seconde tentative : recherche approximative via /cles/closest
+          // Seconde tentative : recherche approximative sur /cles/closest
           response = await fetch(
             `https://cl-back.onrender.com/produit/cles/closest?nom=${encodeURIComponent(name)}`
           );
@@ -46,7 +46,7 @@ const CommandePage = () => {
   }, [name]);
 
   const handleCommander = () => {
-    // Redirige vers la page de finalisation de commande en utilisant l'ID du produit
+    // Redirection vers la page de finalisation en utilisant l'ID du produit
     if (produit && produit.id) {
       navigate(`/finaliser-commande/${produit.id}`);
     }
@@ -96,3 +96,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
