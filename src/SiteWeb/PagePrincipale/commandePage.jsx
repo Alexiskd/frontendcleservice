@@ -2,17 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Récupère le paramètre "nom" dans l'URL (exemple de route : /commande/:nom)
+  // Récupère le paramètre "nom" depuis l'URL (exemple de route : /commande/:nom)
   const { nom } = useParams();
   const [product, setProduct] = useState(null);
   const [error, setError] = useState(null);
+
+  const isValidImageUrl = (url) => {
+    return typeof url === 'string' &&
+           url.trim() !== '' &&
+           (url.startsWith('data:image/') || url.startsWith('http'));
+  };
 
   useEffect(() => {
     if (!nom) {
       setError("Le nom du produit n'est pas fourni.");
       return;
     }
-    // Requête vers l'API pour obtenir la clé la plus proche du nom fourni
+
     fetch(`https://cl-back.onrender.com/produit/cles/closest?nom=${encodeURIComponent(nom)}`)
       .then((res) => {
         if (!res.ok) {
@@ -40,15 +46,9 @@ const CommandePage = () => {
     <div>
       <h1>Détails du produit</h1>
       <ul>
-        <li>
-          <strong>Nom :</strong> {product.nom}
-        </li>
-        <li>
-          <strong>Marque :</strong> {product.marque}
-        </li>
-        <li>
-          <strong>Prix :</strong> {product.prix} €
-        </li>
+        <li><strong>Nom :</strong> {product.nom}</li>
+        <li><strong>Marque :</strong> {product.marque}</li>
+        <li><strong>Prix :</strong> {product.prix} €</li>
         <li>
           <strong>Prix sans carte de propriété :</strong> {product.prixSansCartePropriete} €
         </li>
@@ -58,12 +58,14 @@ const CommandePage = () => {
         <li>
           <strong>Description :</strong> {product.descriptionProduit}
         </li>
-        {product.imageUrl && (
+        {isValidImageUrl(product.imageUrl) ? (
           <li>
             <strong>Image :</strong>
             <br />
             <img src={product.imageUrl} alt={product.nom} style={{ maxWidth: '300px' }} />
           </li>
+        ) : (
+          <li>Aucune image disponible</li>
         )}
       </ul>
     </div>
