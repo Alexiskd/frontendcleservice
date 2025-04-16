@@ -237,7 +237,22 @@ const CommandePage = () => {
     : 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-  const totalPrice = safeArticlePrice + shippingFee;
+
+  // Mapping des marques éligibles pour le frais de dossier
+  const dossierFees = {
+    anker: 80,
+    bricard: 60,
+    fichet: 205,
+    heracles: 60,
+    laperche: 60,
+    medeco: 60,
+    picard: 80,
+    vachette: 96,
+  };
+  const normalizedMarque = article ? normalizeString(article.marque) : "";
+  const dossierFee = lostCartePropriete && dossierFees[normalizedMarque] ? dossierFees[normalizedMarque] : 0;
+
+  const totalPrice = safeArticlePrice + shippingFee + dossierFee;
 
   // Gestion des changements d'input
   const handleInputChange = (event) => {
@@ -769,6 +784,12 @@ const CommandePage = () => {
                 </Typography>
                 <Typography variant="body2">{shippingMethod === 'expedition' ? "8 €" : "0 €"}</Typography>
               </Box>
+              {dossierFee > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
+                  <Typography variant="body2">Frais de dossier</Typography>
+                  <Typography variant="body2">{dossierFee} €</Typography>
+                </Box>
+              )}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Total</Typography>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
