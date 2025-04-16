@@ -45,11 +45,12 @@ const CommandePage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres depuis l'URL.
+  // Extraction des paramètres depuis l'URL
   // La route doit être définie comme "/commande/:brandName/:articleType/:index/:articleName"
   const { brandName, articleType, index, articleName } = useParams();
-  // articleName est décodé en remplaçant les tirets par des espaces
+  // Décodage : remplace les tirets par des espaces
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
+  
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
@@ -58,24 +59,24 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
+  // Vérifier que les paramètres articleName et index sont présents
   useEffect(() => {
-    // Vérifier que nous avons bien un articleName et un index
     if (!decodedArticleName || !index) {
       setErrorArticle("Paramètre 'articleName' ou 'index' absent.");
       setLoadingArticle(false);
       return;
     }
-
+    
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Dans ce cas, la requête API utilise la marque et l'index
+        // Construction de l'URL pour récupérer le produit par marque et index
         let endpoint = `https://cl-back.onrender.com/produit/cles/brand/${encodeURIComponent(brandName)}/index/${encodeURIComponent(index)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
-          console.warn("Produit introuvable par index. Essai via recherche par nom.");
-          // En fallback, on tente une recherche par nom (endpoint best-by-name)
+          console.warn("Produit introuvable par index. Essai via /cles/best-by-name.");
+          // Si l'endpoint par index échoue, on tente via le nom avec l'endpoint best-by-name
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -83,7 +84,7 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Optionnel : vérification de la correspondance de la marque si le champ 'manufacturer' est utilisé
+        // Vérification optionnelle : on peut vérifier que la marque correspond
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -111,15 +112,7 @@ const CommandePage = () => {
 
   if (loadingArticle) {
     return (
-      <Box
-        sx={{
-          backgroundColor: '#fff',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress />
       </Box>
     );
@@ -127,15 +120,7 @@ const CommandePage = () => {
 
   if (errorArticle) {
     return (
-      <Box
-        sx={{
-          backgroundColor: '#fff',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Typography variant="h6" color="error">{errorArticle}</Typography>
       </Box>
     );
@@ -153,7 +138,9 @@ const CommandePage = () => {
                 <Box>
                   <Typography variant="h6">{productDetails.nom}</Typography>
                   <Typography variant="body2" sx={{ mb: 1 }}>Marque : {productDetails.marque}</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Prix : {productDetails.prix} €</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    Prix : {productDetails.prix} €
+                  </Typography>
                   {productDetails.imageUrl && (
                     <Box sx={{ mt: 2 }}>
                       <CardMedia
