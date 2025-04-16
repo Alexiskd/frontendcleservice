@@ -97,13 +97,12 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// Composant principal CommandePage
 const CommandePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres (exemple : brandName, articleType, articleName)
+  // Extraction des paramètres URL (exemple : brandName, articleType, articleName)
   const { brandName, articleType, articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
@@ -114,9 +113,9 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Autres états pour formulaire, photos, etc. (non modifiés ici)
+  // Les autres états (formulaire, fichier, etc.) sont présents, mais se concentrent ici sur la récupération du produit
 
-  // Récupération du produit via le backend
+  // Exemple de récupération du produit depuis le backend
   useEffect(() => {
     const fetchArticle = async () => {
       try {
@@ -127,7 +126,7 @@ const CommandePage = () => {
         let response = await fetch(endpoint);
         if (!response.ok) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/best-by-name.");
-          // Si la recherche exacte échoue, utiliser le fallback pour la meilleure correspondance
+          // Si la recherche exacte échoue, utiliser l'endpoint pour le produit le plus similaire
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -135,7 +134,7 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Vérification optionnelle de la marque
+        // Facultatif : vérifier que la marque correspond
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -147,11 +146,10 @@ const CommandePage = () => {
         setLoadingArticle(false);
       }
     };
-
     fetchArticle();
   }, [brandName, decodedArticleName]);
 
-  // Renommage pour clarté dans l'affichage
+  // Renommage pour clarté
   const productDetails = article;
 
   const articlePrice = productDetails
@@ -160,7 +158,7 @@ const CommandePage = () => {
       : parseFloat(productDetails.prix)
     : 0;
   const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
-  const shippingFee = 8; // Exemple fixe pour l'expédition (à adapter)
+  const shippingFee = mode === 'expedition' ? 8 : 0;
   const totalPrice = safeArticlePrice + shippingFee;
 
   if (loadingArticle) {
@@ -186,14 +184,18 @@ const CommandePage = () => {
           <Grid item xs={12}>
             <SectionPaper>
               <Typography variant="h5" gutterBottom>
-                Détails du Produit
+                Informations de Commande
               </Typography>
               <Divider sx={{ mb: 3 }} />
               {productDetails ? (
                 <Box>
                   <Typography variant="h6">{productDetails.nom}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}>Marque : {productDetails.marque}</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Prix : {productDetails.prix} €</Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Marque : {productDetails.marque}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    Prix : {productDetails.prix} €
+                  </Typography>
                   {productDetails.imageUrl && (
                     <Box sx={{ mt: 2 }}>
                       <CardMedia
@@ -210,7 +212,7 @@ const CommandePage = () => {
               )}
             </SectionPaper>
           </Grid>
-          {/* Autres sections du formulaire peuvent être ajoutées ici */}
+          {/* Vous pouvez ajouter ici d'autres sections du formulaire */}
         </Grid>
       </Container>
     </Box>
@@ -218,3 +220,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
