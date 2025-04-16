@@ -19,7 +19,7 @@ const CommandePage = () => {
   const [errorSimilar, setErrorSimilar] = useState(null);
 
   useEffect(() => {
-    const fetchArticleAndSimilar = async () => {
+    const fetchData = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
@@ -30,44 +30,48 @@ const CommandePage = () => {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
 
-        // Récupération du produit exact via l’endpoint "by-name"
-        let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-        let response = await fetch(endpoint);
+        // Fonction pour effectuer une requête à l'API
+        const fetchProduct = async (endpoint) => {
+          const response = await fetch(endpoint);
+          return response;
+        };
 
+        // Tentative de récupération du produit exact
+        let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        let response = await fetchProduct(endpoint);
+
+        // Si la réponse n'est pas OK, on tente un fallback vers l'endpoint "closest-match"
         if (!response.ok) {
-          // Si le produit n'est pas trouvé, essaye avec l’endpoint "closest-match"
           const errorText = await response.text();
-          if (errorText.includes("Produit introuvable")) {
+          if (response.status === 500 || errorText.includes("Produit introuvable")) {
+            // On utilise l'endpoint alternatif pour récupérer les produits similaires
             endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
-            response = await fetch(endpoint);
+            response = await fetchProduct(endpoint);
             if (!response.ok) {
               throw new Error("Erreur lors du chargement des produits similaires.");
             }
             const similarData = await response.json();
-            // Ici, on considère que l'API retourne un tableau de produits similaires
             setArticle(null);
             setSimilarProducts(similarData);
           } else {
             throw new Error("Erreur lors du chargement de l'article.");
           }
         } else {
+          // Si le produit exact est trouvé
           const data = await response.json();
-          // Vérification que la marque du produit correspond à celle spécifiée dans l'URL
           if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
             throw new Error("La marque de l'article ne correspond pas.");
           }
           setArticle(data);
 
-          // Récupération des produits similaires même si le produit a été trouvé
+          // Récupération des produits similaires
           endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
           const similarResponse = await fetch(endpoint);
           if (similarResponse.ok) {
             const similarData = await similarResponse.json();
-            // On peut retirer le produit principal de la liste, si nécessaire (ici en supposant qu'il possède une propriété "id")
+            // On peut retirer le produit principal de la liste si besoin (ici on suppose qu'il y a une propriété "id")
             const filteredSimilar =
-              data && data.id
-                ? similarData.filter(prod => prod.id !== data.id)
-                : similarData;
+              data && data.id ? similarData.filter(prod => prod.id !== data.id) : similarData;
             setSimilarProducts(filteredSimilar);
           } else {
             setErrorSimilar("Erreur lors du chargement des produits similaires.");
@@ -82,7 +86,7 @@ const CommandePage = () => {
       }
     };
 
-    fetchArticleAndSimilar();
+    fetchData();
   }, [brandName, decodedArticleName]);
 
   return (
