@@ -12,69 +12,119 @@ const CommandePage = () => {
   const decodedArticleName = articleName.replace(/-/g, ' ');
 
   const [article, setArticle] = useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]);
   const [loadingArticle, setLoadingArticle] = useState(true);
+  const [loadingSimilar, setLoadingSimilar] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
+  const [errorSimilar, setErrorSimilar] = useState(null);
 
   useEffect(() => {
-    const fetchArticle = async () => {
+    const fetchArticleAndSimilar = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
+        setLoadingSimilar(true);
+        setErrorSimilar(null);
 
         if (!decodedArticleName.trim()) {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
 
-        // Construction de l'URL pour récupérer l'article par son nom
+        // Récupération du produit exact via l’endpoint "by-name"
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
 
-        // Si la réponse n'est pas OK, vérification du texte d'erreur
         if (!response.ok) {
+          // Si le produit n'est pas trouvé, essaye avec l’endpoint "closest-match"
           const errorText = await response.text();
           if (errorText.includes("Produit introuvable")) {
-            // Utilisation d'un endpoint alternatif pour un closest-match
             endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
+            if (!response.ok) {
+              throw new Error("Erreur lors du chargement des produits similaires.");
+            }
+            const similarData = await response.json();
+            // Ici, on considère que l'API retourne un tableau de produits similaires
+            setArticle(null);
+            setSimilarProducts(similarData);
           } else {
             throw new Error("Erreur lors du chargement de l'article.");
           }
+        } else {
+          const data = await response.json();
+          // Vérification que la marque du produit correspond à celle spécifiée dans l'URL
+          if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
+            throw new Error("La marque de l'article ne correspond pas.");
+          }
+          setArticle(data);
+
+          // Récupération des produits similaires même si le produit a été trouvé
+          endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
+          const similarResponse = await fetch(endpoint);
+          if (similarResponse.ok) {
+            const similarData = await similarResponse.json();
+            // On peut retirer le produit principal de la liste, si nécessaire (ici en supposant qu'il possède une propriété "id")
+            const filteredSimilar =
+              data && data.id
+                ? similarData.filter(prod => prod.id !== data.id)
+                : similarData;
+            setSimilarProducts(filteredSimilar);
+          } else {
+            setErrorSimilar("Erreur lors du chargement des produits similaires.");
+          }
         }
-
-        if (!response.ok) {
-          throw new Error("Erreur lors du chargement de l'article.");
-        }
-
-        const data = await response.json();
-
-        // Vérification que la marque du produit correspond à celle spécifiée dans l'URL
-        if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
-          throw new Error("La marque de l'article ne correspond pas.");
-        }
-
-        setArticle(data);
       } catch (err) {
-        console.error("Erreur lors de la récupération du produit:", err);
+        console.error("Erreur lors de la récupération du produit :", err);
         setErrorArticle(err.message || "Erreur inconnue");
       } finally {
         setLoadingArticle(false);
+        setLoadingSimilar(false);
       }
     };
 
-    fetchArticle();
+    fetchArticleAndSimilar();
   }, [brandName, decodedArticleName]);
-
-  if (loadingArticle) return <div>Chargement...</div>;
-  if (errorArticle) return <div>Erreur : {errorArticle}</div>;
 
   return (
     <div>
-      <h1>{article.nom}</h1>
-      <p>Marque : {article.marque}</p>
-      <p>Prix : {article.prix} €</p>
+      {loadingArticle ? (
+        <div>Chargement du produit...</div>
+      ) : errorArticle ? (
+        <div>Erreur : {errorArticle}</div>
+      ) : article ? (
+        <div>
+          <h1>{article.nom}</h1>
+          <p>Marque : {article.marque}</p>
+          <p>Prix : {article.prix} €</p>
+        </div>
+      ) : (
+        <div>Produit non trouvé.</div>
+      )}
+
+      <hr />
+
+      {loadingSimilar ? (
+        <div>Chargement des produits similaires...</div>
+      ) : errorSimilar ? (
+        <div>Erreur : {errorSimilar}</div>
+      ) : similarProducts.length > 0 ? (
+        <div>
+          <h2>Produits similaires :</h2>
+          <ul>
+            {similarProducts.map(prod => (
+              <li key={prod.id}>
+                <h3>{prod.nom}</h3>
+                <p>Marque : {prod.marque}</p>
+                <p>Prix : {prod.prix} €</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div>Aucun produit similaire trouvé.</div>
+      )}
     </div>
   );
 };
 
 export default CommandePage;
-
