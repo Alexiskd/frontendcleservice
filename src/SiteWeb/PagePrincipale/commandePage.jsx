@@ -4,15 +4,13 @@ import { useParams } from 'react-router-dom';
 const CommandePage = () => {
   const { brand: brandName, name: articleName } = useParams();
 
-  // Vérification de la présence des paramètres requis dans l'URL
+  // Vérification de la présence des paramètres requis
   if (!brandName || !articleName) {
     return <div>Erreur : Paramètre "brand" ou "articleName" manquant dans l'URL.</div>;
   }
 
-  // Décodage du nom de l'article (remplacement des tirets par des espaces)
   const decodedArticleName = articleName.replace(/-/g, ' ');
 
-  // États pour le produit exact, les produits similaires, et les messages de chargement / erreurs
   const [article, setArticle] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loadingArticle, setLoadingArticle] = useState(true);
@@ -23,7 +21,6 @@ const CommandePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Réinitialisation des états de chargement et d'erreurs
         setLoadingArticle(true);
         setErrorArticle(null);
         setLoadingSimilar(true);
@@ -39,15 +36,14 @@ const CommandePage = () => {
           return response;
         };
 
-        // Construction de l'URL de l'endpoint de récupération du produit exact
+        // Tentative de récupération du produit exact
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetchProduct(endpoint);
 
-        // Si la réponse n'est pas "ok", on tente un fallback sur l'endpoint "closest-match"
+        // Si la réponse n'est pas OK, on tente un fallback vers l'endpoint "closest-match"
         if (!response.ok) {
           const errorText = await response.text();
           if (response.status === 500 || errorText.includes("Produit introuvable")) {
-            // Utilisation de l'endpoint alternatif pour récupérer des produits similaires
             endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetchProduct(endpoint);
             if (!response.ok) {
@@ -62,18 +58,17 @@ const CommandePage = () => {
         } else {
           // Si le produit exact est trouvé
           const data = await response.json();
-          // Vérification que la marque du produit correspond à celle spécifiée dans l'URL
           if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
             throw new Error("La marque de l'article ne correspond pas.");
           }
           setArticle(data);
 
-          // Récupération des produits similaires via l'endpoint "closest-match"
+          // Récupération des produits similaires
           endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
           const similarResponse = await fetch(endpoint);
           if (similarResponse.ok) {
             const similarData = await similarResponse.json();
-            // Optionnel : retirer le produit principal de la liste des similaires si une propriété "id" existe
+            // On peut retirer le produit principal de la liste si besoin (ici on suppose qu'il y a une propriété "id")
             const filteredSimilar =
               data && data.id ? similarData.filter(prod => prod.id !== data.id) : similarData;
             setSimilarProducts(filteredSimilar);
