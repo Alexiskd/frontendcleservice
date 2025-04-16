@@ -819,7 +819,6 @@ const CommandePage = () => {
               >
                 {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
               </Button>
-              {/* Affichage des frais de dossier sous le bouton de commande */}
               {lostCartePropriete && dossierFee > 0 && (
                 <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 1 }}>
                   Les frais de dossier de {dossierFee}€ seront appliqués pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
