@@ -309,6 +309,7 @@ const CommandePage = () => {
       commandeFormData.append('quantity', quantity);
       if (mode === 'numero') {
         if (article?.besoinNumeroCle) {
+          // Affichage statique du nom du produit pour le numéro de clé
           commandeFormData.append('keyNumber', article?.nom || '');
         }
         if (article?.besoinNumeroCarte) {
@@ -432,15 +433,10 @@ const CommandePage = () => {
                   )}
                   {article?.besoinNumeroCle && (
                     <>
-                      <TextField
-                        disabled
-                        placeholder="Le nom du produit sera utilisé comme numéro de clé"
-                        variant="outlined"
-                        name="keyNumber"
-                        value={article?.nom || ''}
-                        fullWidth
-                        sx={{ mb: 2 }}
-                      />
+                      {/* Affichage statique du nom de la clé */}
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        {article?.nom}
+                      </Typography>
                       {article.numeroCleDescription && (
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                           {article.numeroCleDescription}
@@ -831,3 +827,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
