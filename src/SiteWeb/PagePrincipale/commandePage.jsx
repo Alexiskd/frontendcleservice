@@ -46,9 +46,9 @@ const CommandePage = () => {
   }, []);
 
   // Extraction des paramètres depuis l'URL.
-  // La route doit inclure : brandName, articleType et articleName
-  const { brandName, articleType, articleName } = useParams();
-  // On remplace les tirets par des espaces pour reconstituer le nom du produit.
+  // La route doit être définie comme "/commande/:brandName/:articleType/:index/:articleName"
+  const { brandName, articleType, index, articleName } = useParams();
+  // articleName est décodé en remplaçant les tirets par des espaces
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
@@ -58,23 +58,24 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Récupération du produit depuis le backend
   useEffect(() => {
+    // Vérifier que nous avons bien un articleName et un index
+    if (!decodedArticleName || !index) {
+      setErrorArticle("Paramètre 'articleName' ou 'index' absent.");
+      setLoadingArticle(false);
+      return;
+    }
+
     const fetchArticle = async () => {
       try {
-        // Vérification de la présence du paramètre articleName
-        if (!decodedArticleName) {
-          throw new Error("Paramètre 'articleName' absent.");
-        }
         setLoadingArticle(true);
         setErrorArticle(null);
-
-        // Construction de l'URL pour une recherche exacte
-        let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        // Dans ce cas, la requête API utilise la marque et l'index
+        let endpoint = `https://cl-back.onrender.com/produit/cles/brand/${encodeURIComponent(brandName)}/index/${encodeURIComponent(index)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
-          console.warn("Produit introuvable avec /by-name. Essai via /cles/best-by-name.");
-          // Utilisation de l'endpoint pour la meilleure correspondance si la recherche exacte échoue
+          console.warn("Produit introuvable par index. Essai via recherche par nom.");
+          // En fallback, on tente une recherche par nom (endpoint best-by-name)
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -82,7 +83,7 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Optionnel: vérifiez que la marque correspond
+        // Optionnel : vérification de la correspondance de la marque si le champ 'manufacturer' est utilisé
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -96,10 +97,9 @@ const CommandePage = () => {
     };
 
     fetchArticle();
-  }, [brandName, decodedArticleName]);
+  }, [brandName, decodedArticleName, index]);
 
   const productDetails = article;
-  // Calcul du prix en fonction du mode (exemple simplifié)
   const articlePrice = productDetails
     ? mode === 'postal'
       ? parseFloat(productDetails.prixSansCartePropriete)
