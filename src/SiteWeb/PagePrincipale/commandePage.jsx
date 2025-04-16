@@ -44,9 +44,7 @@ import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
-    <Typography variant="body2" sx={{ minWidth: '150px' }}>
-      {label}
-    </Typography>
+    <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
     <IconButton
       color="primary"
       aria-label={label}
@@ -102,7 +100,7 @@ const CommandePage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres URL (exemple : brandName, articleType, articleName)
+  // Extraction des paramètres URL
   const { brandName, articleType, articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
@@ -113,20 +111,23 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Les autres états (formulaire, fichier, etc.) sont présents, mais se concentrent ici sur la récupération du produit
-
-  // Exemple de récupération du produit depuis le backend
+  // Vérifiez que le nom de l'article est présent
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        // Tentative via l'endpoint exact (/cles/by-name)
+
+        // Si le nom de l'article est vide, on lève immédiatement une erreur.
+        if (!decodedArticleName) {
+          throw new Error("Paramètre 'articleName' absent.");
+        }
+
+        // Recherche par nom exact (/cles/by-name)
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/best-by-name.");
-          // Si la recherche exacte échoue, utiliser l'endpoint pour le produit le plus similaire
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -134,7 +135,7 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Facultatif : vérifier que la marque correspond
+        // Vérification optionnelle de la correspondance de la marque
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -146,12 +147,11 @@ const CommandePage = () => {
         setLoadingArticle(false);
       }
     };
+
     fetchArticle();
   }, [brandName, decodedArticleName]);
 
-  // Renommage pour clarté
   const productDetails = article;
-
   const articlePrice = productDetails
     ? mode === 'postal'
       ? parseFloat(productDetails.prixSansCartePropriete)
@@ -183,19 +183,13 @@ const CommandePage = () => {
         <Grid container spacing={4}>
           <Grid item xs={12}>
             <SectionPaper>
-              <Typography variant="h5" gutterBottom>
-                Informations de Commande
-              </Typography>
+              <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
               <Divider sx={{ mb: 3 }} />
               {productDetails ? (
                 <Box>
                   <Typography variant="h6">{productDetails.nom}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    Marque : {productDetails.marque}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    Prix : {productDetails.prix} €
-                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>Marque : {productDetails.marque}</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Prix : {productDetails.prix} €</Typography>
                   {productDetails.imageUrl && (
                     <Box sx={{ mt: 2 }}>
                       <CardMedia
@@ -212,7 +206,7 @@ const CommandePage = () => {
               )}
             </SectionPaper>
           </Grid>
-          {/* Vous pouvez ajouter ici d'autres sections du formulaire */}
+          {/* Autres sections du formulaire peuvent être ajoutées ici */}
         </Grid>
       </Container>
     </Box>
@@ -220,4 +214,5 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
 
