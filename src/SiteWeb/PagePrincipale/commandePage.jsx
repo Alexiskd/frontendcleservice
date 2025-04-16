@@ -815,6 +815,11 @@ const CommandePage = () => {
               >
                 {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
               </Button>
+              {lostCartePropriete && dossierFee > 0 && (
+                <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 1 }}>
+                  Les frais de dossier de {dossierFee}€ sont appliqués pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
+                </Typography>
+              )}
             </SummaryCard>
           </Grid>
         </Grid>
@@ -851,4 +856,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
