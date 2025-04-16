@@ -146,10 +146,8 @@ const CommandePage = () => {
         if (!decodedArticleName.trim()) {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
-        // Appel sur l'endpoint best-by-name
         const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpointBest);
-        // Si best-by-name renvoie un 404, alors fallback sur closest-match
         if (response.status === 404) {
           console.warn("best-by-name retourne 404, utilisation du fallback closest-match.");
           const endpointFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
@@ -250,7 +248,13 @@ const CommandePage = () => {
     vachette: 96,
   };
   const normalizedMarque = article ? normalizeString(article.marque) : "";
-  const dossierFee = lostCartePropriete && dossierFees[normalizedMarque] ? dossierFees[normalizedMarque] : 0;
+  // Utilisation d'une écriture plus explicite pour le calcul du frais de dossier :
+  const dossierFee = lostCartePropriete ? (dossierFees[normalizedMarque] || 0) : 0;
+
+  // Log pour déboguer
+  console.log('lostCartePropriete:', lostCartePropriete);
+  console.log('Marque normalisée:', normalizedMarque);
+  console.log('Frais dossier:', dossierFee);
 
   const totalPrice = safeArticlePrice + shippingFee + dossierFee;
 
@@ -448,7 +452,6 @@ const CommandePage = () => {
                   )}
                   {article?.besoinNumeroCle && (
                     <>
-                      {/* Affichage statique du nom de la clé */}
                       <Typography variant="body1" sx={{ mb: 2 }}>
                         {article?.nom}
                       </Typography>
