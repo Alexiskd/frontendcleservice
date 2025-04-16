@@ -23,7 +23,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -45,17 +44,6 @@ const Commande = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [zoom, setZoom] = useState(1);
-
-  // États pour l'édition d'une commande
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    id: '',
-    nom: '',
-    ville: '',
-    isCleAPasse: false,
-    hasCartePropriete: true,
-    attestationPropriete: false,
-  });
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -151,53 +139,6 @@ const Commande = () => {
     window.open(fullPdfUrl, '_blank');
   };
 
-  // Ouverture du formulaire d'édition avec les données existantes, y compris "ville"
-  const openEditDialogForCommande = (commande) => {
-    setEditFormData({
-      id: commande.id,
-      nom: commande.nom || '',
-      ville: commande.ville || '',
-      isCleAPasse: commande.isCleAPasse || false,
-      hasCartePropriete: commande.hasCartePropriete !== undefined ? commande.hasCartePropriete : true,
-      attestationPropriete: commande.attestationPropriete || false,
-    });
-    setOpenEditDialog(true);
-  };
-
-  const handleEditFormChange = (e) => {
-    const { name, value } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  };
-
-  const handleEditFormSubmit = async () => {
-    try {
-      const response = await fetch(`https://cl-back.onrender.com/commande/update/${editFormData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editFormData),
-      });
-      if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour de la commande');
-      }
-      alert('Commande mise à jour avec succès');
-      setOpenEditDialog(false);
-      fetchCommandes();
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
   const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const margin = 15;
@@ -254,7 +195,7 @@ const Commande = () => {
 
     // Préparation du tableau de détails de la commande
     let currentY = margin + 55;
-    const articleText = 
+    const articleText =
       commande.cle && commande.cle.length
         ? (Array.isArray(commande.cle)
             ? commande.cle.join(', ')
@@ -575,13 +516,6 @@ const Commande = () => {
                 </Button>
                 <Button
                   variant="contained"
-                  color="warning"
-                  onClick={() => openEditDialogForCommande(commande)}
-                >
-                  Modifier la commande
-                </Button>
-                <Button
-                  variant="contained"
                   startIcon={<CancelIcon />}
                   sx={{
                     borderRadius: 20,
@@ -634,67 +568,6 @@ const Commande = () => {
             disabled={!cancellationReason.trim()}
           >
             Confirmer l'annulation
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Modifier la commande</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Nom"
-            fullWidth
-            margin="normal"
-            name="nom"
-            value={editFormData.nom}
-            onChange={handleEditFormChange}
-          />
-          {/* Champ pour la ville (input) */}
-          <TextField
-            label="Ville"
-            fullWidth
-            margin="normal"
-            name="ville"
-            value={editFormData.ville}
-            onChange={handleEditFormChange}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                name="isCleAPasse"
-                checked={editFormData.isCleAPasse}
-                onChange={handleCheckboxChange}
-              />
-            }
-            label="Clé à passe"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                name="hasCartePropriete"
-                checked={editFormData.hasCartePropriete}
-                onChange={handleCheckboxChange}
-              />
-            }
-            label="Carte de propriété présente"
-          />
-          {!editFormData.hasCartePropriete && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  name="attestationPropriete"
-                  checked={editFormData.attestationPropriete}
-                  onChange={handleCheckboxChange}
-                />
-              }
-              label="Attestation de perte de la carte"
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditDialog(false)}>Annuler</Button>
-          <Button onClick={handleEditFormSubmit} variant="contained" color="primary">
-            Enregistrer
           </Button>
         </DialogActions>
       </Dialog>
