@@ -11,7 +11,9 @@ import {
   Alert,
   Paper,
   Dialog,
+  DialogTitle,
   DialogContent,
+  DialogActions,
   Divider,
   Grid,
   Card,
@@ -118,7 +120,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 );
 
 const CommandePage = () => {
-  // Défilement vers le haut à l'ouverture de la page
+  // Défilement vers le haut lors du chargement
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -144,7 +146,6 @@ const CommandePage = () => {
         if (!decodedArticleName.trim()) {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
-
         // Appel sur l'endpoint best-by-name
         const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpointBest);
@@ -162,7 +163,6 @@ const CommandePage = () => {
           const errorText = await response.text();
           throw new Error(`Erreur lors du chargement du produit via best-by-name : ${errorText}`);
         }
-
         const product = await response.json();
         if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
           throw new Error("La marque de l'article ne correspond pas.");
