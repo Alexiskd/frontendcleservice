@@ -4,17 +4,29 @@ import { useParams } from 'react-router-dom';
 const CommandePage = () => {
   const { brand: brandName, name: articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
-
+  
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
   useEffect(() => {
+    // Logging parameters for debugging purposes
+    console.log("Brand Name:", brandName);
+    console.log("Article Name:", articleName);
+    console.log("Decoded Article Name:", decodedArticleName);
+
+    // Check for a valid article name before making the API call
+    if (!decodedArticleName) {
+      setErrorArticle("Le paramètre 'articleName' est manquant ou invalide.");
+      setLoadingArticle(false);
+      return;
+    }
+
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-
+        
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
 
