@@ -46,8 +46,11 @@ const CommandePage = () => {
   }, []);
 
   // Extraction des paramètres URL
+  // Par exemple, la route pourrait être définie comme "/commande/:brandName/:articleType/:articleName"
   const { brandName, articleType, articleName } = useParams();
+  // On remplace les tirets par des espaces pour reconstituer le nom
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
+
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
@@ -56,22 +59,23 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Vérifiez que le nom de l'article est présent
+  // Récupération du produit depuis le backend
   useEffect(() => {
     const fetchArticle = async () => {
       try {
+        // Vérifier que le nom de l'article est présent
         if (!decodedArticleName) {
           throw new Error("Paramètre 'articleName' absent.");
         }
         setLoadingArticle(true);
         setErrorArticle(null);
 
-        // Tentative via l'endpoint exact (/cles/by-name)
+        // Construction de l'URL pour une recherche exacte
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/best-by-name.");
-          // Si la recherche exacte échoue, utiliser l'endpoint pour le produit le plus similaire
+          // Utilisation de l'endpoint pour la meilleure correspondance si la recherche exacte échoue
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -96,6 +100,7 @@ const CommandePage = () => {
   }, [brandName, decodedArticleName]);
 
   const productDetails = article;
+  // Calcul du prix en fonction du mode (exemple simplifié)
   const articlePrice = productDetails
     ? mode === 'postal'
       ? parseFloat(productDetails.prixSansCartePropriete)
@@ -107,7 +112,15 @@ const CommandePage = () => {
 
   if (loadingArticle) {
     return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -115,7 +128,15 @@ const CommandePage = () => {
 
   if (errorArticle) {
     return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Typography variant="h6" color="error">{errorArticle}</Typography>
       </Box>
     );
@@ -150,7 +171,7 @@ const CommandePage = () => {
               )}
             </SectionPaper>
           </Grid>
-          {/* D'autres sections du formulaire peuvent être ajoutées ici */}
+          {/* Vous pouvez ajouter ici d'autres sections du formulaire */}
         </Grid>
       </Container>
     </Box>
