@@ -3,77 +3,22 @@ import {
   Box,
   Typography,
   Container,
-  TextField,
   Button,
   Snackbar,
   Alert,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormControl,
-  Select,
-  MenuItem,
-  IconButton,
-  InputAdornment,
+  CircularProgress,
+  Paper,
+  Dialog,
+  DialogContent,
   Card,
   CardMedia,
   Grid,
   Divider,
-  CircularProgress,
   Checkbox,
-  Paper,
-  Dialog,
-  DialogContent,
 } from '@mui/material';
-import {
-  PhotoCamera,
-  CloudUpload,
-  Person,
-  Email,
-  Phone,
-  Home,
-  LocationCity,
-  Info,
-  VpnKey,
-  CheckCircle,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { styled } from '@mui/material/styles';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-
-const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
-    <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
-    <IconButton
-      color="primary"
-      aria-label={label}
-      component="label"
-      sx={{
-        backgroundColor: 'background.paper',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        '&:hover': { backgroundColor: 'action.hover' },
-      }}
-    >
-      <input type="file" name={name} accept={accept} hidden onChange={onChange} />
-      <IconComponent sx={{ color: '#1B5E20' }} />
-    </IconButton>
-    {file && (
-      <Typography variant="caption" color="success.main">
-        {typeof file === 'string' ? file : file.name}
-      </Typography>
-    )}
-  </Box>
-);
-
-const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
-  color: theme.palette.grey[500],
-  '&.Mui-checked': {
-    color: theme.palette.primary.main,
-  },
-}));
 
 const SectionPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -115,19 +60,18 @@ const CommandePage = () => {
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        setLoadingArticle(true);
-        setErrorArticle(null);
-
-        // Si le nom de l'article est vide, on lève immédiatement une erreur.
         if (!decodedArticleName) {
           throw new Error("Paramètre 'articleName' absent.");
         }
+        setLoadingArticle(true);
+        setErrorArticle(null);
 
-        // Recherche par nom exact (/cles/by-name)
+        // Tentative via l'endpoint exact (/cles/by-name)
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
           console.warn("Produit introuvable avec /by-name. Essai via /cles/best-by-name.");
+          // Si la recherche exacte échoue, utiliser l'endpoint pour le produit le plus similaire
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -135,7 +79,7 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Vérification optionnelle de la correspondance de la marque
+        // Vérification optionnelle : s'assurer que la marque correspond
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -206,7 +150,7 @@ const CommandePage = () => {
               )}
             </SectionPaper>
           </Grid>
-          {/* Autres sections du formulaire peuvent être ajoutées ici */}
+          {/* D'autres sections du formulaire peuvent être ajoutées ici */}
         </Grid>
       </Container>
     </Box>
