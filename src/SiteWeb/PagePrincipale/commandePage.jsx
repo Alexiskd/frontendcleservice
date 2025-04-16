@@ -33,6 +33,8 @@ const CommandePage = () => {
         // Fonction pour effectuer une requête à l'API
         const fetchProduct = async (endpoint) => {
           const response = await fetch(endpoint);
+          // Log de debugging pour vérifier la réponse brute
+          console.log("Endpoint appelé :", endpoint, "=> Réponse:", response);
           return response;
         };
 
@@ -43,6 +45,7 @@ const CommandePage = () => {
         // Si la réponse n'est pas OK, on tente un fallback vers l'endpoint "closest-match"
         if (!response.ok) {
           const errorText = await response.text();
+          console.error("Erreur de l'endpoint by-name :", errorText);
           if (response.status === 500 || errorText.includes("Produit introuvable")) {
             endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetchProduct(endpoint);
@@ -58,6 +61,7 @@ const CommandePage = () => {
         } else {
           // Si le produit exact est trouvé
           const data = await response.json();
+          console.log("Produit exact trouvé :", data);
           if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
             throw new Error("La marque de l'article ne correspond pas.");
           }
@@ -68,6 +72,7 @@ const CommandePage = () => {
           const similarResponse = await fetch(endpoint);
           if (similarResponse.ok) {
             const similarData = await similarResponse.json();
+            console.log("Produits similaires trouvés :", similarData);
             // On peut retirer le produit principal de la liste si besoin (ici on suppose qu'il y a une propriété "id")
             const filteredSimilar =
               data && data.id ? similarData.filter(prod => prod.id !== data.id) : similarData;
