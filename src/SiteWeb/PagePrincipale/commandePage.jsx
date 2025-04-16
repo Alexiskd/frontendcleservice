@@ -1,35 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Redirect } from 'react-router-dom';
 
 const CommandePage = () => {
   const { brand: brandName, name: articleName } = useParams();
-  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
-  
+
+  // Vérifier que les paramètres attendus existent
+  if (!brandName || !articleName) {
+    return <div>Erreur : Paramètre 'brand' ou 'articleName' absent dans l'URL.</div>;
+  }
+
+  const decodedArticleName = articleName.replace(/-/g, ' ');
+
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
   useEffect(() => {
-    // Logging parameters for debugging purposes
-    console.log("Brand Name:", brandName);
-    console.log("Article Name:", articleName);
-    console.log("Decoded Article Name:", decodedArticleName);
-
-    // Check for a valid article name before making the API call
-    if (!decodedArticleName) {
-      setErrorArticle("Le paramètre 'articleName' est manquant ou invalide.");
-      setLoadingArticle(false);
-      return;
-    }
-
     const fetchArticle = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        
+
+        // Vérification supplémentaire pour s'assurer que le nom de l'article est valide
+        if (!decodedArticleName.trim()) {
+          throw new Error("Le nom de l'article est vide après décodage.");
+        }
+
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
 
+        // Si le produit n'est pas trouvé, on tente un endpoint alternatif
         if (!response.ok) {
           const errorText = await response.text();
           if (errorText.includes("Produit introuvable")) {
@@ -46,6 +46,7 @@ const CommandePage = () => {
 
         const data = await response.json();
 
+        // Vérifier si la marque du produit correspond à celle attendue dans l'URL
         if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
