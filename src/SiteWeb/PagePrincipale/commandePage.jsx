@@ -248,10 +248,9 @@ const CommandePage = () => {
     vachette: 96,
   };
   const normalizedMarque = article ? normalizeString(article.marque) : "";
-  // Utilisation d'une écriture plus explicite pour le calcul du frais de dossier :
   const dossierFee = lostCartePropriete ? (dossierFees[normalizedMarque] || 0) : 0;
 
-  // Log pour déboguer
+  // Log pour déboguer (à enlever en production)
   console.log('lostCartePropriete:', lostCartePropriete);
   console.log('Marque normalisée:', normalizedMarque);
   console.log('Frais dossier:', dossierFee);
@@ -469,6 +468,11 @@ const CommandePage = () => {
                         label="J'ai perdu ma carte de propriété"
                         sx={{ mr: 2 }}
                       />
+                      {lostCartePropriete && dossierFee > 0 && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                          Les frais de dossier de {dossierFee}€ seront ajoutés pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
+                        </Typography>
+                      )}
                       {!lostCartePropriete ? (
                         <>
                           <TextField
@@ -815,9 +819,10 @@ const CommandePage = () => {
               >
                 {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
               </Button>
+              {/* Affichage des frais de dossier sous le bouton de commande */}
               {lostCartePropriete && dossierFee > 0 && (
                 <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 1 }}>
-                  Les frais de dossier de {dossierFee}€ sont appliqués pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
+                  Les frais de dossier de {dossierFee}€ seront appliqués pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
                 </Typography>
               )}
             </SummaryCard>
@@ -856,3 +861,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
