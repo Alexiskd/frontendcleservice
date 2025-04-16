@@ -45,9 +45,10 @@ const CommandePage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres depuis l'URL : 
-  // La route devrait être définie comme "/commande/:brandName/:articleType/:index/:articleName"
+  // Extraction des paramètres depuis l'URL.
+  // La route doit être définie comme "/commande/:brandName/:articleType/:index/:articleName"
   const { brandName, articleType, index, articleName } = useParams();
+  // On remplace les tirets par des espaces pour reconstituer le nom du produit.
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
 
   const [searchParams] = useSearchParams();
@@ -58,8 +59,8 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
+  // Vérification : si articleName ou index est absent, afficher immédiatement une erreur.
   useEffect(() => {
-    // Si l'un des paramètres requis est absent, on arrête et affiche l'erreur.
     if (!decodedArticleName || !index) {
       setErrorArticle("Paramètre 'articleName' ou 'index' absent.");
       setLoadingArticle(false);
@@ -71,12 +72,12 @@ const CommandePage = () => {
         setLoadingArticle(true);
         setErrorArticle(null);
 
-        // Tentative via l'endpoint exact (/cles/by-name)
-        let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        // Construction de l'URL de recherche par index (par marque et index)
+        let endpoint = `https://cl-back.onrender.com/produit/cles/brand/${encodeURIComponent(brandName)}/index/${encodeURIComponent(index)}`;
         let response = await fetch(endpoint);
         if (!response.ok) {
-          console.warn("Produit introuvable avec /by-name. Essai via /cles/best-by-name.");
-          // Si la recherche exacte échoue, utiliser l'endpoint pour la meilleure correspondance
+          console.warn("Produit introuvable par index. Essai via /cles/best-by-name.");
+          // En fallback, on utilise l'endpoint pour rechercher par nom
           endpoint = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
           response = await fetch(endpoint);
         }
@@ -84,7 +85,7 @@ const CommandePage = () => {
           throw new Error("Produit introuvable.");
         }
         const data = await response.json();
-        // Optionnel : vérification de la correspondance de la marque
+        // Optionnel : Vérifier que la marque correspond (si le backend retourne un champ 'manufacturer')
         if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -101,6 +102,7 @@ const CommandePage = () => {
   }, [brandName, decodedArticleName, index]);
 
   const productDetails = article;
+  // Calcul du prix selon le mode (exemple simplifié)
   const articlePrice = productDetails
     ? mode === 'postal'
       ? parseFloat(productDetails.prixSansCartePropriete)
@@ -112,7 +114,15 @@ const CommandePage = () => {
 
   if (loadingArticle) {
     return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -120,7 +130,15 @@ const CommandePage = () => {
 
   if (errorArticle) {
     return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Typography variant="h6" color="error">{errorArticle}</Typography>
       </Box>
     );
@@ -138,7 +156,9 @@ const CommandePage = () => {
                 <Box>
                   <Typography variant="h6">{productDetails.nom}</Typography>
                   <Typography variant="body2" sx={{ mb: 1 }}>Marque : {productDetails.marque}</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Prix : {productDetails.prix} €</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    Prix : {productDetails.prix} €
+                  </Typography>
                   {productDetails.imageUrl && (
                     <Box sx={{ mt: 2 }}>
                       <CardMedia
@@ -163,4 +183,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
