@@ -120,7 +120,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 );
 
 const CommandePage = () => {
-  // Défilement vers le haut lors du chargement
+  // Défilement vers le haut lors du chargement de la page
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -149,7 +149,6 @@ const CommandePage = () => {
         // Appel sur l'endpoint best-by-name
         const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpointBest);
-
         // Si best-by-name renvoie un 404, alors fallback sur closest-match
         if (response.status === 404) {
           console.warn("best-by-name retourne 404, utilisation du fallback closest-match.");
