@@ -202,28 +202,32 @@ const Commande = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const margin = 15;
 
+    // En-tête avec un fond vert et le logo
     doc.setFillColor(27, 94, 32);
     doc.rect(0, margin, 210, 40, 'F');
 
     const logoWidth = 32, logoHeight = 32;
     doc.addImage(logo, 'PNG', margin, margin, logoWidth, logoHeight);
+
+    // Texte à gauche : adaptation pour un site de reproduction en ligne
     const leftTextX = margin + logoWidth + 5;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
     doc.text(
       [
-        "MAISON BOUVET",
-        "20 rue de Lévis",
-        "75017 Paris",
+        "REPRODUCTION EN LIGNE",
+        "www.votresite-reproduction.com",
+        "Service en ligne de reproductions de documents",
         "Tél : 01 42 67 47 28",
-        "Email : contact@cleservice.com",
+        "Email : contact@reproduction.com",
       ],
       leftTextX,
       margin + 12,
       { lineHeightFactor: 1.5 }
     );
 
+    // Texte à droite
     const rightX = 210 - margin;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -240,25 +244,30 @@ const Commande = () => {
       doc.text(txt, rightX, margin + 17 + i * 5, { align: 'right' });
     });
 
-    let currentY = margin + 45;
-    const articleText =
+    // Affichage de la date de commande
+    const orderDate = commande.dateCommande
+      ? new Date(commande.dateCommande).toLocaleDateString()
+      : "Non renseignée";
+    doc.setFontSize(9);
+    doc.setTextColor(27, 94, 32);
+    doc.text(`Date de commande : ${orderDate}`, margin, margin + 45);
+
+    // Préparation du tableau de détails de la commande
+    let currentY = margin + 55;
+    const articleText = 
       commande.cle && commande.cle.length
-        ? Array.isArray(commande.cle)
-          ? commande.cle.join(', ')
-          : commande.cle
+        ? (Array.isArray(commande.cle)
+            ? commande.cle.join(', ')
+            : commande.cle)
         : 'Article';
-    const reference =
-      commande.numeroCle && commande.numeroCle.length
-        ? Array.isArray(commande.numeroCle)
-          ? commande.numeroCle.join(', ')
-          : commande.numeroCle
-        : 'N/A';
+    // Remplacer la référence par le nom de la marque
+    const marque = commande.marque || "Reproduction En Ligne";
     const quantite = commande.quantity ? commande.quantity.toString() : "1";
     const prixTTC = parseFloat(commande.prix);
     const tauxTVA = 0.20;
     const prixHT = prixTTC / (1 + tauxTVA);
-    const tableHead = [['Article', 'Référence', 'Quantité', 'Sous-total']];
-    const tableBody = [[articleText, reference, quantite, prixHT.toFixed(2) + ' €']];
+    const tableHead = [['Article', 'Marque', 'Quantité', 'Sous-total']];
+    const tableBody = [[articleText, marque, quantite, prixHT.toFixed(2) + ' €']];
 
     doc.autoTable({
       startY: currentY,
@@ -271,6 +280,7 @@ const Commande = () => {
     });
     currentY = doc.lastAutoTable.finalY + 10;
 
+    // Affichage des totaux et TVA
     const fraisLivraison = 0.0,
       totalTTC = prixTTC,
       montantTVA = prixTTC - prixHT;
@@ -293,10 +303,11 @@ const Commande = () => {
     doc.text(montantTVA.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
     currentY += 15;
 
+    // Conditions de vente adaptées au contexte du site de reproduction en ligne
     doc.setFontSize(10);
     doc.setTextColor(27, 94, 32);
     const conditions =
-      "CONDITIONS GÉNÉRALES DE VENTE: La pose ayant été reconnue satisfaisante, notre installation est payable au monteur, comptant. En cas de retard de paiement, indemnité forfaitaire de 40€ sera due pour frais de recouvrement et taux de pénalité de retard sera appliqué (3 fois le taux d’intérêt légal). Nos coordonnées bancaires : IBAN : FR76 1820 6004 1744 1936 2200 145 - BIC : AGRIFRPP882";
+      "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin. En cas de retard de paiement, des pénalités pourront être appliquées.";
     const conditionsLines = doc.splitTextToSize(conditions, 180);
     doc.text(conditionsLines, 105, currentY, { align: 'center' });
     currentY += conditionsLines.length * 5;
@@ -366,7 +377,9 @@ const Commande = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Typography variant="body2">
-                    {Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle || 'Non renseigné'}
+                    {Array.isArray(commande.cle)
+                      ? commande.cle.join(', ')
+                      : commande.cle || 'Non renseigné'}
                   </Typography>
                   {commande.isCleAPasse && (
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
@@ -388,6 +401,13 @@ const Commande = () => {
                   {/* Affichage du numéro de commande */}
                   <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
                     Numéro de commande : {commande.numeroCommande || "Non renseigné"}
+                  </Typography>
+                  {/* Affichage de la date de commande enregistrée dans la base de données */}
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
+                    Date de commande :{" "}
+                    {commande.dateCommande
+                      ? new Date(commande.dateCommande).toLocaleDateString()
+                      : "Non renseignée"}
                   </Typography>
                   {(() => {
                     const adresseParts = commande.adressePostale ? commande.adressePostale.split(',') : [];
