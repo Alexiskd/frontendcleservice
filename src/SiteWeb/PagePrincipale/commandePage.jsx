@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Redirect } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 const CommandePage = () => {
   const { brand: brandName, name: articleName } = useParams();
 
-  // Vérifier que les paramètres attendus existent
+  // Vérification de la présence des paramètres requis
   if (!brandName || !articleName) {
-    return <div>Erreur : Paramètre 'brand' ou 'articleName' absent dans l'URL.</div>;
+    return <div>Erreur : Paramètre "brand" ou "articleName" manquant dans l'URL.</div>;
   }
 
   const decodedArticleName = articleName.replace(/-/g, ' ');
@@ -21,18 +21,19 @@ const CommandePage = () => {
         setLoadingArticle(true);
         setErrorArticle(null);
 
-        // Vérification supplémentaire pour s'assurer que le nom de l'article est valide
         if (!decodedArticleName.trim()) {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
 
+        // Construction de l'URL pour récupérer l'article par son nom
         let endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpoint);
 
-        // Si le produit n'est pas trouvé, on tente un endpoint alternatif
+        // Si la réponse n'est pas OK, vérification du texte d'erreur
         if (!response.ok) {
           const errorText = await response.text();
           if (errorText.includes("Produit introuvable")) {
+            // Utilisation d'un endpoint alternatif pour un closest-match
             endpoint = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
             response = await fetch(endpoint);
           } else {
@@ -46,7 +47,7 @@ const CommandePage = () => {
 
         const data = await response.json();
 
-        // Vérifier si la marque du produit correspond à celle attendue dans l'URL
+        // Vérification que la marque du produit correspond à celle spécifiée dans l'URL
         if (data && data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -76,3 +77,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
