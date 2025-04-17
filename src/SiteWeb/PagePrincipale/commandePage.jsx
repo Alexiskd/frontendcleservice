@@ -37,8 +37,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Import corrigé : on monte de PagePrincipale/src/SiteWeb/PagePrincipale vers src/api
-import { preloadKeysData } from '../../../api/brandsApi';
+// Chemin corrigé : de PagePrincipale à src/api
+import { preloadKeysData } from '../../api/brandsApi';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ mb: 2 }}>
@@ -200,7 +200,6 @@ const CommandePage = () => {
     setOrdering(true);
     try {
       const fd = new FormData();
-      // append fields...
       const cmdRes = await fetch(
         'https://cl-back.onrender.com/commande/create',
         { method: 'POST', body: fd }
