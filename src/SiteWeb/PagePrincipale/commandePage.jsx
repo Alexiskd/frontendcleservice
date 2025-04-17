@@ -64,13 +64,13 @@ const CommandePage = () => {
   }, [brandName, decodedArticleName]);
 
   if (loading) return <div>Chargement du produit...</div>;
-  if (error)   return <div>Erreur : {error}</div>;
+  if (error)   return <div>Erreur : {error}</div>;
 
   return (
     <div>
       <h1>{article.nom}</h1>
-      <p>Marque : {article.marque}</p>
-      <p>Prix : {article.prix} €</p>
+      <p>Marque : {article.marque}</p>
+      <p>Prix : {article.prix} €</p>
       {article.imageBase64 && (
         <img
           src={decodeImage(article.imageBase64)}
@@ -83,4 +83,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
