@@ -48,15 +48,23 @@ import { styled } from '@mui/material/styles';
 const normalizeString = (str) =>
   str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
-// Composant d’upload aligné
+// Composant pour upload aligné
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: 150 }}>{label}</Typography>
-    <IconButton component="label" sx={{ backgroundColor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider', '&:hover': { backgroundColor: 'action.hover' } }}>
+    <IconButton component="label" sx={{
+      backgroundColor: 'background.paper',
+      borderRadius: 1,
+      border: '1px solid',
+      borderColor: 'divider',
+      '&:hover': { backgroundColor: 'action.hover' },
+    }}>
       <input type="file" name={name} accept={accept} hidden onChange={onChange} />
       <IconComponent sx={{ color: '#1B5E20' }} />
     </IconButton>
-    {file && <Typography variant="caption" color="success.main">{typeof file === 'string' ? file : file.name}</Typography>}
+    {file && <Typography variant="caption" color="success.main">
+      {typeof file === 'string' ? file : file.name}
+    </Typography>}
   </Box>
 );
 
@@ -89,7 +97,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
     <DialogTitle>Conditions Générales de Vente</DialogTitle>
     <DialogContent dividers>
       <Typography paragraph>
-        Les présentes Conditions Générales de Vente régissent la vente de clés, cartes de propriété et autres services.
+        Les présentes Conditions Générales de Vente régissent la vente de clés, cartes de propriété et services associés.
       </Typography>
     </DialogContent>
     <DialogActions>
@@ -101,7 +109,7 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 const CommandePage = () => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const { brand: brandName, reference: articleType, name: articleName } = useParams();
+  const { brand: brandName, name: articleName } = useParams();
   const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
@@ -112,7 +120,7 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // **CORRECTION** : backticks autour du data URI
+  // Fonction corrigée pour décoder l'image
   const decodeImage = (img) =>
     img
       ? img.startsWith('data:')
@@ -125,14 +133,16 @@ const CommandePage = () => {
       try {
         setLoadingArticle(true);
         if (!decodedArticleName.trim()) throw new Error("Nom vide après décodage.");
+        // essai best-by-name
         const bestUrl = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let res = await fetch(bestUrl);
         if (res.status === 404) {
+          // fallback closest-match
           const fallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
           res = await fetch(fallback);
-          if (!res.ok) throw new Error(`fallback failed: ${await res.text()}`);
+          if (!res.ok) throw new Error(`fallback échoué : ${await res.text()}`);
         } else if (!res.ok) {
-          throw new Error(`best-by-name failed: ${await res.text()}`);
+          throw new Error(`best-by-name échoué : ${await res.text()}`);
         }
         const prod = await res.json();
         if (prod.marque && normalizeString(prod.marque) !== normalizeString(brandName)) {
@@ -149,15 +159,29 @@ const CommandePage = () => {
     fetchProduct();
   }, [brandName, decodedArticleName]);
 
-  // États formulaire...
+  // États formulaire et commande
   const [userInfo, setUserInfo] = useState({
-    clientType: 'particulier', nom: '', email: '', phone: '',
-    address: '', postalCode: '', ville: '', additionalInfo: ''
+    clientType: 'particulier',
+    nom: '',
+    email: '',
+    phone: '',
+    address: '',
+    postalCode: '',
+    ville: '',
+    additionalInfo: '',
   });
-  const [keyInfo, setKeyInfo] = useState({ propertyCardNumber: '', frontPhoto: null, backPhoto: null });
+  const [keyInfo, setKeyInfo] = useState({
+    propertyCardNumber: '',
+    frontPhoto: null,
+    backPhoto: null,
+  });
   const [isCleAPasse, setIsCleAPasse] = useState(false);
   const [lostCartePropriete, setLostCartePropriete] = useState(false);
-  const [idCardInfo, setIdCardInfo] = useState({ idCardFront: null, idCardBack: null, domicileJustificatif: '' });
+  const [idCardInfo, setIdCardInfo] = useState({
+    idCardFront: null,
+    idCardBack: null,
+    domicileJustificatif: '',
+  });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
   const [deliveryType, setDeliveryType] = useState('');
   const [shippingMethod, setShippingMethod] = useState('magasin');
@@ -172,8 +196,8 @@ const CommandePage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (userInfo.hasOwnProperty(name)) setUserInfo(prev => ({ ...prev, [name]: value }));
-    else if (keyInfo.hasOwnProperty(name)) setKeyInfo(prev => ({ ...prev, [name]: value }));
+    if (name in userInfo) setUserInfo(prev => ({ ...prev, [name]: value }));
+    else if (name in keyInfo) setKeyInfo(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePhotoUpload = (e) => {
@@ -189,7 +213,7 @@ const CommandePage = () => {
         fd.append('pdf', files[0]);
         try {
           const r = await fetch('https://cl-back.onrender.com/upload/pdf', { method: 'POST', body: fd });
-          if (!r.ok) throw new Error("Upload PDF failed.");
+          if (!r.ok) throw new Error("Upload PDF échoué.");
           const d = await r.json();
           setIdCardInfo(prev => ({ ...prev, domicileJustificatif: d.filePath }));
         } catch (err) {
@@ -203,18 +227,18 @@ const CommandePage = () => {
     }
   };
 
-  const safeArticlePrice = !article ? 0 : (
-    isCleAPasse && article.prixCleAPasse
+  const safeArticlePrice = article
+    ? isCleAPasse && article.prixCleAPasse
       ? parseFloat(article.prixCleAPasse)
       : mode === 'postal'
         ? parseFloat(article.prixSansCartePropriete)
         : parseFloat(article.prix)
-  ) || 0;
+    : 0;
   const totalPrice = safeArticlePrice + (shippingMethod === 'expedition' ? 8 : 0);
 
   const handleOrder = async () => {
     if (!termsAccepted) {
-      setSnackbarMessage('Acceptez les CGV.');
+      setSnackbarMessage('Veuillez accepter les CGV.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -222,7 +246,7 @@ const CommandePage = () => {
     setOrdering(true);
     try {
       const fd = new FormData();
-      Object.entries(userInfo).forEach(([k,v]) => fd.append(k, v));
+      Object.entries(userInfo).forEach(([k, v]) => fd.append(k, v));
       fd.append('prix', totalPrice.toFixed(2));
       fd.append('articleName', article.nom);
       fd.append('quantity', quantity.toString());
@@ -254,7 +278,7 @@ const CommandePage = () => {
         body: JSON.stringify({
           amount: totalPrice * 100,
           currency: 'eur',
-          description: `Paiement ${userInfo.nom}`,
+          description: `Paiement pour ${userInfo.nom}`,
           success_url: `https://cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
           cancel_url: `https://cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
         }),
@@ -296,7 +320,6 @@ const CommandePage = () => {
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
         <Grid container spacing={4}>
-          {/* Section Formulaire */}
           <Grid item xs={12}>
             <SectionPaper>
               <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
@@ -309,12 +332,11 @@ const CommandePage = () => {
                 </Typography>
               </Box>
 
-              {/* ... le reste du formulaire comme précédemment ... */}
+              {/* Le reste du formulaire se positionne ici... */}
 
             </SectionPaper>
           </Grid>
 
-          {/* Récapitulatif */}
           <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>Récapitulatif</Typography>
@@ -356,14 +378,12 @@ const CommandePage = () => {
         </Grid>
       </Container>
 
-      {/* Modal agrandi */}
       <Dialog open={openImageModal} onClose={() => setOpenImageModal(false)} fullWidth maxWidth="md">
         <DialogContent sx={{ p: 0 }}>
           <img src={decodeImage(article.imageBase64)} alt={article.nom} style={{ width: '100%' }} />
         </DialogContent>
       </Dialog>
 
-      {/* Snackbar */}
       <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert severity={snackbarSeverity} onClose={handleCloseSnackbar} iconMapping={{
           success: <CheckCircle />,
@@ -373,7 +393,6 @@ const CommandePage = () => {
         </Alert>
       </Snackbar>
 
-      {/* CGV */}
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
