@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+ import React, { useState, useEffect, useCallback } from 'react'; 
 import {
   Box,
   Typography,
@@ -34,16 +34,17 @@ import {
   Home,
   LocationCity,
   Info,
+  VpnKey,
   CheckCircle,
   Error as ErrorIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Ajustez le chemin en fonction de votre projet
+
+// Ajustez le chemin ci-dessous en fonction de la localisation réelle de brandsApi.js dans votre projet
 import { preloadKeysData } from '../../api/brandsApi';
 
-// Composant utilitaire pour l'upload de fichier
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: '150px' }}>
@@ -99,57 +100,28 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-// Fonction utilitaire pour calculer la distance de Levenshtein
-const levenshteinDistance = (a, b) => {
-  const matrix = [];
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1      // suppression
-        );
-      }
-    }
-  }
-  return matrix[b.length][a.length];
-};
-
 const CommandePage = () => {
-  // Scroll vers le haut lors du chargement
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Extraction des paramètres depuis l'URL
-  const { brand, reference, name } = useParams();
-  // Décodage et transformation du nom pour retrouver les espaces à la place des tirets
-  const decodedProductName = name ? decodeURIComponent(name).replace(/-/g, ' ') : '';
+  const { brandName, articleType, articleName } = useParams();
+  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
 
-  // États liés au produit
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Clé préchargée correspondant à la marque et la meilleure correspondance du nom
+  // État pour stocker la clé préchargée pour la marque
   const [preloadedKey, setPreloadedKey] = useState(null);
 
-  // Déclaration de l'état pour le type de livraison (utile pour le mode "postal")
-  const [deliveryType, setDeliveryType] = useState('');
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const handleOpenImageModal = () => setOpenImageModal(true);
+  const handleCloseImageModal = () => setOpenImageModal(false);
 
-  // Autres états utilisateurs et informations de commande
   const [userInfo, setUserInfo] = useState({
     clientType: 'particulier',
     nom: '',
@@ -177,6 +149,7 @@ const CommandePage = () => {
   });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
 
+  const [deliveryType, setDeliveryType] = useState('');
   const [shippingMethod, setShippingMethod] = useState('magasin');
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -189,18 +162,14 @@ const CommandePage = () => {
 
   const [quantity, setQuantity] = useState(1);
 
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const handleOpenImageModal = () => setOpenImageModal(true);
-  const handleCloseImageModal = () => setOpenImageModal(false);
-
   // Fonction de chargement de l'article depuis l'API
   const loadArticle = useCallback(async () => {
     try {
       setLoadingArticle(true);
       setErrorArticle(null);
-      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
-        decodedProductName
-      )}`;
+      const endpoint = https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
+        decodedArticleName
+      )};
       const response = await fetch(endpoint);
       if (!response.ok) {
         if (response.status === 404) throw new Error('Article non trouvé.');
@@ -209,8 +178,7 @@ const CommandePage = () => {
       const responseText = await response.text();
       if (!responseText) throw new Error('Réponse vide du serveur.');
       const data = JSON.parse(responseText);
-      // Vérifier que la marque correspond à celle de l'URL
-      if (data && data.marque && data.marque.toLowerCase() !== brand.toLowerCase()) {
+      if (data && data.manufacturer && data.manufacturer.toLowerCase() !== brandName.toLowerCase()) {
         throw new Error("La marque de l'article ne correspond pas.");
       }
       setArticle(data);
@@ -219,38 +187,30 @@ const CommandePage = () => {
     } finally {
       setLoadingArticle(false);
     }
-  }, [brand, decodedProductName]);
+  }, [brandName, decodedArticleName]);
 
   useEffect(() => {
     loadArticle();
   }, [loadArticle]);
 
-  // Préchargement des clés pour la marque et recherche de la meilleure correspondance
+  // Préchargement des clés pour la marque et recherche d'une correspondance par nom
   useEffect(() => {
-    if (brand && article) {
-      preloadKeysData(brand)
+    if (brandName && article) {
+      preloadKeysData(brandName)
         .then((keys) => {
-          let bestMatch = null;
-          let bestDistance = Infinity;
-          const targetName = article.nom ? article.nom.toLowerCase() : decodedProductName.toLowerCase();
-          keys.forEach((key) => {
-            const distance = levenshteinDistance(key.nom.toLowerCase(), targetName);
-            if (distance < bestDistance) {
-              bestDistance = distance;
-              bestMatch = key;
-            }
-          });
-          if (bestMatch) {
-            setPreloadedKey(bestMatch);
+          const found = keys.find(
+            (key) => key.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+          );
+          if (found) {
+            setPreloadedKey(found);
           }
         })
         .catch((err) => {
           console.error(err);
         });
     }
-  }, [brand, article, decodedProductName]);
+  }, [brandName, article]);
 
-  // Utilisation de la clé préchargée si trouvée, sinon on utilise l'article chargé
   const productDetails = preloadedKey || article;
   const articlePrice = productDetails
     ? isCleAPasse && productDetails.prixCleAPasse
@@ -391,7 +351,7 @@ const CommandePage = () => {
       });
       if (!commandeResponse.ok) {
         const errorText = await commandeResponse.text();
-        throw new Error(`Erreur lors de la création de la commande : ${errorText}`);
+        throw new Error(Erreur lors de la création de la commande : ${errorText});
       }
       const commandeResult = await commandeResponse.json();
       const { numeroCommande } = commandeResult;
@@ -400,10 +360,10 @@ const CommandePage = () => {
         amount: totalPrice * 100,
         currency: 'eur',
         description: productDetails
-          ? `Veuillez procéder au paiement pour ${userInfo.nom}`
+          ? Veuillez procéder au paiement pour ${userInfo.nom}
           : 'Veuillez procéder au paiement',
-        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
+        success_url: https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande},
+        cancel_url: https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande},
       };
 
       const paymentResponse = await fetch('https://cl-back.onrender.com/stripe/create', {
@@ -413,12 +373,12 @@ const CommandePage = () => {
       });
       if (!paymentResponse.ok) {
         const errorText = await paymentResponse.text();
-        throw new Error(`Erreur lors de la création de la page de paiement : ${errorText}`);
+        throw new Error(Erreur lors de la création de la page de paiement : ${errorText});
       }
       const paymentResult = await paymentResponse.json();
       window.location.href = paymentResult.paymentUrl;
     } catch (error) {
-      setSnackbarMessage(`Erreur : ${error.message}`);
+      setSnackbarMessage(Erreur : ${error.message});
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       setOrdering(false);
@@ -491,7 +451,7 @@ const CommandePage = () => {
                 </Typography>
                 {mode === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email contenant l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie.
+                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email contenant l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé classique).
                   </Typography>
                 ) : (
                   <Typography variant="body1" sx={{ color: '#000' }}>
@@ -636,8 +596,16 @@ const CommandePage = () => {
                 </Typography>
                 <FormControl component="fieldset" sx={{ mb: 2 }}>
                   <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
-                    <FormControlLabel value="particulier" control={<Radio sx={{ color: '#1B5E20' }} />} label="Particulier" />
-                    <FormControlLabel value="entreprise" control={<Radio sx={{ color: '#1B5E20' }} />} label="Entreprise" />
+                    <FormControlLabel
+                      value="particulier"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Particulier"
+                    />
+                    <FormControlLabel
+                      value="entreprise"
+                      control={<Radio sx={{ color: '#1B5E20' }} />}
+                      label="Entreprise"
+                    />
                   </RadioGroup>
                 </FormControl>
                 <TextField
@@ -884,7 +852,7 @@ const CommandePage = () => {
                     ? "Frais d'expédition"
                     : "Récupération en magasin"}
                 </Typography>
-                <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
+                <Typography variant="body2">{${shippingMethod === 'expedition' ? 8 : 0} €}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
