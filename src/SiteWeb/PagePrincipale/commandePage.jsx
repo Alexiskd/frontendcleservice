@@ -37,8 +37,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Chemin corrigé : de PagePrincipale à src/api
-import { preloadKeysData } from '../../api/brandsApi';
+// Import corrigé : brandsApi se trouve dans src/SiteWeb/brandsApi.js
+import { preloadKeysData } from '../brandsApi';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ mb: 2 }}>
@@ -139,9 +139,8 @@ const CommandePage = () => {
       const text = await res.text();
       if (!text) throw new Error('Réponse vide du serveur.');
       const data = JSON.parse(text);
-      if (
-        data.manufacturer?.toLowerCase() !== brandName.toLowerCase()
-      ) throw new Error("La marque ne correspond pas.");
+      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase())
+        throw new Error("La marque ne correspond pas.");
       setArticle(data);
     } catch (e) {
       setErrorArticle(e.message);
@@ -159,8 +158,7 @@ const CommandePage = () => {
       preloadKeysData(brandName)
         .then((keys) => {
           const found = keys.find(
-            (k) =>
-              k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
           );
           if (found) setPreloadedKey(found);
         })
@@ -200,10 +198,10 @@ const CommandePage = () => {
     setOrdering(true);
     try {
       const fd = new FormData();
-      const cmdRes = await fetch(
-        'https://cl-back.onrender.com/commande/create',
-        { method: 'POST', body: fd }
-      );
+      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
+        method: 'POST',
+        body: fd,
+      });
       if (!cmdRes.ok) {
         throw new Error(`Création commande : ${await cmdRes.text()}`);
       }
@@ -215,14 +213,11 @@ const CommandePage = () => {
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
         cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
       };
-      const payRes = await fetch(
-        'https://cl-back.onrender.com/stripe/create',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
+      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
       if (!payRes.ok) {
         throw new Error(`Paiement : ${await payRes.text()}`);
       }
@@ -257,7 +252,7 @@ const CommandePage = () => {
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
-        {/* ... votre formulaire et récapitulatif ici ... */}
+        {/* … votre formulaire et récapitulatif ici … */}
       </Container>
 
       {/* Modal d’image */}
