@@ -23,8 +23,6 @@ import {
 import { useTheme } from '@mui/material/styles';
 import CancelIcon from '@mui/icons-material/Cancel';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
 import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -40,7 +38,7 @@ const Commande = () => {
   const [commandeToCancel, setCommandeToCancel] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [openImageDialog, setOpenImageDialog] = = useState(false);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
   const [zoom, setZoom] = useState(1);
 
   const theme = useTheme();
@@ -125,10 +123,12 @@ const Commande = () => {
   const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
+
     // En-tête
     doc.setFillColor(27, 94, 32);
     doc.rect(0, m, 210, 40, 'F');
     doc.addImage(logo, 'PNG', m, m, 32, 32);
+
     // Texte gauche
     doc.setFontSize(8).setTextColor(255, 255, 255);
     doc.text(
@@ -143,6 +143,7 @@ const Commande = () => {
       m + 12,
       { lineHeightFactor: 1.5 }
     );
+
     // Texte droite
     const rightX = 210 - m;
     doc
@@ -155,7 +156,9 @@ const Commande = () => {
       '2 bis rue Folyette, 80170 BEAUFORT EN SANTERRE',
       'Tél : 0613404007',
       'Email : ameliecrohin@gmail.com',
-    ].forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
+    ].forEach((t, i) =>
+      doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
+    );
 
     // Date d'enregistrement
     const dateEnregistrement = commande.createdAt
@@ -183,9 +186,13 @@ const Commande = () => {
     doc.text('156.67 €', rightX, y, { align: 'right' });
     doc.text('Frais de livraison', rightX - 80, (y += 7));
     doc.text('0.00 €', rightX, y, { align: 'right' });
-    doc.setFont('helvetica', 'bold').text('Total TTC', rightX - 80, (y += 7));
+    doc
+      .setFont('helvetica', 'bold')
+      .text('Total TTC', rightX - 80, (y += 7));
     doc.text('188.00 €', rightX, y, { align: 'right' });
-    doc.setFont('helvetica', 'normal').text('TVA', rightX - 80, (y += 7));
+    doc
+      .setFont('helvetica', 'normal')
+      .text('TVA', rightX - 80, (y += 7));
     doc.text('31.33 €', rightX, y, { align: 'right' });
 
     // Conditions générales
@@ -194,14 +201,21 @@ const Commande = () => {
       "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin. En cas de retard de paiement, des pénalités pourront être appliquées.";
     doc.setFontSize(10).setTextColor(27, 94, 32);
     doc.text(doc.splitTextToSize(cond, 180), 105, y, { align: 'center' });
-    doc.text('Bonne journée.', 105, y + doc.splitTextToSize(cond, 180).length * 5, { align: 'center' });
+    doc.text(
+      'Bonne journée.',
+      105,
+      y + doc.splitTextToSize(cond, 180).length * 5,
+      { align: 'center' }
+    );
 
     return doc;
   };
 
   // Actions facture
-  const showInvoice = (c) => window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
-  const downloadInvoice = (c) => generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
+  const showInvoice = (c) =>
+    window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
+  const downloadInvoice = (c) =>
+    generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
   const printInvoice = (c) => {
     const d = generateInvoiceDoc(c);
     d.autoPrint();
@@ -214,9 +228,18 @@ const Commande = () => {
   return (
     <Container
       maxWidth="lg"
-      sx={{ py: 4, fontFamily: '"Poppins", sans-serif', backgroundColor: 'rgba(240,255,245,0.5)' }}
+      sx={{
+        py: 4,
+        fontFamily: '"Poppins", sans-serif',
+        backgroundColor: 'rgba(240,255,245,0.5)',
+      }}
     >
-      <Typography variant="h4" align="center" gutterBottom sx={{ color: 'green.700', fontWeight: 600 }}>
+      <Typography
+        variant="h4"
+        align="center"
+        gutterBottom
+        sx={{ color: 'green.700', fontWeight: 600 }}
+      >
         Détails des Commandes Payées
       </Typography>
 
@@ -229,43 +252,80 @@ const Commande = () => {
       {error && <Alert severity="error">{error}</Alert>}
 
       {!loading && sorted.length === 0 && !error && (
-        <Typography align="center">Aucune commande payée trouvée.</Typography>
+        <Typography align="center">
+          Aucune commande payée trouvée.
+        </Typography>
       )}
 
       <Grid container spacing={3}>
         {sorted.map((c) => (
           <Grid item xs={12} key={c.id}>
-            <Card sx={{ borderRadius: 3, boxShadow: 3, border: '1px solid', borderColor: 'green.100', overflow: 'hidden' }}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: 3,
+                border: '1px solid',
+                borderColor: 'green.100',
+                overflow: 'hidden',
+              }}
+            >
               <CardContent sx={{ backgroundColor: 'white' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}
+                >
                   Produit Commandé :
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Typography>{Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}</Typography>
-                  {c.isCleAPasse && <Typography sx={{ fontWeight: 'bold' }}>(Clé à passe)</Typography>}
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
+                >
+                  <Typography>
+                    {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
+                  </Typography>
                 </Box>
 
                 <Divider sx={{ mb: 2 }} />
 
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}
+                >
                   Informations Client :
                 </Typography>
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 600, color: 'green.800' }}>{c.nom}</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 600, color: 'green.800' }}
+                  >
+                    {c.nom}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}
+                  >
                     Numéro de commande : {c.numeroCommande || 'Non renseigné'}
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
-                    Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Non renseignée'}
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}
+                  >
+                    Date de commande :{' '}
+                    {c.createdAt
+                      ? new Date(c.createdAt).toLocaleDateString()
+                      : 'Non renseignée'}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                     <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
-                    <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
+                    <Typography>
+                      {c.adressePostale.split(',')[0].trim()}
+                    </Typography>
                   </Box>
                 </Box>
               </CardContent>
 
-              <CardActions sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}>
+              <CardActions
+                sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}
+              >
                 <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
                   Afficher Facture
                 </Button>
@@ -289,8 +349,15 @@ const Commande = () => {
         ))}
       </Grid>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen} PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}>
-        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>Confirmer l'annulation</DialogTitle>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullScreen={fullScreen}
+        PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>
+          Confirmer l'annulation
+        </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -307,15 +374,41 @@ const Commande = () => {
           <Button onClick={() => setOpenDialog(false)} color="success">
             Annuler
           </Button>
-          <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancellationReason.trim()}>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            disabled={!cancellationReason.trim()}
+          >
             Confirmer l'annulation
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openImageDialog} onClose={() => { setOpenImageDialog(false); setZoom(1); }} fullScreen={fullScreen} maxWidth="lg" fullWidth onWheel={handleWheel} sx={{ p: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', maxHeight: '90vh', overflow: 'hidden' }}>
+      <Dialog
+        open={openImageDialog}
+        onClose={() => {
+          setOpenImageDialog(false);
+          setZoom(1);
+        }}
+        fullScreen={fullScreen}
+        maxWidth="lg"
+        fullWidth
+        onWheel={handleWheel}
+        sx={{
+          p: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          maxHeight: '90vh',
+          overflow: 'hidden',
+        }}
+      >
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
-          <IconButton onClick={() => { setOpenImageDialog(false); setZoom(1); }}>
+          <IconButton onClick={() => {
+            setOpenImageDialog(false);
+            setZoom(1);
+          }}>
             <CloseIcon />
           </IconButton>
         </DialogActions>
