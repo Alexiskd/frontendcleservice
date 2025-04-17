@@ -37,8 +37,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Chemin corrigé : on remonte de PagePrincipale à SiteWeb, puis à src, puis dans api
-import { preloadKeysData } from '../../api/brandsApi';
+// Import corrigé : on monte de PagePrincipale/src/SiteWeb/PagePrincipale vers src/api
+import { preloadKeysData } from '../../../api/brandsApi';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ mb: 2 }}>
@@ -91,15 +91,26 @@ const CommandePage = () => {
   const handleCloseImageModal = () => setOpenImageModal(false);
 
   const [userInfo, setUserInfo] = useState({
-    nom: '', email: '', phone: '', address: '', postalCode: '', ville: '', additionalInfo: ''
+    nom: '',
+    email: '',
+    phone: '',
+    address: '',
+    postalCode: '',
+    ville: '',
+    additionalInfo: '',
   });
   const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '', propertyCardNumber: '', frontPhoto: null, backPhoto: null
+    keyNumber: '',
+    propertyCardNumber: '',
+    frontPhoto: null,
+    backPhoto: null,
   });
   const [isCleAPasse, setIsCleAPasse] = useState(false);
   const [lostCartePropriete, setLostCartePropriete] = useState(false);
   const [idCardInfo, setIdCardInfo] = useState({
-    idCardFront: null, idCardBack: null, domicileJustificatif: ''
+    idCardFront: null,
+    idCardBack: null,
+    domicileJustificatif: '',
   });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
   const [deliveryType, setDeliveryType] = useState('');
@@ -117,7 +128,9 @@ const CommandePage = () => {
     setLoadingArticle(true);
     setErrorArticle(null);
     try {
-      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
+        decodedArticleName
+      )}`;
       const res = await fetch(endpoint);
       if (!res.ok) {
         if (res.status === 404) throw new Error('Article non trouvé.');
@@ -126,9 +139,9 @@ const CommandePage = () => {
       const text = await res.text();
       if (!text) throw new Error('Réponse vide du serveur.');
       const data = JSON.parse(text);
-      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase()) {
-        throw new Error("La marque ne correspond pas.");
-      }
+      if (
+        data.manufacturer?.toLowerCase() !== brandName.toLowerCase()
+      ) throw new Error("La marque ne correspond pas.");
       setArticle(data);
     } catch (e) {
       setErrorArticle(e.message);
@@ -144,8 +157,11 @@ const CommandePage = () => {
   useEffect(() => {
     if (brandName && article) {
       preloadKeysData(brandName)
-        .then(keys => {
-          const found = keys.find(k => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase());
+        .then((keys) => {
+          const found = keys.find(
+            (k) =>
+              k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+          );
           if (found) setPreloadedKey(found);
         })
         .catch(console.error);
@@ -185,8 +201,13 @@ const CommandePage = () => {
     try {
       const fd = new FormData();
       // append fields...
-      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', { method: 'POST', body: fd });
-      if (!cmdRes.ok) throw new Error(`Création commande : ${await cmdRes.text()}`);
+      const cmdRes = await fetch(
+        'https://cl-back.onrender.com/commande/create',
+        { method: 'POST', body: fd }
+      );
+      if (!cmdRes.ok) {
+        throw new Error(`Création commande : ${await cmdRes.text()}`);
+      }
       const { numeroCommande } = await cmdRes.json();
       const payload = {
         amount: Math.round(totalPrice * 100),
@@ -195,12 +216,17 @@ const CommandePage = () => {
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
         cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
       };
-      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!payRes.ok) throw new Error(`Paiement : ${await payRes.text()}`);
+      const payRes = await fetch(
+        'https://cl-back.onrender.com/stripe/create',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!payRes.ok) {
+        throw new Error(`Paiement : ${await payRes.text()}`);
+      }
       const { paymentUrl } = await payRes.json();
       window.location.href = paymentUrl;
     } catch (e) {
