@@ -31,7 +31,15 @@ import { styled } from '@mui/material/styles';
 
 // Fonction de normalisation pour comparer les chaînes
 const normalizeString = (str) =>
-  str.trim().toLowerCase().normalize('NFD').replace(/[^\p{ASCII}]/gu, "");
+  str.trim().toLowerCase().normalize('NFD').replace(/[^\p{ASCII}]/gu, '');
+
+// Fonction pour décoder l'image (fix erreur template literal)
+const decodeImage = (img) =>
+  img
+    ? img.startsWith('data:')
+      ? img
+      : `data:image/jpeg;base64,${img}`
+    : '';
 
 // Popup des Conditions Générales de Vente
 const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
@@ -80,61 +88,55 @@ const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
 );
 
 const CommandePage = () => {
-  // Défilement vers le haut lors du chargement de la page
+  // Scroll vers le haut au chargement
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Récupération des paramètres d'URL
+  // Paramètres URL
   const { brand: brandName, reference: articleType, name: articleName } = useParams();
   const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode'); // "postal" ou "numero"
+  const mode = searchParams.get('mode');
   const navigate = useNavigate();
 
-  // États pour le produit
+  // États produit
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
+  // États formulaire, commande...
+  // Exemple: const [quantite, setQuantite] = useState(1);
+
   // État pour le popup CGV
   const [openCGV, setOpenCGV] = useState(false);
-
-  // Gestion ouverture/fermeture CGV
   const handleOpenCGV = () => setOpenCGV(true);
   const handleCloseCGV = () => setOpenCGV(false);
 
-  // Récupération du produit via best-by-name avec fallback sur closest-match
+  // Récupération du produit via best-by-name / closest-match
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        if (!decodedArticleName.trim()) {
-          throw new Error("Le nom de l'article est vide après décodage.");
+        if (!decodedArticleName.trim()) throw new Error("Nom d’article vide.");
+        const bestUrl = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        let res = await fetch(bestUrl);
+        if (res.status === 404) {
+          const fallbackUrl = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
+          res = await fetch(fallbackUrl);
+          if (!res.ok) throw new Error(`Erreur closest-match: ${await res.text()}`);
+        } else if (!res.ok) {
+          throw new Error(`Erreur best-by-name: ${await res.text()}`);
         }
-        const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-        let response = await fetch(endpointBest);
-        if (response.status === 404) {
-          console.warn("best-by-name retourne 404, utilisation du fallback closest-match.");
-          const endpointFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
-          response = await fetch(endpointFallback);
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur lors du chargement du produit via closest-match : ${errorText}`);
-          }
-        } else if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erreur lors du chargement du produit via best-by-name : ${errorText}`);
+        const prod = await res.json();
+        if (prod && prod.marque && normalizeString(prod.marque) !== normalizeString(brandName)) {
+          throw new Error('Marque non correspondante.');
         }
-        const product = await response.json();
-        if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
-          throw new Error("La marque de l'article ne correspond pas.");
-        }
-        setArticle(product);
-      } catch (err) {
-        console.error("Erreur lors de la récupération du produit :", err);
-        setErrorArticle(err.message || "Erreur inconnue");
+        setArticle(prod);
+      } catch (e) {
+        console.error('Fetch produit:', e);
+        setErrorArticle(e.message);
       } finally {
         setLoadingArticle(false);
       }
@@ -142,21 +144,18 @@ const CommandePage = () => {
     fetchProduct();
   }, [brandName, decodedArticleName]);
 
-  // ... (le reste des états et fonctions de gestion de formulaire et commande)
-
-  // Affichage pendant le chargement ou en cas d'erreur
-  if (loadingArticle) {
+  // Loading / erreur
+  if (loadingArticle) 
     return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
         <CircularProgress />
       </Box>
     );
-  }
   if (errorArticle || !article) {
     return (
       <Container sx={{ mt: 4 }}>
         <Typography variant="h4" color="error" gutterBottom>
-          {errorArticle || "Produit non disponible"}
+          {errorArticle || 'Produit non disponible'}
         </Typography>
         <Button variant="contained" onClick={() => navigate('/')}>
           Retour à l’accueil
@@ -165,15 +164,23 @@ const CommandePage = () => {
     );
   }
 
+  // Calcul prix, gestion formulaire, envoi commande...
+
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
-      {/* JSX pour le formulaire et le récapitulatif de commande */}
+      <Container maxWidth="sm">
+        <Typography variant="h5" gutterBottom>
+          Commander {article.nom}
+        </Typography>
+        {/* Formulaire commande */}
 
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
-        <Button variant="outlined" onClick={handleOpenCGV}>
-          Conditions Générales de Vente
-        </Button>
-      </Box>
+        {/* Bouton CGV */}
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Button variant="outlined" onClick={handleOpenCGV}>
+            Conditions Générales de Vente
+          </Button>
+        </Box>
+      </Container>
 
       <ConditionsGeneralesVentePopup open={openCGV} onClose={handleCloseCGV} />
     </Box>
@@ -181,4 +188,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
