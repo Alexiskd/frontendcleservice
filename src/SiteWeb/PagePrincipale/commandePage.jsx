@@ -1,280 +1,118 @@
-import React, { useState, useEffect, useCallback } from 'react';
+// src/AppAdmin/commande.jsx
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
   Container,
-  TextField,
-  Button,
-  Snackbar,
-  Alert,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Select,
-  MenuItem,
-  IconButton,
   Card,
-  Grid,
-  Divider,
+  CardContent,
+  CardMedia,
   CircularProgress,
-  Checkbox,
-  Paper,
-  Dialog,
-  DialogContent,
+  Alert,
+  Snackbar,
+  Button,
 } from '@mui/material';
-import {
-  PhotoCamera,
-  CloudUpload,
-  Person,
-  Email,
-  Phone,
-  Home,
-  LocationCity,
-  VpnKey,
-  CheckCircle,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Chemin corrigé : de PagePrincipale à src/api
-import { preloadKeysData } from '../brandsApi';
-
-const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
-  <Box sx={{ mb: 2 }}>
-    <Button variant="outlined" component="label" startIcon={<IconComponent />}>
-      {label}
-      <input type="file" hidden name={name} accept={accept} onChange={onChange} />
-    </Button>
-    {file && <Typography variant="body2" sx={{ mt: 1 }}>{file.name || file}</Typography>}
-  </Box>
-);
-
-const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
-  color: theme.palette.grey[500],
-  '&.Mui-checked': { color: theme.palette.primary.main },
-}));
-
-const SectionPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: theme.spacing(1),
-  boxShadow: theme.shadows[1],
-  marginBottom: theme.spacing(3),
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-}));
-
-const SummaryCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(2),
-  boxShadow: theme.shadows[1],
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-}));
+import { Error as ErrorIcon } from '@mui/icons-material';
 
 const CommandePage = () => {
-  useEffect(() => window.scrollTo(0, 0), []);
-
-  const { brandName, articleName } = useParams();
-  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
-  const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode');
-  const navigate = useNavigate();
-
-  const [article, setArticle] = useState(null);
-  const [loadingArticle, setLoadingArticle] = useState(true);
-  const [errorArticle, setErrorArticle] = useState(null);
-  const [preloadedKey, setPreloadedKey] = useState(null);
-
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const handleOpenImageModal = () => setOpenImageModal(true);
-  const handleCloseImageModal = () => setOpenImageModal(false);
-
-  const [userInfo, setUserInfo] = useState({
-    nom: '',
-    email: '',
-    phone: '',
-    address: '',
-    postalCode: '',
-    ville: '',
-    additionalInfo: '',
-  });
-  const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '',
-    propertyCardNumber: '',
-    frontPhoto: null,
-    backPhoto: null,
-  });
-  const [isCleAPasse, setIsCleAPasse] = useState(false);
-  const [lostCartePropriete, setLostCartePropriete] = useState(false);
-  const [idCardInfo, setIdCardInfo] = useState({
-    idCardFront: null,
-    idCardBack: null,
-    domicileJustificatif: '',
-  });
-  const [attestationPropriete, setAttestationPropriete] = useState(false);
-  const [deliveryType, setDeliveryType] = useState('');
-  const [shippingMethod, setShippingMethod] = useState('magasin');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [ordering, setOrdering] = useState(false);
-  const [openCGV, setOpenCGV] = useState(false);
-
-  const loadArticle = useCallback(async () => {
-    setLoadingArticle(true);
-    setErrorArticle(null);
-    try {
-      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
-        decodedArticleName
-      )}`;
-      const res = await fetch(endpoint);
-      if (!res.ok) {
-        if (res.status === 404) throw new Error('Article non trouvé.');
-        throw new Error("Erreur lors du chargement de l'article.");
-      }
-      const text = await res.text();
-      if (!text) throw new Error('Réponse vide du serveur.');
-      const data = JSON.parse(text);
-      if (
-        data.manufacturer?.toLowerCase() !== brandName.toLowerCase()
-      ) throw new Error("La marque ne correspond pas.");
-      setArticle(data);
-    } catch (e) {
-      setErrorArticle(e.message);
-    } finally {
-      setLoadingArticle(false);
-    }
-  }, [brandName, decodedArticleName]);
 
   useEffect(() => {
-    loadArticle();
-  }, [loadArticle]);
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('https://cl-back.onrender.com/commande/all');
+        if (!res.ok) throw new Error('Erreur lors du chargement des commandes');
+        const data = await res.json();
+        setOrders(data);
+      } catch (err) {
+        setError(err.message);
+        setSnackbarOpen(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
-  useEffect(() => {
-    if (brandName && article) {
-      preloadKeysData(brandName)
-        .then((keys) => {
-          const found = keys.find(
-            (k) =>
-              k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
-          );
-          if (found) setPreloadedKey(found);
-        })
-        .catch(console.error);
-    }
-  }, [brandName, article]);
+  // Fonction pour décoder une image Base64 ou renvoyer directement si déjà data URI
+  const decodeImage = (img) =>
+    img
+      ? img.startsWith('data:')
+        ? img
+        : `data:image/jpeg;base64,${img}`
+      : '';
 
-  const productDetails = preloadedKey || article;
-  const basePrice = productDetails
-    ? isCleAPasse && productDetails.prixCleAPasse
-      ? parseFloat(productDetails.prixCleAPasse)
-      : mode === 'postal'
-      ? parseFloat(productDetails.prixSansCartePropriete)
-      : parseFloat(productDetails.prix)
-    : 0;
-  const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-  const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
-
-  const validateForm = () => {
-    // logique de validation...
-    return true;
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
-  const handleOrder = async () => {
-    if (!termsAccepted) {
-      setSnackbarMessage('Veuillez accepter les CGV.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
-    }
-    if (!validateForm()) {
-      setSnackbarMessage('Champs obligatoires manquants.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
-    }
-    setOrdering(true);
-    try {
-      const fd = new FormData();
-      const cmdRes = await fetch(
-        'https://cl-back.onrender.com/commande/create',
-        { method: 'POST', body: fd }
-      );
-      if (!cmdRes.ok) {
-        throw new Error(`Création commande : ${await cmdRes.text()}`);
-      }
-      const { numeroCommande } = await cmdRes.json();
-      const payload = {
-        amount: Math.round(totalPrice * 100),
-        currency: 'eur',
-        description: `Paiement ${userInfo.nom}`,
-        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
-      };
-      const payRes = await fetch(
-        'https://cl-back.onrender.com/stripe/create',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!payRes.ok) {
-        throw new Error(`Paiement : ${await payRes.text()}`);
-      }
-      const { paymentUrl } = await payRes.json();
-      window.location.href = paymentUrl;
-    } catch (e) {
-      setSnackbarMessage(e.message);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      setOrdering(false);
-    }
-  };
-
-  if (loadingArticle) {
+  if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <CircularProgress />
       </Box>
     );
   }
 
-  if (errorArticle) {
+  if (error) {
     return (
-      <Box sx={{ minHeight: '100vh', p: 4, textAlign: 'center' }}>
-        <ErrorIcon color="error" sx={{ fontSize: 48 }} />
-        <Typography variant="h6" color="error">{errorArticle}</Typography>
-        <Button onClick={loadArticle}>Réessayer</Button>
-      </Box>
+      <Container maxWidth="sm" sx={{ mt: 4 }}>
+        <Alert severity="error" icon={<ErrorIcon />}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 2 }}>
+          Réessayer
+        </Button>
+      </Container>
     );
   }
 
   return (
-    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="lg">
-        {/* ... votre formulaire et récapitulatif ici ... */}
-      </Container>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Tableau de bord des Commandes
+      </Typography>
 
-      {/* Modal d’image */}
-      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
-        <DialogContent sx={{ p: 0 }}>
-          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
-        </DialogContent>
-      </Dialog>
+      {orders.length === 0 ? (
+        <Typography>Aucune commande disponible.</Typography>
+      ) : (
+        orders.map((order) => (
+          <Card key={order.id} sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6">Commande #{order.numeroCommande}</Typography>
+              <Typography>Client : {order.nomClient}</Typography>
+              <Typography>Statut : {order.statut}</Typography>
+              {order.imagePreuve && (
+                <CardMedia
+                  component="img"
+                  src={decodeImage(order.imagePreuve)}
+                  alt="Preuve de paiement"
+                  sx={{ width: 200, height: 'auto', mt: 2, borderRadius: 1 }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        ))
+      )}
 
-      {/* Notification */}
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
-        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="error" icon={<ErrorIcon />}>
+          {error}
+        </Alert>
       </Snackbar>
-
-      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
-    </Box>
+    </Container>
   );
 };
 
 export default CommandePage;
+
+
+
