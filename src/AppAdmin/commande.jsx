@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import io from 'socket.io-client';
 import {
   Container,
@@ -162,7 +162,7 @@ const Commande = () => {
 
     // Date d'enregistrement
     const dateEnregistrement = commande.createdAt
-      ? new Date(commande.createdAt).toLocaleDateString()
+      ? new Date(commande.createdAt).toLocaleString('fr-FR')
       : 'Non renseignée';
     doc.setFontSize(9).setTextColor(27, 94, 32);
     doc.text(`Date de commande : ${dateEnregistrement}`, m, m + 45);
@@ -311,7 +311,7 @@ const Commande = () => {
                   >
                     Date de commande :{' '}
                     {c.createdAt
-                      ? new Date(c.createdAt).toLocaleDateString()
+                      ? new Date(c.createdAt).toLocaleString('fr-FR')
                       : 'Non renseignée'}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
@@ -356,13 +356,13 @@ const Commande = () => {
         PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}
       >
         <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>
-          Confirmer l'annulation
+          Confirmer l\'annulation
         </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Raison de l'annulation"
+            label="Raison de l\'annulation"
             fullWidth
             variant="outlined"
             value={cancellationReason}
@@ -380,7 +380,7 @@ const Commande = () => {
             color="error"
             disabled={!cancellationReason.trim()}
           >
-            Confirmer l'annulation
+            Confirmer l\'annulation
           </Button>
         </DialogActions>
       </Dialog>
