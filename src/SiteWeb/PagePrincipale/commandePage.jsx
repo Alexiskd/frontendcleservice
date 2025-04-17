@@ -1,5 +1,4 @@
-
-// src/AppAdmin/commande.jsx
+// src/AppAdmin/CommandePage.jsx
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -13,7 +12,7 @@ import {
   Snackbar,
   Button,
 } from '@mui/material';
-import { Error as ErrorIcon } from '@mui/icons-material';
+import { CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
 
 const CommandePage = () => {
   const [orders, setOrders] = useState([]);
@@ -76,7 +75,6 @@ const CommandePage = () => {
       <Typography variant="h4" gutterBottom>
         Tableau de bord des Commandes
       </Typography>
-
       {orders.length === 0 ? (
         <Typography>Aucune commande disponible.</Typography>
       ) : (
@@ -98,14 +96,17 @@ const CommandePage = () => {
           </Card>
         ))
       )}
-
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity="error" icon={<ErrorIcon />}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="error"
+          iconMapping={{ error: <ErrorIcon fontSize="inherit" /> }}
+        >
           {error}
         </Alert>
       </Snackbar>
@@ -114,3 +115,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
