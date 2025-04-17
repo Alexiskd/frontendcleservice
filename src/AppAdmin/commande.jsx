@@ -251,10 +251,8 @@ const Commande = () => {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && sorted.length === 0 && !error && (  
-        <Typography align="center">
-          Aucune commande payée trouvée.
-        </Typography>
+      {!loading && sorted.length === 0 && !error && (
+        <Typography align="center">Aucune commande payée trouvée.</Typography>
       )}
 
       <Grid container spacing={3}>
