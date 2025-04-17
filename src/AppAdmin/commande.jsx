@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
   Container,
@@ -45,7 +45,7 @@ const Commande = () => {
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const decodeImage = (img) =>
-    img ? (img.startsWith('data:') ? img : data:image/jpeg;base64,${img}) : '';
+    img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
   // Récupère les commandes payées
   const fetchCommandes = async () => {
@@ -54,7 +54,7 @@ const Commande = () => {
       const response = await fetch('https://cl-back.onrender.com/commande/paid', {
         headers: { Accept: 'application/json' },
       });
-      if (!response.ok) throw new Error(Erreur (status ${response.status}));
+      if (!response.ok) throw new Error(`Erreur (status ${response.status})`);
       const json = await response.json();
       setCommandes(Array.isArray(json.data) ? json.data : []);
       setError(null);
@@ -87,7 +87,7 @@ const Commande = () => {
     }
     try {
       const resp = await fetch(
-        https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande},
+        `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
         { method: 'DELETE', headers: { Accept: 'application/json' } }
       );
       const data = await resp.json();
@@ -117,7 +117,7 @@ const Commande = () => {
 
   // Ouvre un PDF dans un nouvel onglet
   const handlePdfDisplay = (path) =>
-    window.open(https://cl-back.onrender.com/${path.replace(/\\/g, '/')}, '_blank');
+    window.open(`https://cl-back.onrender.com/${path.replace(/\\/g, '/')}`, '_blank');
 
   // Génère la facture PDF
   const generateInvoiceDoc = (commande) => {
@@ -165,7 +165,7 @@ const Commande = () => {
       ? new Date(commande.createdAt).toLocaleDateString()
       : 'Non renseignée';
     doc.setFontSize(9).setTextColor(27, 94, 32);
-    doc.text(Date de commande : ${dateEnregistrement}, m, m + 45);
+    doc.text(`Date de commande : ${dateEnregistrement}`, m, m + 45);
 
     // Détails de la commande
     let y = m + 55;
@@ -215,7 +215,7 @@ const Commande = () => {
   const showInvoice = (c) =>
     window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
   const downloadInvoice = (c) =>
-    generateInvoiceDoc(c).save(facture_${c.numeroCommande}.pdf);
+    generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
   const printInvoice = (c) => {
     const d = generateInvoiceDoc(c);
     d.autoPrint();
@@ -421,7 +421,7 @@ const Commande = () => {
               sx={{
                 maxWidth: '100%',
                 maxHeight: '80vh',
-                transform: scale(${zoom}),
+                transform: `scale(${zoom})`,
                 transition: 'transform 0.2s',
                 transformOrigin: 'center',
                 borderRadius: 2,
