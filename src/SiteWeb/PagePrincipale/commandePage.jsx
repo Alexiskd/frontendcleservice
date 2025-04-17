@@ -46,7 +46,7 @@ import { styled } from '@mui/material/styles';
 
 // Utility pour normaliser les chaînes
 const normalizeString = (str) =>
-  str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+  str.trim().toLowerCase().normalize('NFD').replace(/[̀-\u036f]/g, "");
 
 // Composants auxiliaires
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
@@ -157,14 +157,8 @@ const CommandePage = () => {
 
   // États formulaire
   const [userInfo, setUserInfo] = useState({
-    clientType: 'particulier',
-    nom: '',
-    email: '',
-    phone: '',
-    address: '',
-    postalCode: '',
-    ville: '',
-    additionalInfo: '',
+    clientType: 'particulier', nom: '', email: '', phone: '',
+    address: '', postalCode: '', ville: '', additionalInfo: '',
   });
   const [keyInfo, setKeyInfo] = useState({ propertyCardNumber: '', frontPhoto: null, backPhoto: null });
   const [isCleAPasse, setIsCleAPasse] = useState(false);
@@ -319,7 +313,7 @@ const CommandePage = () => {
                     : 'Numéro — pas besoin d’envoyer la clé.'}
                 </Typography>
               </Box>
-              {/* ... votre formulaire ici ... */}
+              {/* ... le formulaire ... */}
             </SectionPaper>
           </Grid>
 
@@ -372,8 +366,7 @@ const CommandePage = () => {
 
       <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert severity={snackbarSeverity} onClose={handleCloseSnackbar} iconMapping={{
-          success: <CheckCircle />,
-          error: <ErrorIcon />,
+          success: <CheckCircle />, error: <ErrorIcon />
         }}>
           {snackbarMessage}
         </Alert>
