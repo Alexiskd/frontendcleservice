@@ -29,11 +29,11 @@ const CommandePage = () => {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
 
-        // Essai best-by-name
+        // Essai sur l'endpoint best-by-name
         const urlBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let res = await fetch(urlBest);
 
-        // Si pas trouvé (404), fallback closest-match
+        // Si 404 (pas trouvé), bascule sur closest-match
         if (res.status === 404) {
           const urlFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
           res = await fetch(urlFallback);
