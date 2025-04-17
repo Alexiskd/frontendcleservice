@@ -44,11 +44,11 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
-// Normalisation pour comparaison de chaînes
+// Utility pour normaliser les chaînes
 const normalizeString = (str) =>
   str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
-// Composant pour upload aligné
+// Composants auxiliaires
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
     <Typography variant="body2" sx={{ minWidth: 150 }}>{label}</Typography>
@@ -62,9 +62,7 @@ const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent,
       <input type="file" name={name} accept={accept} hidden onChange={onChange} />
       <IconComponent sx={{ color: '#1B5E20' }} />
     </IconButton>
-    {file && <Typography variant="caption" color="success.main">
-      {typeof file === 'string' ? file : file.name}
-    </Typography>}
+    {file && <Typography variant="caption" color="success.main">{typeof file === 'string' ? file : file.name}</Typography>}
   </Box>
 );
 
@@ -120,7 +118,7 @@ const CommandePage = () => {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
 
-  // Fonction corrigée pour décoder l'image
+  // Fonction corrigée : backticks autour du data URI
   const decodeImage = (img) =>
     img
       ? img.startsWith('data:')
@@ -132,12 +130,10 @@ const CommandePage = () => {
     const fetchProduct = async () => {
       try {
         setLoadingArticle(true);
-        if (!decodedArticleName.trim()) throw new Error("Nom vide après décodage.");
-        // essai best-by-name
+        if (!decodedArticleName.trim()) throw new Error("Nom vide.");
         const bestUrl = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let res = await fetch(bestUrl);
         if (res.status === 404) {
-          // fallback closest-match
           const fallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
           res = await fetch(fallback);
           if (!res.ok) throw new Error(`fallback échoué : ${await res.text()}`);
@@ -159,7 +155,7 @@ const CommandePage = () => {
     fetchProduct();
   }, [brandName, decodedArticleName]);
 
-  // États formulaire et commande
+  // États formulaire
   const [userInfo, setUserInfo] = useState({
     clientType: 'particulier',
     nom: '',
@@ -170,18 +166,10 @@ const CommandePage = () => {
     ville: '',
     additionalInfo: '',
   });
-  const [keyInfo, setKeyInfo] = useState({
-    propertyCardNumber: '',
-    frontPhoto: null,
-    backPhoto: null,
-  });
+  const [keyInfo, setKeyInfo] = useState({ propertyCardNumber: '', frontPhoto: null, backPhoto: null });
   const [isCleAPasse, setIsCleAPasse] = useState(false);
   const [lostCartePropriete, setLostCartePropriete] = useState(false);
-  const [idCardInfo, setIdCardInfo] = useState({
-    idCardFront: null,
-    idCardBack: null,
-    domicileJustificatif: '',
-  });
+  const [idCardInfo, setIdCardInfo] = useState({ idCardFront: null, idCardBack: null, domicileJustificatif: '' });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
   const [deliveryType, setDeliveryType] = useState('');
   const [shippingMethod, setShippingMethod] = useState('magasin');
@@ -331,9 +319,7 @@ const CommandePage = () => {
                     : 'Numéro — pas besoin d’envoyer la clé.'}
                 </Typography>
               </Box>
-
-              {/* Le reste du formulaire se positionne ici... */}
-
+              {/* ... votre formulaire ici ... */}
             </SectionPaper>
           </Grid>
 
