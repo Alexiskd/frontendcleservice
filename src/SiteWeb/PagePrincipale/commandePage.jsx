@@ -11,7 +11,7 @@ const CommandePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fonction pour décoder une image Base64
+  // Décode une image Base64 ou renvoie directement si déjà Data URI
   const decodeImage = (img) =>
     img
       ? img.startsWith('data:')
@@ -29,11 +29,11 @@ const CommandePage = () => {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
 
-        // Essai de récupération via best-by-name
+        // Essai best-by-name
         const urlBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let res = await fetch(urlBest);
 
-        // Si 404, fallback sur closest-match
+        // Si pas trouvé, fallback closest-match
         if (res.status === 404) {
           const urlFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
           res = await fetch(urlFallback);
@@ -46,7 +46,6 @@ const CommandePage = () => {
 
         const data = await res.json();
 
-        // Vérifier la marque
         if (data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
