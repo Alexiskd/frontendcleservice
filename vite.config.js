@@ -6,13 +6,11 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+      // now you can do import { ... } from '@api/brandsApi'
+      '@api': path.resolve(__dirname, 'src/api'),
+      // (optional) also make @/ point at src/
+      '@': path.resolve(__dirname, 'src'),
+    },
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
-  preview: {
-    allowedHosts: [
-      'frontendcleservice.onrender.com',
-      'www.cleservice.com'
-    ]
-  }
 });
