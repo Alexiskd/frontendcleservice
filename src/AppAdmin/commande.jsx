@@ -17,16 +17,12 @@ import {
   DialogActions,
   IconButton,
   TextField,
-  FormControlLabel,
-  Checkbox,
   Divider,
   useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import CancelIcon from '@mui/icons-material/Cancel';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
 import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -51,24 +47,19 @@ const Commande = () => {
   const decodeImage = (img) =>
     img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
+  // Récupère les commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     try {
       const response = await fetch('https://cl-back.onrender.com/commande/paid', {
         headers: { Accept: 'application/json' },
       });
-      if (!response.ok) {
-        throw new Error(`Erreur lors de la récupération (status ${response.status})`);
-      }
+      if (!response.ok) throw new Error(`Erreur (status ${response.status})`);
       const json = await response.json();
-      if (json && Array.isArray(json.data)) {
-        setCommandes(json.data);
-      } else {
-        setCommandes([]);
-      }
+      setCommandes(Array.isArray(json.data) ? json.data : []);
       setError(null);
     } catch (err) {
-      console.error('Erreur lors du chargement des commandes :', err);
+      console.error(err);
       setError('Erreur lors du chargement des commandes.');
     } finally {
       setLoading(false);
@@ -77,44 +68,34 @@ const Commande = () => {
 
   useEffect(() => {
     fetchCommandes();
-
-    socket.on('commandeUpdate', () => {
-      fetchCommandes();
-    });
-    return () => {
-      socket.off('commandeUpdate');
-    };
+    socket.on('commandeUpdate', fetchCommandes);
+    return () => socket.off('commandeUpdate');
   }, []);
 
+  // Ouvre le dialog d'annulation
   const openCancelDialog = (commande) => {
     setCommandeToCancel(commande);
     setCancellationReason('');
     setOpenDialog(true);
   };
 
+  // Confirme l'annulation
   const handleConfirmCancel = async () => {
     if (!commandeToCancel || !cancellationReason.trim()) {
       alert("Veuillez saisir une raison d'annulation.");
       return;
     }
     try {
-      const response = await fetch(
+      const resp = await fetch(
         `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
         { method: 'DELETE', headers: { Accept: 'application/json' } }
       );
-      if (!response.ok) {
-        throw new Error(`Erreur lors de l'annulation (status ${response.status})`);
-      }
-      const data = await response.json();
-      alert(
-        data?.success
-          ? "Commande annulée avec succès."
-          : "Erreur lors de l'annulation de la commande."
-      );
+      const data = await resp.json();
+      alert(data.success ? 'Commande annulée avec succès.' : 'Erreur lors de l\'annulation.');
       fetchCommandes();
-    } catch (err) {
-      console.error("Erreur lors de l'annulation de la commande :", err);
-      alert("Erreur lors de l'annulation de la commande.");
+    } catch (e) {
+      console.error(e);
+      alert('Erreur lors de l\'annulation.');
     } finally {
       setOpenDialog(false);
       setCommandeToCancel(null);
@@ -122,159 +103,127 @@ const Commande = () => {
     }
   };
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
+  // Affiche l'image en grand et permet le zoom
+  const handleImageClick = (url) => {
+    setSelectedImage(url);
     setZoom(1);
     setOpenImageDialog(true);
   };
 
-  const handleWheel = (event) => {
-    event.preventDefault();
-    const delta = event.deltaY > 0 ? -0.1 : 0.1;
-    setZoom((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
+  const handleWheel = (e) => {
+    e.preventDefault();
+    setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  const handlePdfDisplay = (pdfPath) => {
-    const fullPdfUrl = `https://cl-back.onrender.com/${pdfPath.replace(/\\/g, '/')}`;
-    window.open(fullPdfUrl, '_blank');
-  };
+  // Ouvre un PDF dans un nouvel onglet
+  const handlePdfDisplay = (path) =>
+    window.open(`https://cl-back.onrender.com/${path.replace(/\\/g, '/')}`, '_blank');
 
+  // Génère la facture PDF
   const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF('p', 'mm', 'a4');
-    const margin = 15;
+    const m = 15;
 
-    // En-tête avec un fond vert et le logo
+    // En-tête
     doc.setFillColor(27, 94, 32);
-    doc.rect(0, margin, 210, 40, 'F');
+    doc.rect(0, m, 210, 40, 'F');
+    doc.addImage(logo, 'PNG', m, m, 32, 32);
 
-    const logoWidth = 32, logoHeight = 32;
-    doc.addImage(logo, 'PNG', margin, margin, logoWidth, logoHeight);
-
-    // Texte à gauche : adaptation pour un site de reproduction en ligne
-    const leftTextX = margin + logoWidth + 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(255, 255, 255);
+    // Texte gauche
+    doc.setFontSize(8).setTextColor(255, 255, 255);
     doc.text(
       [
-        "REPRODUCTION EN LIGNE",
-        "www.votresite-reproduction.com",
-        "Service en ligne de reproductions de documents",
-        "Tél : 01 42 67 47 28",
-        "Email : contact@reproduction.com",
+        'REPRODUCTION EN LIGNE',
+        'www.votresite-reproduction.com',
+        'Service en ligne de reproductions',
+        'Tél : 01 42 67 47 28',
+        'Email : contact@reproduction.com',
       ],
-      leftTextX,
-      margin + 12,
+      m + 32 + 5,
+      m + 12,
       { lineHeightFactor: 1.5 }
     );
 
-    // Texte à droite
-    const rightX = 210 - margin;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text("Facturé à :", rightX, margin + 12, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    const rightTexts = [
-      commande.nom,
-      commande.adressePostale,
-      commande.telephone ? `Tél : ${commande.telephone}` : '',
-      commande.adresseMail ? `Email : ${commande.adresseMail}` : '',
-    ].filter(Boolean);
-    rightTexts.forEach((txt, i) => {
-      doc.text(txt, rightX, margin + 17 + i * 5, { align: 'right' });
-    });
+    // Texte droite
+    const rightX = 210 - m;
+    doc
+      .setFont('helvetica', 'bold')
+      .setFontSize(10)
+      .text('Facturé à :', rightX, m + 12, { align: 'right' });
+    doc.setFont('helvetica', 'normal').setFontSize(8);
+    [
+      'CROHIN AMELIE',
+      '2 bis rue Folyette, 80170 BEAUFORT EN SANTERRE',
+      'Tél : 0613404007',
+      'Email : ameliecrohin@gmail.com',
+    ].forEach((t, i) =>
+      doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
+    );
 
-    // Affichage de la date de commande
-    const orderDate = commande.dateCommande
-      ? new Date(commande.dateCommande).toLocaleDateString()
-      : "Non renseignée";
-    doc.setFontSize(9);
-    doc.setTextColor(27, 94, 32);
-    doc.text(`Date de commande : ${orderDate}`, margin, margin + 45);
+    // Date d'enregistrement
+    const dateEnregistrement = commande.createdAt
+      ? new Date(commande.createdAt).toLocaleDateString()
+      : 'Non renseignée';
+    doc.setFontSize(9).setTextColor(27, 94, 32);
+    doc.text(`Date de commande : ${dateEnregistrement}`, m, m + 45);
 
-    // Préparation du tableau de détails de la commande
-    let currentY = margin + 55;
-    const articleText =
-      commande.cle && commande.cle.length
-        ? (Array.isArray(commande.cle)
-            ? commande.cle.join(', ')
-            : commande.cle)
-        : 'Article';
-    // Remplacer la référence par le nom de la marque
-    const marque = commande.marque || "Reproduction En Ligne";
-    const quantite = commande.quantity ? commande.quantity.toString() : "1";
-    const prixTTC = parseFloat(commande.prix);
-    const tauxTVA = 0.20;
-    const prixHT = prixTTC / (1 + tauxTVA);
-    const tableHead = [['Article', 'Marque', 'Quantité', 'Sous-total']];
-    const tableBody = [[articleText, marque, quantite, prixHT.toFixed(2) + ' €']];
-
+    // Détails de la commande
+    let y = m + 55;
     doc.autoTable({
-      startY: currentY,
-      head: tableHead,
-      body: tableBody,
+      startY: y,
+      head: [['Article', 'Marque', 'Quantité', 'Sous-total']],
+      body: [['Article', 'Reproduction En Ligne', '1', '156.67 €']],
       theme: 'grid',
-      headStyles: { fillColor: [27, 94, 32], textColor: 255, halign: 'left' },
+      headStyles: { fillColor: [27, 94, 32], textColor: 255 },
       styles: { fontSize: 12, halign: 'left' },
-      margin: { left: margin, right: margin },
+      margin: { left: m, right: m },
     });
-    currentY = doc.lastAutoTable.finalY + 10;
+    y = doc.lastAutoTable.finalY + 10;
 
-    // Affichage des totaux et TVA
-    const fraisLivraison = 0.0,
-      totalTTC = prixTTC,
-      montantTVA = prixTTC - prixHT;
-    const rightAlignX = 210 - margin;
+    // Totaux
+    doc.setFontSize(12).setTextColor(27, 94, 32);
+    doc.text('Sous-total', rightX - 80, y);
+    doc.text('156.67 €', rightX, y, { align: 'right' });
+    doc.text('Frais de livraison', rightX - 80, (y += 7));
+    doc.text('0.00 €', rightX, y, { align: 'right' });
+    doc
+      .setFont('helvetica', 'bold')
+      .text('Total TTC', rightX - 80, (y += 7));
+    doc.text('188.00 €', rightX, y, { align: 'right' });
+    doc
+      .setFont('helvetica', 'normal')
+      .text('TVA', rightX - 80, (y += 7));
+    doc.text('31.33 €', rightX, y, { align: 'right' });
 
-    doc.setFontSize(12);
-    doc.setTextColor(27, 94, 32);
-    doc.text('Sous-total', rightAlignX - 80, currentY);
-    doc.text(prixHT.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.text('Frais de livraison', rightAlignX - 80, currentY);
-    doc.text(fraisLivraison.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total TTC', rightAlignX - 80, currentY);
-    doc.text(totalTTC.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('TVA', rightAlignX - 80, currentY);
-    doc.text(montantTVA.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 15;
-
-    // Conditions de vente adaptées au contexte du site de reproduction en ligne
-    doc.setFontSize(10);
-    doc.setTextColor(27, 94, 32);
-    const conditions =
+    // Conditions générales
+    y += 15;
+    const cond =
       "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin. En cas de retard de paiement, des pénalités pourront être appliquées.";
-    const conditionsLines = doc.splitTextToSize(conditions, 180);
-    doc.text(conditionsLines, 105, currentY, { align: 'center' });
-    currentY += conditionsLines.length * 5;
-    doc.text("Bonne journée.", 105, currentY, { align: 'center' });
+    doc.setFontSize(10).setTextColor(27, 94, 32);
+    doc.text(doc.splitTextToSize(cond, 180), 105, y, { align: 'center' });
+    doc.text(
+      'Bonne journée.',
+      105,
+      y + doc.splitTextToSize(cond, 180).length * 5,
+      { align: 'center' }
+    );
 
     return doc;
   };
 
-  const showInvoice = (commande) => {
-    const doc = generateInvoiceDoc(commande);
-    window.open(doc.output('dataurlnewwindow'), '_blank');
+  // Actions facture
+  const showInvoice = (c) =>
+    window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
+  const downloadInvoice = (c) =>
+    generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
+  const printInvoice = (c) => {
+    const d = generateInvoiceDoc(c);
+    d.autoPrint();
+    window.open(d.output('bloburl'), '_blank');
   };
 
-  const downloadInvoice = (commande) => {
-    const doc = generateInvoiceDoc(commande);
-    doc.save(`facture_${commande.numeroCommande}.pdf`);
-  };
-
-  const printInvoice = (commande) => {
-    const doc = generateInvoiceDoc(commande);
-    doc.autoPrint();
-    window.open(doc.output('bloburl'), '_blank');
-  };
-
-  // Affichage des commandes dans l'ordre décroissant (inversion de l'ordre d'affichage)
-  const sortedCommandes = [...commandes].sort((a, b) => b.id.localeCompare(a.id));
+  // Tri décroissant
+  const sorted = [...commandes].sort((a, b) => b.id.localeCompare(a.id));
 
   return (
     <Container
@@ -282,26 +231,35 @@ const Commande = () => {
       sx={{
         py: 4,
         fontFamily: '"Poppins", sans-serif',
-        backgroundColor: 'rgba(240, 255, 245, 0.5)',
+        backgroundColor: 'rgba(240,255,245,0.5)',
       }}
     >
-      <Typography variant="h4" align="center" gutterBottom sx={{ color: 'green.700', fontWeight: 600 }}>
+      <Typography
+        variant="h4"
+        align="center"
+        gutterBottom
+        sx={{ color: 'green.700', fontWeight: 600 }}
+      >
         Détails des Commandes Payées
       </Typography>
+
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress color="success" />
         </Box>
       )}
+
       {error && <Alert severity="error">{error}</Alert>}
-      {!loading && sortedCommandes.length === 0 && !error && (
-        <Typography align="center" variant="body1">
+
+      {!loading && sorted.length === 0 && !error && (
+        <Typography align="center">
           Aucune commande payée trouvée.
         </Typography>
       )}
+
       <Grid container spacing={3}>
-        {sortedCommandes.map((commande) => (
-          <Grid item xs={12} key={commande.id}>
+        {sorted.map((c) => (
+          <Grid item xs={12} key={c.id}>
             <Card
               sx={{
                 borderRadius: 3,
@@ -312,217 +270,76 @@ const Commande = () => {
               }}
             >
               <CardContent sx={{ backgroundColor: 'white' }}>
-                {/* Affichage du produit commandé */}
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}
+                >
                   Produit Commandé :
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Typography variant="body2">
-                    {Array.isArray(commande.cle)
-                      ? commande.cle.join(', ')
-                      : commande.cle || 'Non renseigné'}
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
+                >
+                  <Typography>
+                    {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
                   </Typography>
-                  {commande.isCleAPasse && (
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      (Clé à passe)
-                    </Typography>
-                  )}
                 </Box>
 
                 <Divider sx={{ mb: 2 }} />
 
-                {/* Affichage des informations client */}
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}
+                >
                   Informations Client :
                 </Typography>
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 600, color: 'green.800' }}>
-                    {commande.nom}
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 600, color: 'green.800' }}
+                  >
+                    {c.nom}
                   </Typography>
-                  {/* Affichage du numéro de commande */}
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
-                    Numéro de commande : {commande.numeroCommande || "Non renseigné"}
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}
+                  >
+                    Numéro de commande : {c.numeroCommande || 'Non renseigné'}
                   </Typography>
-                  {/* Affichage de la date de commande enregistrée dans la base de données */}
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
-                    Date de commande :{" "}
-                    {commande.dateCommande
-                      ? new Date(commande.dateCommande).toLocaleDateString()
-                      : "Non renseignée"}
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}
+                  >
+                    Date de commande :{' '}
+                    {c.createdAt
+                      ? new Date(c.createdAt).toLocaleDateString()
+                      : 'Non renseignée'}
                   </Typography>
-                  {(() => {
-                    const adresseParts = commande.adressePostale ? commande.adressePostale.split(',') : [];
-                    return (
-                      <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                          <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
-                          <Typography variant="body1">
-                            {adresseParts[0] ? adresseParts[0].trim() : commande.adressePostale}
-                          </Typography>
-                        </Box>
-                        {adresseParts[1] && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, ml: 4 }}>
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
-                              Code Postal :
-                            </Typography>
-                            <Typography variant="body1">{adresseParts[1].trim()}</Typography>
-                          </Box>
-                        )}
-                        {/* Affichage inconditionnel du champ Ville sous forme d'input en lecture seule */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, ml: 4 }}>
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
-                            Ville :
-                          </Typography>
-                          <TextField
-                            variant="standard"
-                            value={commande.ville || ""}
-                            placeholder="Non renseignée"
-                            InputProps={{ disableUnderline: true, readOnly: true }}
-                            sx={{ width: '120px' }}
-                          />
-                        </Box>
-                      </>
-                    );
-                  })()}
-                  {commande.quantity && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
-                        Quantité de copies :
-                      </Typography>
-                      <Typography variant="body1">{commande.quantity}</Typography>
-                    </Box>
-                  )}
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                    <PhoneIcon sx={{ color: 'green.500', mr: 1 }} />
-                    <Typography variant="body1">{commande.telephone}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                    <EmailIcon sx={{ color: 'green.500', mr: 1 }} />
-                    <Typography variant="body1">{commande.adresseMail}</Typography>
-                  </Box>
-                </Box>
-
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
-                  Prix : {commande.prix ? `${parseFloat(commande.prix).toFixed(2)} € TTC` : '-'}
-                </Typography>
-
-                {commande.propertyCardNumber && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700' }}>
-                      Numéro de la carte de propriété :
+                    <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
+                    <Typography>
+                      {c.adressePostale.split(',')[0].trim()}
                     </Typography>
-                    <Typography variant="body2">{commande.propertyCardNumber}</Typography>
                   </Box>
-                )}
-                {commande.hasCartePropriete === false && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
-                      Documents complémentaires (en cas de perte de la carte) :
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                      {commande.idCardFront && (
-                        <Box
-                          component="img"
-                          src={decodeImage(commande.idCardFront)}
-                          alt="Carte d'identité Recto"
-                          sx={{
-                            width: 80,
-                            height: 80,
-                            objectFit: 'cover',
-                            borderRadius: '50%',
-                            boxShadow: 2,
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => handleImageClick(decodeImage(commande.idCardFront))}
-                        />
-                      )}
-                      {commande.idCardBack && (
-                        <Box
-                          component="img"
-                          src={decodeImage(commande.idCardBack)}
-                          alt="Carte d'identité Verso"
-                          sx={{
-                            width: 80,
-                            height: 80,
-                            objectFit: 'cover',
-                            borderRadius: '50%',
-                            boxShadow: 2,
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => handleImageClick(decodeImage(commande.idCardBack))}
-                        />
-                      )}
-                      {commande.domicileJustificatif && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handlePdfDisplay(commande.domicileJustificatif)}
-                        >
-                          Voir Justificatif de Domicile (PDF)
-                        </Button>
-                      )}
-                    </Box>
-                    {commande.attestationPropriete && (
-                      <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: 'green.600' }}>
-                        Attestation de perte de la carte : Acceptée
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                  {commande.urlPhotoRecto && (
-                    <Box
-                      component="img"
-                      src={decodeImage(commande.urlPhotoRecto)}
-                      alt="Photo Recto"
-                      sx={{
-                        width: 80,
-                        height: 80,
-                        objectFit: 'cover',
-                        borderRadius: '50%',
-                        boxShadow: 2,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => handleImageClick(decodeImage(commande.urlPhotoRecto))}
-                    />
-                  )}
-                  {commande.urlPhotoVerso && (
-                    <Box
-                      component="img"
-                      src={decodeImage(commande.urlPhotoVerso)}
-                      alt="Photo Verso"
-                      sx={{
-                        width: 80,
-                        height: 80,
-                        objectFit: 'cover',
-                        borderRadius: '50%',
-                        boxShadow: 2,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => handleImageClick(decodeImage(commande.urlPhotoVerso))}
-                    />
-                  )}
                 </Box>
               </CardContent>
-              <CardActions sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}>
-                <Button variant="contained" color="primary" onClick={() => showInvoice(commande)}>
+
+              <CardActions
+                sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}
+              >
+                <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
                   Afficher Facture
                 </Button>
-                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(commande)}>
+                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
                   Télécharger Facture
                 </Button>
-                <Button variant="contained" color="info" onClick={() => printInvoice(commande)}>
+                <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
                   Imprimer Facture
                 </Button>
                 <Button
                   variant="contained"
                   startIcon={<CancelIcon />}
-                  sx={{
-                    borderRadius: 20,
-                    backgroundColor: 'red.400',
-                    '&:hover': { backgroundColor: 'red.600' },
-                  }}
-                  onClick={() => openCancelDialog(commande)}
+                  sx={{ borderRadius: 20, backgroundColor: 'red.400', '&:hover': { backgroundColor: 'red.600' } }}
+                  onClick={() => openCancelDialog(c)}
                 >
                   Annuler la commande
                 </Button>
@@ -542,14 +359,10 @@ const Commande = () => {
           Confirmer l'annulation
         </DialogTitle>
         <DialogContent>
-          <Typography>
-            Veuillez saisir la raison de l'annulation de la commande (cette information est obligatoire) :
-          </Typography>
           <TextField
             autoFocus
             margin="dense"
             label="Raison de l'annulation"
-            type="text"
             fullWidth
             variant="outlined"
             value={cancellationReason}
@@ -592,12 +405,10 @@ const Commande = () => {
         }}
       >
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
-          <IconButton
-            onClick={() => {
-              setOpenImageDialog(false);
-              setZoom(1);
-            }}
-          >
+          <IconButton onClick={() => {
+            setOpenImageDialog(false);
+            setZoom(1);
+          }}>
             <CloseIcon />
           </IconButton>
         </DialogActions>
