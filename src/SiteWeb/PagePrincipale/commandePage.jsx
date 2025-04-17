@@ -10,10 +10,13 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  FormControl,
   Select,
   MenuItem,
   IconButton,
+  InputAdornment,
   Card,
+  CardMedia,
   Grid,
   Divider,
   CircularProgress,
@@ -30,6 +33,7 @@ import {
   Phone,
   Home,
   LocationCity,
+  Info,
   VpnKey,
   CheckCircle,
   Error as ErrorIcon,
@@ -37,16 +41,25 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Import corrigé : brandsApi se trouve dans src/SiteWeb/brandsApi.js
-import { preloadKeysData } from '../brandsApi';
+import { preloadKeysData } from '../../api/brandsApi';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ mb: 2 }}>
     <Button variant="outlined" component="label" startIcon={<IconComponent />}>
       {label}
-      <input type="file" hidden name={name} accept={accept} onChange={onChange} />
+      <input
+        type="file"
+        hidden
+        name={name}
+        accept={accept}
+        onChange={onChange}
+      />
     </Button>
-    {file && <Typography variant="body2" sx={{ mt: 1 }}>{file.name || file}</Typography>}
+    {file && (
+      <Typography variant="body2" sx={{ mt: 1 }}>
+        {typeof file === 'string' ? file : file.name}
+      </Typography>
+    )}
   </Box>
 );
 
@@ -59,6 +72,7 @@ const SectionPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: theme.spacing(1),
   boxShadow: theme.shadows[1],
+  backgroundColor: '#fff',
   marginBottom: theme.spacing(3),
   border: '1px solid',
   borderColor: theme.palette.divider,
@@ -68,29 +82,39 @@ const SummaryCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: theme.spacing(2),
   boxShadow: theme.shadows[1],
+  backgroundColor: '#fff',
   border: '1px solid',
   borderColor: theme.palette.divider,
+  color: theme.palette.text.primary,
 }));
 
 const CommandePage = () => {
-  useEffect(() => window.scrollTo(0, 0), []);
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
-  const { brandName, articleName } = useParams();
-  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
+  // Récupération des params
+  const { brandName, articleType, articleName } = useParams();
+  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
 
+  // États principaux
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
   const [preloadedKey, setPreloadedKey] = useState(null);
 
+  // Modals & UI
   const [openImageModal, setOpenImageModal] = useState(false);
   const handleOpenImageModal = () => setOpenImageModal(true);
   const handleCloseImageModal = () => setOpenImageModal(false);
 
+  // Formulaire
   const [userInfo, setUserInfo] = useState({
+    clientType: 'particulier',
     nom: '',
     email: '',
     phone: '',
@@ -118,32 +142,43 @@ const CommandePage = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  // Notifications / loading commande
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [ordering, setOrdering] = useState(false);
   const [openCGV, setOpenCGV] = useState(false);
 
+  // Chargement de l'article depuis l'API
   const loadArticle = useCallback(async () => {
-    setLoadingArticle(true);
-    setErrorArticle(null);
     try {
+      setLoadingArticle(true);
+      setErrorArticle(null);
+
+      // <<< CORRECTION ICI : URL entourée de backticks >>>
       const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
         decodedArticleName
       )}`;
-      const res = await fetch(endpoint);
-      if (!res.ok) {
-        if (res.status === 404) throw new Error('Article non trouvé.');
+
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        if (response.status === 404) throw new Error('Article non trouvé.');
         throw new Error("Erreur lors du chargement de l'article.");
       }
-      const text = await res.text();
+      const text = await response.text();
       if (!text) throw new Error('Réponse vide du serveur.');
       const data = JSON.parse(text);
-      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase())
-        throw new Error("La marque ne correspond pas.");
+
+      // Vérification de la marque
+      if (
+        data.manufacturer &&
+        data.manufacturer.toLowerCase() !== brandName.toLowerCase()
+      ) {
+        throw new Error("La marque de l'article ne correspond pas.");
+      }
       setArticle(data);
-    } catch (e) {
-      setErrorArticle(e.message);
+    } catch (err) {
+      setErrorArticle(err.message);
     } finally {
       setLoadingArticle(false);
     }
@@ -153,12 +188,14 @@ const CommandePage = () => {
     loadArticle();
   }, [loadArticle]);
 
+  // Préchargement des clés de la marque
   useEffect(() => {
     if (brandName && article) {
       preloadKeysData(brandName)
         .then((keys) => {
           const found = keys.find(
-            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+            (key) =>
+              key.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
           );
           if (found) setPreloadedKey(found);
         })
@@ -166,7 +203,10 @@ const CommandePage = () => {
     }
   }, [brandName, article]);
 
+  // Sélection des détails à afficher
   const productDetails = preloadedKey || article;
+
+  // Calculs des prix
   const basePrice = productDetails
     ? isCleAPasse && productDetails.prixCleAPasse
       ? parseFloat(productDetails.prixCleAPasse)
@@ -174,14 +214,82 @@ const CommandePage = () => {
       ? parseFloat(productDetails.prixSansCartePropriete)
       : parseFloat(productDetails.prix)
     : 0;
+  const safeArticlePrice = isNaN(basePrice) ? 0 : basePrice;
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-  const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
+  const totalPrice = safeArticlePrice + shippingFee;
 
+  // Validation du formulaire avant envoi
   const validateForm = () => {
-    // logique de validation...
+    if (
+      !userInfo.nom.trim() ||
+      !userInfo.email.trim() ||
+      !userInfo.phone.trim() ||
+      !userInfo.address.trim() ||
+      !userInfo.postalCode.trim() ||
+      !userInfo.ville.trim() ||
+      (productDetails?.besoinPhoto &&
+        (!keyInfo.frontPhoto || !keyInfo.backPhoto)) ||
+      !shippingMethod ||
+      (mode === 'postal' && !deliveryType)
+    ) {
+      return false;
+    }
+    if (mode === 'numero') {
+      if (
+        productDetails?.besoinNumeroCarte &&
+        !lostCartePropriete &&
+        !keyInfo.propertyCardNumber.trim()
+      )
+        return false;
+      if (lostCartePropriete) {
+        if (
+          !idCardInfo.idCardFront ||
+          !idCardInfo.idCardBack ||
+          !idCardInfo.domicileJustificatif ||
+          !attestationPropriete
+        )
+          return false;
+      }
+    }
     return true;
   };
 
+  // Handlers divers (inputs, uploads, etc.)
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name in userInfo) setUserInfo((p) => ({ ...p, [name]: value }));
+    else if (name in keyInfo) setKeyInfo((p) => ({ ...p, [name]: value }));
+  };
+  const handlePhotoUpload = (e) => {
+    const { name, files } = e.target;
+    if (files?.[0]) setKeyInfo((p) => ({ ...p, [name]: files[0] }));
+  };
+  const handleIdCardUpload = async (e) => {
+    const { name, files } = e.target;
+    if (files?.[0]) {
+      if (name === 'domicileJustificatif') {
+        const fd = new FormData();
+        fd.append('pdf', files[0]);
+        try {
+          const res = await fetch('https://cl-back.onrender.com/upload/pdf', {
+            method: 'POST',
+            body: fd,
+          });
+          if (!res.ok) throw new Error("Erreur lors de l'upload du justificatif.");
+          const data = await res.json();
+          setIdCardInfo((p) => ({ ...p, domicileJustificatif: data.filePath }));
+        } catch {
+          setSnackbarMessage("Erreur lors de l'upload du justificatif.");
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+        }
+      } else {
+        setIdCardInfo((p) => ({ ...p, [name]: files[0] }));
+      }
+    }
+  };
+
+  // Passage de commande + redirection vers Stripe
   const handleOrder = async () => {
     if (!termsAccepted) {
       setSnackbarMessage('Veuillez accepter les CGV.');
@@ -190,7 +298,7 @@ const CommandePage = () => {
       return;
     }
     if (!validateForm()) {
-      setSnackbarMessage('Champs obligatoires manquants.');
+      setSnackbarMessage('Veuillez remplir tous les champs obligatoires.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -198,18 +306,22 @@ const CommandePage = () => {
     setOrdering(true);
     try {
       const fd = new FormData();
+      // ... append tous les champs ...
+      // Création de la commande
       const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
         method: 'POST',
         body: fd,
       });
       if (!cmdRes.ok) {
-        throw new Error(`Création commande : ${await cmdRes.text()}`);
+        const errText = await cmdRes.text();
+        throw new Error(`Erreur création commande : ${errText}`);
       }
       const { numeroCommande } = await cmdRes.json();
+      // Préparation Stripe
       const payload = {
-        amount: Math.round(totalPrice * 100),
+        amount: totalPrice * 100,
         currency: 'eur',
-        description: `Paiement ${userInfo.nom}`,
+        description: `Paiement pour ${userInfo.nom}`,
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
         cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
       };
@@ -219,55 +331,116 @@ const CommandePage = () => {
         body: JSON.stringify(payload),
       });
       if (!payRes.ok) {
-        throw new Error(`Paiement : ${await payRes.text()}`);
+        const errText = await payRes.text();
+        throw new Error(`Erreur paiement : ${errText}`);
       }
       const { paymentUrl } = await payRes.json();
       window.location.href = paymentUrl;
-    } catch (e) {
-      setSnackbarMessage(e.message);
+    } catch (err) {
+      setSnackbarMessage(`Erreur : ${err.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       setOrdering(false);
     }
   };
 
+  const handleCloseSnackbar = (_, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbarOpen(false);
+  };
+
+  // Gestion des états vides / chargement
+  if (errorArticle === 'Réponse vide du serveur.') {
+    return (
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          p: 2,
+        }}
+      >
+        <ErrorIcon color="error" sx={{ fontSize: 40 }} />
+        <Typography variant="h6" color="error">
+          Réponse vide du serveur.
+        </Typography>
+        <Typography variant="body1" color="text.secondary" align="center">
+          Aucune donnée n'a été renvoyée. Vérifiez la connexion ou réessayez.
+        </Typography>
+        <Button variant="contained" onClick={loadArticle}>
+          Réessayer
+        </Button>
+      </Box>
+    );
+  }
+
   if (loadingArticle) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
   }
 
-  if (errorArticle) {
-    return (
-      <Box sx={{ minHeight: '100vh', p: 4, textAlign: 'center' }}>
-        <ErrorIcon color="error" sx={{ fontSize: 48 }} />
-        <Typography variant="h6" color="error">{errorArticle}</Typography>
-        <Button onClick={loadArticle}>Réessayer</Button>
-      </Box>
-    );
-  }
-
+  // Affichage du formulaire
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
-        {/* … votre formulaire et récapitulatif ici … */}
+        {/* ... tout le JSX du formulaire et du récapitulatif ... */}
       </Container>
 
-      {/* Modal d’image */}
-      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
+      {/* Modal image */}
+      <Dialog
+        open={openImageModal}
+        onClose={handleCloseImageModal}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent sx={{ p: 0 }}>
-          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
+          <img
+            src={productDetails?.imageUrl}
+            alt={productDetails?.nom}
+            style={{ width: '100%', display: 'block' }}
+          />
         </DialogContent>
       </Dialog>
 
-      {/* Notification */}
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
-        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          iconMapping={{
+            success: <CheckCircle fontSize="inherit" />,
+            error: <ErrorIcon fontSize="inherit" />,
+          }}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
 
-      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
+      <ConditionsGeneralesVentePopup
+        open={openCGV}
+        onClose={() => setOpenCGV(false)}
+      />
     </Box>
   );
 };
