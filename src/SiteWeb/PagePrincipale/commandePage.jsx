@@ -1,88 +1,116 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+// src/AppAdmin/CommandePage.jsx
+import React, { useEffect, useState } from 'react';
+import {
+  Box,
+  Typography,
+  Container,
+  Card,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Button,
+} from '@mui/material';
+import { CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
 
 const CommandePage = () => {
-  // Extraction des paramètres de l’URL
-  let { brand, reference, name } = useParams();
-  const { search } = useLocation();
-  const queryParams = new URLSearchParams(search);
-  const mode = queryParams.get('mode');
-
-  // Si le paramètre "brand" contient ".html", on le nettoie
-  if (brand && brand.endsWith('.html')) {
-    brand = brand.replace('.html', '');
-  }
-
-  // Définition de l'URL de base pour le back-end
-  const API_BASE = 'https://cl-back.onrender.com';
-
-  // États pour le produit, le chargement et la gestion des erreurs
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  // Récupération du produit dès le chargement ou lorsque les paramètres changent
   useEffect(() => {
-    const fetchProduct = async () => {
-      setLoading(true);
+    const fetchOrders = async () => {
       try {
-        let url = '';
-        if (mode === 'numero') {
-          // Utilisation de l'endpoint pour une recherche par index dans la marque
-          url = `${API_BASE}/produit/cles/brand/${encodeURIComponent(brand)}/index/${encodeURIComponent(reference)}`;
-        } else {
-          // Utilisation de l'endpoint pour une recherche par nom
-          url = `${API_BASE}/produit/cles/by-name?nom=${encodeURIComponent(name)}`;
-        }
-
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Erreur lors de la récupération du produit : ${response.statusText}`);
-        }
-        const data = await response.json();
-        setProduct(data);
+        const res = await fetch('https://cl-back.onrender.com/commande/all');
+        if (!res.ok) throw new Error('Erreur lors du chargement des commandes');
+        const data = await res.json();
+        setOrders(data);
       } catch (err) {
         setError(err.message);
+        setSnackbarOpen(true);
       } finally {
         setLoading(false);
       }
     };
+    fetchOrders();
+  }, []);
 
-    fetchProduct();
-  }, [brand, reference, name, mode]);
+  // Fonction pour décoder une image Base64 ou renvoyer directement si déjà data URI
+  const decodeImage = (img) =>
+    img
+      ? img.startsWith('data:')
+        ? img
+        : `data:image/jpeg;base64,${img}`
+      : '';
 
-  // Fonction pour gérer l'action "Valider"
-  const handleValidate = () => {
-    // Ici, vous pouvez déclencher une logique de commande ou d'autres actions
-    alert('Produit validé !');
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 4 }}>
+        <Alert severity="error" icon={<ErrorIcon />}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 2 }}>
+          Réessayer
+        </Button>
+      </Container>
+    );
+  }
+
   return (
-    <div>
-      <h1>Commande Page</h1>
-
-      {loading && <p>Chargement du produit…</p>}
-      {error && <p style={{ color: 'red' }}>Erreur : {error}</p>}
-
-      {!loading && !error && product ? (
-        <div>
-          <h2>{product.descriptionProduit || name}</h2>
-          <p>
-            <strong>Marque :</strong> {brand}
-          </p>
-          <p>
-            <strong>Référence :</strong> {reference}
-          </p>
-          <p>
-            <strong>Description :</strong>{' '}
-            {product.descriptionProduit || 'Aucune description disponible.'}
-          </p>
-          {/* Vous pouvez afficher d'autres champs du produit ici */}
-        </div>
-      ) : (!loading && !error && <p>Aucun produit trouvé pour "{name}".</p>)}
-
-      <button onClick={handleValidate}>Valider</button>
-    </div>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Tableau de bord des Commandes
+      </Typography>
+      {orders.length === 0 ? (
+        <Typography>Aucune commande disponible.</Typography>
+      ) : (
+        orders.map((order) => (
+          <Card key={order.id} sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6">Commande #{order.numeroCommande}</Typography>
+              <Typography>Client : {order.nomClient}</Typography>
+              <Typography>Statut : {order.statut}</Typography>
+              {order.imagePreuve && (
+                <CardMedia
+                  component="img"
+                  src={decodeImage(order.imagePreuve)}
+                  alt="Preuve de paiement"
+                  sx={{ width: 200, height: 'auto', mt: 2, borderRadius: 1 }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        ))
+      )}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="error"
+          iconMapping={{ error: <ErrorIcon fontSize="inherit" /> }}
+        >
+          {error}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 
