@@ -33,19 +33,20 @@ const CommandePage = () => {
         const urlBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let res = await fetch(urlBest);
 
-        // Si pas trouvé, fallback closest-match
+        // Si pas trouvé (404), fallback closest-match
         if (res.status === 404) {
           const urlFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
           res = await fetch(urlFallback);
           if (!res.ok) {
-            throw new Error(`Erreur fallback closest-match : ${await res.text()}`);
+            throw new Error(`Fallback closest-match échoué : ${await res.text()}`);
           }
         } else if (!res.ok) {
-          throw new Error(`Erreur best-by-name : ${await res.text()}`);
+          throw new Error(`Best-by-name échoué : ${await res.text()}`);
         }
 
         const data = await res.json();
 
+        // Vérifier la marque
         if (data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
           throw new Error("La marque de l'article ne correspond pas.");
         }
@@ -82,3 +83,4 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
+
