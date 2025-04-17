@@ -1,84 +1,203 @@
 // src/AppAdmin/commande.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Container,
+  TextField,
+  Button,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import {
+  PhotoCamera,
+  CloudUpload,
+  Person,
+  Email,
+  Phone,
+  Home,
+  LocationCity,
+  Info,
+  CheckCircle,
+  Error as ErrorIcon,
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+
+// Normalisation pour comparer les chaînes
+const normalizeString = (str) =>
+  str.trim().toLowerCase().normalize('NFD').replace(/[^\p{ASCII}]/gu, '');
+
+// Décodage safe des images
+const decodeImage = (img) =>
+  img
+    ? img.startsWith('data:')
+      ? img
+      : `data:image/jpeg;base64,${img}`
+    : '';
+
+// Styled Paper pour sections (si besoin)
+const SectionPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: theme.spacing(1),
+  boxShadow: theme.shadows[1],
+  backgroundColor: '#fff',
+  marginBottom: theme.spacing(3),
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+}));
+
+// Popup des Conditions Générales de Vente
+const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
+  <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <DialogTitle>Conditions Générales de Vente - Cleservice.com</DialogTitle>
+    <DialogContent dividers>
+      <Box sx={{ maxHeight: '60vh', overflowY: 'auto', pr: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Article 1 : Objet
+        </Typography>
+        <Typography variant="body2" paragraph>
+          Les présentes Conditions Générales de Vente (CGV) régissent les relations contractuelles entre Maison Bouvet S.A.S. (ci-après "le Vendeur") et tout client souhaitant effectuer un achat sur le site cleservice.com (ci-après "l'Acheteur").
+        </Typography>
+        {/* … insérez ici le reste des articles de vos CGV … */}
+        <Typography variant="body2" align="center" paragraph>
+          © 2025 cleservice.com - Tous droits réservés.
+        </Typography>
+      </Box>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose} color="primary">
+        Fermer
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
 
 const CommandePage = () => {
-  const { brand: brandName, name: articleName } = useParams();
-  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
+  // Scroll vers le haut au chargement
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
+  // Paramètres d'URL
+  const { brand: brandName, reference: articleType, name: articleName } = useParams();
+  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode'); // "postal" ou "numero"
+  const navigate = useNavigate();
+
+  // États pour le produit
   const [article, setArticle] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loadingArticle, setLoadingArticle] = useState(true);
+  const [errorArticle, setErrorArticle] = useState(null);
 
-  // Décode une image Base64 ou renvoie directement si déjà Data URI
-  const decodeImage = (img) =>
-    img
-      ? img.startsWith('data:')
-        ? img
-        : `data:image/jpeg;base64,${img}`
-      : '';
+  // États pour le formulaire de commande (exemples)
+  // const [quantite, setQuantite] = useState(1);
+  // const [nomClient, setNomClient] = useState('');
+  // etc.
 
+  // État pour l'ouverture de la popup CGV
+  const [openCGV, setOpenCGV] = useState(false);
+  const handleOpenCGV = () => setOpenCGV(true);
+  const handleCloseCGV = () => setOpenCGV(false);
+
+  // Récupération du produit via best-by-name avec fallback
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
+        setLoadingArticle(true);
+        setErrorArticle(null);
         if (!decodedArticleName.trim()) {
-          throw new Error("Le nom de l'article est vide après décodage.");
+          throw new Error("Nom d’article vide.");
         }
-
-        // Essai sur l'endpoint best-by-name
-        const urlBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-        let res = await fetch(urlBest);
-
-        // Si 404 (pas trouvé), bascule sur closest-match
+        const bestUrl = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        let res = await fetch(bestUrl);
         if (res.status === 404) {
-          const urlFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
-          res = await fetch(urlFallback);
+          const fallbackUrl = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
+          res = await fetch(fallbackUrl);
           if (!res.ok) {
-            throw new Error(`Fallback closest-match échoué : ${await res.text()}`);
+            throw new Error(`Erreur closest-match : ${await res.text()}`);
           }
         } else if (!res.ok) {
-          throw new Error(`Best-by-name échoué : ${await res.text()}`);
+          throw new Error(`Erreur best-by-name : ${await res.text()}`);
         }
 
-        const data = await res.json();
-
-        // Vérifier la marque
-        if (data.marque && data.marque.toLowerCase() !== brandName.toLowerCase()) {
-          throw new Error("La marque de l'article ne correspond pas.");
+        const prod = await res.json();
+        if (
+          prod.marque &&
+          normalizeString(prod.marque) !== normalizeString(brandName)
+        ) {
+          throw new Error("Marque non correspondante.");
         }
-
-        setArticle(data);
+        setArticle(prod);
       } catch (err) {
-        console.error(err);
-        setError(err.message);
+        console.error("Erreur récupération produit :", err);
+        setErrorArticle(err.message);
       } finally {
-        setLoading(false);
+        setLoadingArticle(false);
       }
     };
-
     fetchProduct();
   }, [brandName, decodedArticleName]);
 
-  if (loading) return <div>Chargement du produit...</div>;
-  if (error)   return <div>Erreur : {error}</div>;
+  // Affichage pendant le chargement ou en cas d'erreur
+  if (loadingArticle) {
+    return (
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (errorArticle || !article) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h4" color="error" gutterBottom>
+          {errorArticle || "Produit non disponible"}
+        </Typography>
+        <Button variant="contained" onClick={() => navigate('/')}>
+          Retour à l’accueil
+        </Button>
+      </Container>
+    );
+  }
+
+  // Ici : calcul du prix, gestion du formulaire, envoi de la commande, etc.
 
   return (
-    <div>
-      <h1>{article.nom}</h1>
-      <p>Marque : {article.marque}</p>
-      <p>Prix : {article.prix} €</p>
-      {article.imageBase64 && (
-        <img
-          src={decodeImage(article.imageBase64)}
-          alt={article.nom}
-          style={{ maxWidth: '200px', marginTop: '1rem' }}
-        />
-      )}
-    </div>
+    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
+      <Container maxWidth="sm">
+        <Typography variant="h5" gutterBottom>
+          Commander {article.nom}
+        </Typography>
+
+        {/* Vos champs de formulaire ici */}
+
+        {/* Bouton pour ouvrir les CGV */}
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Button variant="outlined" onClick={handleOpenCGV}>
+            Conditions Générales de Vente
+          </Button>
+        </Box>
+      </Container>
+
+      <ConditionsGeneralesVentePopup open={openCGV} onClose={handleCloseCGV} />
+    </Box>
   );
 };
 
