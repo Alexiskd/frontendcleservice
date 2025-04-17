@@ -146,8 +146,10 @@ const CommandePage = () => {
         if (!decodedArticleName.trim()) {
           throw new Error("Le nom de l'article est vide après décodage.");
         }
+        // Appel sur l'endpoint best-by-name
         const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
         let response = await fetch(endpointBest);
+        // Si best-by-name renvoie un 404, alors fallback sur closest-match
         if (response.status === 404) {
           console.warn("best-by-name retourne 404, utilisation du fallback closest-match.");
           const endpointFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
@@ -248,12 +250,7 @@ const CommandePage = () => {
     vachette: 96,
   };
   const normalizedMarque = article ? normalizeString(article.marque) : "";
-  const dossierFee = lostCartePropriete ? (dossierFees[normalizedMarque] || 0) : 0;
-
-  // Log pour déboguer (à enlever en production)
-  console.log('lostCartePropriete:', lostCartePropriete);
-  console.log('Marque normalisée:', normalizedMarque);
-  console.log('Frais dossier:', dossierFee);
+  const dossierFee = lostCartePropriete && dossierFees[normalizedMarque] ? dossierFees[normalizedMarque] : 0;
 
   const totalPrice = safeArticlePrice + shippingFee + dossierFee;
 
@@ -451,6 +448,7 @@ const CommandePage = () => {
                   )}
                   {article?.besoinNumeroCle && (
                     <>
+                      {/* Affichage statique du nom de la clé */}
                       <Typography variant="body1" sx={{ mb: 2 }}>
                         {article?.nom}
                       </Typography>
@@ -468,11 +466,6 @@ const CommandePage = () => {
                         label="J'ai perdu ma carte de propriété"
                         sx={{ mr: 2 }}
                       />
-                      {lostCartePropriete && dossierFee > 0 && (
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                          Les frais de dossier de {dossierFee}€ seront ajoutés pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
-                        </Typography>
-                      )}
                       {!lostCartePropriete ? (
                         <>
                           <TextField
@@ -819,12 +812,6 @@ const CommandePage = () => {
               >
                 {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
               </Button>
-              {/* Affichage des frais de dossier sous le bouton de commande */}
-              {lostCartePropriete && dossierFee > 0 && (
-                <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 1 }}>
-                  Les frais de dossier de {dossierFee}€ seront appliqués pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
-                </Typography>
-              )}
             </SummaryCard>
           </Grid>
         </Grid>
