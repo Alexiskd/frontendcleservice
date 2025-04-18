@@ -46,7 +46,15 @@ const CommandePage = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const decodeImage = img =>
+  const decodeImage = img => {
+  if (!img) return '';
+  // If already a data URL, return as-is
+  if (typeof img === 'string' && img.startsWith('data:')) {
+    return img;
+  }
+  // Otherwise assume base64 without prefix; default to PNG
+  return `data:image/png;base64,${img}`;
+};
     img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
   const fetchCommandes = useCallback(async () => {
