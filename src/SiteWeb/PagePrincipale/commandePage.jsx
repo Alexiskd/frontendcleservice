@@ -1,26 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
   Container,
   TextField,
   Button,
+  CircularProgress,
   Snackbar,
   Alert,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  Grid,
+  Card,
+  CardMedia,
+  IconButton,
+  InputAdornment,
   RadioGroup,
   FormControlLabel,
   Radio,
+  FormControl,
   Select,
   MenuItem,
-  IconButton,
-  Card,
-  Grid,
-  Divider,
-  CircularProgress,
   Checkbox,
-  Paper,
-  Dialog,
-  DialogContent,
 } from '@mui/material';
 import {
   PhotoCamera,
@@ -30,53 +36,139 @@ import {
   Phone,
   Home,
   LocationCity,
-  VpnKey,
+  Info,
   CheckCircle,
   Error as ErrorIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Chemin corrigé vers brandsApi.js dans src/SiteWeb
-import { preloadKeysData } from '../brandsApi';
 
+// Fonction de normalisation pour comparer les chaînes
+const normalizeString = (str) =>
+  str.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+// Composant de téléchargement de fichier aligné
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
-  <Box sx={{ mb: 2 }}>
-    <Button variant="outlined" component="label" startIcon={<IconComponent />}>
-      {label}
-      <input type="file" hidden name={name} accept={accept} onChange={onChange} />
-    </Button>
-    {file && <Typography variant="body2" sx={{ mt: 1 }}>{file.name || file}</Typography>}
+  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
+    <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
+    <IconButton
+      color="primary"
+      aria-label={label}
+      component="label"
+      sx={{
+        backgroundColor: 'background.paper',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        '&:hover': { backgroundColor: 'action.hover' },
+      }}
+    >
+      <input type="file" name={name} accept={accept} hidden onChange={onChange} />
+      <IconComponent sx={{ color: '#1B5E20' }} />
+    </IconButton>
+    {file && (
+      <Typography variant="caption" color="success.main">
+        {typeof file === 'string' ? file : file.name}
+      </Typography>
+    )}
   </Box>
 );
 
+// Checkbox avec style moderne
 const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
   color: theme.palette.grey[500],
   '&.Mui-checked': { color: theme.palette.primary.main },
 }));
 
+// Paper stylisé pour les sections
 const SectionPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: theme.spacing(1),
   boxShadow: theme.shadows[1],
+  backgroundColor: '#fff',
   marginBottom: theme.spacing(3),
   border: '1px solid',
   borderColor: theme.palette.divider,
 }));
 
+// Card de résumé stylisée
 const SummaryCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: theme.spacing(2),
   boxShadow: theme.shadows[1],
+  backgroundColor: '#fff',
   border: '1px solid',
   borderColor: theme.palette.divider,
+  color: theme.palette.text.primary,
 }));
 
-const CommandePage = () => {
-  useEffect(() => window.scrollTo(0, 0), []);
+// Popup des Conditions Générales et Mentions Légales
+const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
+  <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <DialogTitle>Conditions Générales de Vente & Mentions Légales - Cleservice.com</DialogTitle>
+    <DialogContent dividers>
+      <Box sx={{ maxHeight: '60vh', overflowY: 'auto', pr: 2 }}>
+        <Typography variant="h6" gutterBottom>Objet</Typography>
+        <Typography variant="body2" paragraph>
+          Les présentes Conditions Générales de Vente (CGV) régissent les relations contractuelles entre Maison Bouvet S.A.S. (ci-après "le Vendeur") et tout client effectuant un achat sur cleservice.com.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Produits</Typography>
+        <Typography variant="body2" paragraph>
+          Les produits sont présentés avec exactitude. Le Vendeur peut corriger erreurs ou omissions sans engager sa responsabilité.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Prix</Typography>
+        <Typography variant="body2" paragraph>
+          Les prix, en euros TTC, peuvent être modifiés. Le prix facturé est celui en vigueur lors de la validation du paiement.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Commande</Typography>
+        <Typography variant="body2" paragraph>
+          Toute commande implique l'acceptation sans réserve des CGV et la prise de connaissance préalable par l'Acheteur.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Paiement</Typography>
+        <Typography variant="body2" paragraph>
+          Paiement en ligne sécurisé par carte bancaire ou autres moyens proposés.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Livraison</Typography>
+        <Typography variant="body2" paragraph>
+          Livraison à l'adresse indiquée. Délais variables selon destination. Retard non imputable au Vendeur.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Droit de Rétractation</Typography>
+        <Typography variant="body2" paragraph>
+          L'Acheteur dispose de 14 jours à réception pour exercer son droit de rétractation. Frais de retour à sa charge.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Garantie</Typography>
+        <Typography variant="body2" paragraph>
+          Garantie légale de conformité et contre les vices cachés selon la législation en vigueur.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Responsabilité</Typography>
+        <Typography variant="body2" paragraph>
+          Le Vendeur n'est pas responsable des dommages indirects. Responsabilité limitée au montant de la commande.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Droit Applicable</Typography>
+        <Typography variant="body2" paragraph>
+          Les CGV sont soumises au droit français. Juridiction compétente : tribunaux de Paris.
+        </Typography>
+        <Typography variant="h6" gutterBottom>Modification des CGV</Typography>
+        <Typography variant="body2" paragraph>
+          Le Vendeur peut modifier les CGV à tout moment. Les nouvelles CGV s'appliqueront aux commandes ultérieures.
+        </Typography>
+        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+          © 2025 cleservice.com - Tous droits réservés.
+        </Typography>
+      </Box>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose} color="primary">Fermer</Button>
+    </DialogActions>
+  </Dialog>
+);
 
-  const { brandName, articleName } = useParams();
-  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
+const CommandePage = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const { brand: brandName, reference: articleType, name: articleName } = useParams();
+  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
   const navigate = useNavigate();
@@ -84,114 +176,94 @@ const CommandePage = () => {
   const [article, setArticle] = useState(null);
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [errorArticle, setErrorArticle] = useState(null);
-  const [preloadedKey, setPreloadedKey] = useState(null);
 
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const handleOpenImageModal = () => setOpenImageModal(true);
-  const handleCloseImageModal = () => setOpenImageModal(false);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoadingArticle(true);
+        setErrorArticle(null);
+        if (!decodedArticleName.trim()) throw new Error('Nom d\'article vide.');
+        // Appel sur l'endpoint best-by-name
+        const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
+        let response = await fetch(endpointBest);
+        // Si best-by-name renvoie un 404, alors fallback sur closest-match
+        if (response.status === 404) {
+          console.warn('best-by-name retourne 404, utilisation du fallback closest-match.');
+          const endpointFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
+          response = await fetch(endpointFallback);
+        }
+        if (!response.ok) throw new Error(await response.text());
+        const product = await response.json();
+        if (product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
+          throw new Error('La marque de l\'article ne correspond pas.');
+        }
+        setArticle(product);
+      } catch (err) {
+        setErrorArticle(err.message);
+      } finally {
+        setLoadingArticle(false);
+      }
+    };
+    fetchProduct();
+  }, [brandName, decodedArticleName]);
 
+  // États pour le formulaire
   const [userInfo, setUserInfo] = useState({
-    nom: '',
-    email: '',
-    phone: '',
-    address: '',
-    postalCode: '',
-    ville: '',
-    additionalInfo: '',
+    clientType: 'particulier', nom: '', email: '', phone: '', address: '', postalCode: '', ville: '', additionalInfo: '',
   });
-  const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '',
-    propertyCardNumber: '',
-    frontPhoto: null,
-    backPhoto: null,
-  });
+  const [keyInfo, setKeyInfo] = useState({ keyNumber: '', propertyCardNumber: '', frontPhoto: null, backPhoto: null });
   const [isCleAPasse, setIsCleAPasse] = useState(false);
   const [lostCartePropriete, setLostCartePropriete] = useState(false);
-  const [idCardInfo, setIdCardInfo] = useState({
-    idCardFront: null,
-    idCardBack: null,
-    domicileJustificatif: '',
-  });
+  const [idCardInfo, setIdCardInfo] = useState({ idCardFront: null, idCardBack: null, domicileJustificatif: '' });
   const [attestationPropriete, setAttestationPropriete] = useState(false);
   const [deliveryType, setDeliveryType] = useState('');
   const [shippingMethod, setShippingMethod] = useState('magasin');
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [quantity, setQuantity] = useState(1);
-
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [ordering, setOrdering] = useState(false);
   const [openCGV, setOpenCGV] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [openImageModal, setOpenImageModal] = useState(false);
 
-  const loadArticle = useCallback(async () => {
-    setLoadingArticle(true);
-    setErrorArticle(null);
-    try {
-      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
-        decodedArticleName
-      )}`;
-      const res = await fetch(endpoint);
-      if (!res.ok) {
-        if (res.status === 404) throw new Error('Article non trouvé.');
-        throw new Error("Erreur lors du chargement de l'article.");
-      }
-      const text = await res.text();
-      if (!text) throw new Error('Réponse vide du serveur.');
-      const data = JSON.parse(text);
-      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase()) {
-        throw new Error("La marque ne correspond pas.");
-      }
-      setArticle(data);
-    } catch (e) {
-      setErrorArticle(e.message);
-    } finally {
-      setLoadingArticle(false);
-    }
-  }, [brandName, decodedArticleName]);
-
-  useEffect(() => {
-    loadArticle();
-  }, [loadArticle]);
-
-  useEffect(() => {
-    if (brandName && article) {
-      preloadKeysData(brandName)
-        .then((keys) => {
-          const found = keys.find(
-            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
-          );
-          if (found) setPreloadedKey(found);
-        })
-        .catch(console.error);
-    }
-  }, [brandName, article]);
-
-  const productDetails = preloadedKey || article;
-  const basePrice = productDetails
-    ? isCleAPasse && productDetails.prixCleAPasse
-      ? parseFloat(productDetails.prixCleAPasse)
-      : mode === 'postal'
-      ? parseFloat(productDetails.prixSansCartePropriete)
-      : parseFloat(productDetails.prix)
-    : 0;
+  const articlePrice = article ? (isCleAPasse && article.prixCleAPasse ? parseFloat(article.prixCleAPasse)
+    : mode === 'postal' ? parseFloat(article.prixSansCartePropriete)
+    : parseFloat(article.prix)) : 0;
+  const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
   const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-  const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
+  const dossierFees = { anker: 80, bricard: 60, fichet: 205, heracles: 60, laperche: 60, medeco: 60, picard: 80, vachette: 96 };
+  const normalizedMarque = article ? normalizeString(article.marque) : '';
+  const dossierFee = lostCartePropriete && dossierFees[normalizedMarque] ? dossierFees[normalizedMarque] : 0;
+  const totalPrice = safeArticlePrice + shippingFee + dossierFee;
 
-  const validateForm = () => {
-    // logique de validation...
-    return true;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name in userInfo) setUserInfo({ ...userInfo, [name]: value });
+    else if (name in keyInfo) setKeyInfo({ ...keyInfo, [name]: value });
   };
+  const handlePhotoUpload = (e) => { const { name, files } = e.target; if (files[0]) setKeyInfo({ ...keyInfo, [name]: files[0] }); };
+  const handleIdCardUpload = async (e) => { const { name, files } = e.target; if (files[0]) {
+    if (name === 'domicileJustificatif') {
+      const fd = new FormData(); fd.append('pdf', files[0]);
+      try {
+        const res = await fetch('https://cl-back.onrender.com/upload/pdf', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('Erreur upload');
+        const d = await res.json();
+        setIdCardInfo({ ...idCardInfo, domicileJustificatif: d.filePath });
+      } catch {
+        setSnackbarMessage('Erreur lors de l\'upload du justificatif');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    } else {
+      setIdCardInfo({ ...idCardInfo, [name]: files[0] });
+    }
+  }};
 
   const handleOrder = async () => {
     if (!termsAccepted) {
-      setSnackbarMessage('Veuillez accepter les CGV.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
-    }
-    if (!validateForm()) {
-      setSnackbarMessage('Champs obligatoires manquants.');
+      setSnackbarMessage('Veuillez accepter les Conditions Générales de Vente.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -199,75 +271,143 @@ const CommandePage = () => {
     setOrdering(true);
     try {
       const fd = new FormData();
-      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
-        method: 'POST',
-        body: fd,
-      });
-      if (!cmdRes.ok) {
-        throw new Error(`Création commande : ${await cmdRes.text()}`);
+      Object.entries(userInfo).forEach(([k, v]) => fd.append(k, v));
+      fd.append('prix', totalPrice.toFixed(2));
+      fd.append('articleName', article?.nom || '');
+      fd.append('quantity', quantity);
+      if (mode === 'numero') {
+        if (article?.besoinNumeroCle) fd.append('keyNumber', article.nom);
+        if (article?.besoinNumeroCarte) {
+          if (!lostCartePropriete) fd.append('propertyCardNumber', keyInfo.propertyCardNumber);
+          else {
+            fd.append('idCardFront', idCardInfo.idCardFront);
+            fd.append('idCardBack', idCardInfo.idCardBack);
+            fd.append('domicileJustificatifPath', idCardInfo.domicileJustificatif);
+            fd.append('attestationPropriete', attestationPropriete.toString());
+          }
+        }
       }
-      const { numeroCommande } = await cmdRes.json();
-      const payload = {
-        amount: Math.round(totalPrice * 100),
+      fd.append('deliveryType', deliveryType);
+      fd.append('shippingMethod', shippingMethod);
+      fd.append('isCleAPasse', isCleAPasse.toString());
+      if (article?.besoinPhoto) {
+        fd.append('frontPhoto', keyInfo.frontPhoto);
+        fd.append('backPhoto', keyInfo.backPhoto);
+      }
+      const commandeRes = await fetch('https://cl-back.onrender.com/commande/create', { method: 'POST', body: fd });
+      if (!commandeRes.ok) throw new Error(await commandeRes.text());
+      const { numeroCommande } = await commandeRes.json();
+      const paymentPayload = {
+        amount: totalPrice * 100,
         currency: 'eur',
-        description: `Paiement ${userInfo.nom}`,
+        description: `Veuillez procéder au paiement pour ${userInfo.nom}`,
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`
       };
       const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(paymentPayload)
       });
-      if (!payRes.ok) {
-        throw new Error(`Paiement : ${await payRes.text()}`);
-      }
+      if (!payRes.ok) throw new Error(await payRes.text());
       const { paymentUrl } = await payRes.json();
       window.location.href = paymentUrl;
     } catch (e) {
-      setSnackbarMessage(e.message);
+      setSnackbarMessage(`Erreur : ${e.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       setOrdering(false);
     }
   };
 
+  const handleCloseSnackbar = (event, reason) => { if (reason === 'clickaway') return; setSnackbarOpen(false); };
+
   if (loadingArticle) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress />
       </Box>
     );
   }
 
-  if (errorArticle) {
+  if (errorArticle || !article) {
     return (
-      <Box sx={{ minHeight: '100vh', p: 4, textAlign: 'center' }}>
-        <ErrorIcon color="error" sx={{ fontSize: 48 }} />
-        <Typography variant="h6" color="error">{errorArticle}</Typography>
-        <Button onClick={loadArticle}>Réessayer</Button>
-      </Box>
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h4" color="error" gutterBottom>
+          {errorArticle || "Produit non disponible"}
+        </Typography>
+        <Button variant="contained" onClick={() => navigate('/')}>
+          Retour à l’accueil
+        </Button>
+      </Container>
     );
   }
 
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
-        {/* ... votre formulaire et récapitulatif ici ... */}
+        <Grid container spacing={4}>
+          {/* Section Formulaire */}
+          <Grid item xs={12}>
+            <SectionPaper>
+              <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
+              <Divider sx={{ mb: 3 }} />
+              {/* ... (Le formulaire complet) ... */}
+              <Box>
+                <FormControlLabel
+                  control={<ModernCheckbox checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />}
+                  label={
+                    <>
+                      J'accepte les{' '}
+                      <Button
+                        variant="text"
+                        color="primary"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenCGV(true);
+                        }}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Conditions Générales de Vente
+                      </Button>
+                    </>
+                  }
+                />
+              </Box>
+            </SectionPaper>
+          </Grid>
+          {/* Section Récapitulatif */}
+          <Grid item xs={12}>
+            <SummaryCard>
+              {/* ... (Le récapitulatif complet) ... */}
+            </SummaryCard>
+          </Grid>
+        </Grid>
       </Container>
-
-      {/* Modal d’image */}
-      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
+      {/* Modals et Snackbars */}
+      <Dialog open={openImageModal} onClose={() => setOpenImageModal(false)} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
-          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
+          <img src={article?.imageUrl} alt={article?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
         </DialogContent>
       </Dialog>
-
-      {/* Notification */}
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
-        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          iconMapping={{
+            success: <CheckCircle fontSize="inherit" sx={{ color: '#1B5E20' }} />, 
+            error: <ErrorIcon fontSize="inherit" sx={{ color: '#1B5E20' }} />
+          }}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
-
       <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
     </Box>
   );
