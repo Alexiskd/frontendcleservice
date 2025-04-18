@@ -351,5 +351,3 @@ const CommandePage = () => {
 export default CommandePage;
 
 
-export default CommandePage;
-
