@@ -1,415 +1,218 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import io from 'socket.io-client';
 import {
-  Box,
-  Typography,
   Container,
-  TextField,
+  Card,
+  CardContent,
+  CardActions,
+  Typography,
   Button,
   CircularProgress,
-  Snackbar,
   Alert,
-  Paper,
+  Grid,
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
-  Grid,
-  Card,
-  CardMedia,
   IconButton,
-  InputAdornment,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormControl,
-  Select,
-  MenuItem,
-  Checkbox,
+  TextField,
+  Divider,
+  useMediaQuery,
 } from '@mui/material';
-import {
-  PhotoCamera,
-  CloudUpload,
-  Person,
-  Email,
-  Phone,
-  Home,
-  LocationCity,
-  Info,
-  CheckCircle,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+import CancelIcon from '@mui/icons-material/Cancel';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import CloseIcon from '@mui/icons-material/Close';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import logo from './logo.png';
 
-// Fonction de normalisation pour comparer les chaînes
-const normalizeString = (str) =>
-  str.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-
-// Composant de téléchargement de fichier aligné
-const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
-    <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
-    <IconButton
-      color="primary"
-      aria-label={label}
-      component="label"
-      sx={{
-        backgroundColor: 'background.paper',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        '&:hover': { backgroundColor: 'action.hover' },
-      }}
-    >
-      <input type="file" name={name} accept={accept} hidden onChange={onChange} />
-      <IconComponent sx={{ color: '#1B5E20' }} />
-    </IconButton>
-    {file && (
-      <Typography variant="caption" color="success.main">
-        {typeof file === 'string' ? file : file.name}
-      </Typography>
-    )}
-  </Box>
-);
-
-// Checkbox avec style moderne
-const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
-  color: theme.palette.grey[500],
-  '&.Mui-checked': { color: theme.palette.primary.main },
-}));
-
-// Paper stylisé pour les sections
-const SectionPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: theme.spacing(1),
-  boxShadow: theme.shadows[1],
-  backgroundColor: '#fff',
-  marginBottom: theme.spacing(3),
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-}));
-
-// Card de résumé stylisée
-const SummaryCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(2),
-  boxShadow: theme.shadows[1],
-  backgroundColor: '#fff',
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-  color: theme.palette.text.primary,
-}));
-
-// Popup des Conditions Générales et Mentions Légales
-const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
-  <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-    <DialogTitle>Conditions Générales de Vente & Mentions Légales - Cleservice.com</DialogTitle>
-    <DialogContent dividers>
-      <Box sx={{ maxHeight: '60vh', overflowY: 'auto', pr: 2 }}>
-        <Typography variant="h6" gutterBottom>Objet</Typography>
-        <Typography variant="body2" paragraph>
-          Les présentes Conditions Générales de Vente (CGV) régissent les relations contractuelles entre Maison Bouvet S.A.S. (ci-après "le Vendeur") et tout client effectuant un achat sur cleservice.com.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Produits</Typography>
-        <Typography variant="body2" paragraph>
-          Les produits sont présentés avec exactitude. Le Vendeur peut corriger erreurs ou omissions sans engager sa responsabilité.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Prix</Typography>
-        <Typography variant="body2" paragraph>
-          Les prix, en euros TTC, peuvent être modifiés. Le prix facturé est celui en vigueur lors de la validation du paiement.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Commande</Typography>
-        <Typography variant="body2" paragraph>
-          Toute commande implique l'acceptation sans réserve des CGV et la prise de connaissance préalable par l'Acheteur.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Paiement</Typography>
-        <Typography variant="body2" paragraph>
-          Paiement en ligne sécurisé par carte bancaire ou autres moyens proposés.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Livraison</Typography>
-        <Typography variant="body2" paragraph>
-          Livraison à l'adresse indiquée. Délais variables selon destination. Retard non imputable au Vendeur.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Droit de Rétractation</Typography>
-        <Typography variant="body2" paragraph>
-          L'Acheteur dispose de 14 jours à réception pour exercer son droit de rétractation. Frais de retour à sa charge.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Garantie</Typography>
-        <Typography variant="body2" paragraph>
-          Garantie légale de conformité et contre les vices cachés selon la législation en vigueur.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Responsabilité</Typography>
-        <Typography variant="body2" paragraph>
-          Le Vendeur n'est pas responsable des dommages indirects. Responsabilité limitée au montant de la commande.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Droit Applicable</Typography>
-        <Typography variant="body2" paragraph>
-          Les CGV sont soumises au droit français. Juridiction compétente : tribunaux de Paris.
-        </Typography>
-        <Typography variant="h6" gutterBottom>Modification des CGV</Typography>
-        <Typography variant="body2" paragraph>
-          Le Vendeur peut modifier les CGV à tout moment. Les nouvelles CGV s'appliqueront aux commandes ultérieures.
-        </Typography>
-        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-          © 2025 cleservice.com - Tous droits réservés.
-        </Typography>
-      </Box>
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose} color="primary">Fermer</Button>
-    </DialogActions>
-  </Dialog>
-);
+const socket = io('https://cl-back.onrender.com');
 
 const CommandePage = () => {
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  const [commandes, setCommandes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [commandeToCancel, setCommandeToCancel] = useState(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+  const [zoom, setZoom] = useState(1);
+
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const decodeImage = img =>
+    img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
+
+  const fetchCommandes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('https://cl-back.onrender.com/commande/paid', {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        if (response.status === 500) throw new Error('Erreur interne du serveur. Veuillez réessayer plus tard.');
+        throw new Error(`Erreur (status ${response.status})`);
+      }
+      const json = await response.json();
+      setCommandes(Array.isArray(json.data) ? json.data : []);
+    } catch (err) {
+      setError(err.message || 'Erreur lors du chargement des commandes.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const { brand: brandName, reference: articleType, name: articleName } = useParams();
-  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
-  const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode');
-  const navigate = useNavigate();
-
-  const [article, setArticle] = useState(null);
-  const [loadingArticle, setLoadingArticle] = useState(true);
-  const [errorArticle, setErrorArticle] = useState(null);
-
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoadingArticle(true);
-        setErrorArticle(null);
-        if (!decodedArticleName.trim()) throw new Error('Nom d\'article vide.');
-        // Appel sur l'endpoint best-by-name
-        const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-        let response = await fetch(endpointBest);
-        // Si best-by-name renvoie un 404, alors fallback sur closest-match
-        if (response.status === 404) {
-          console.warn('best-by-name retourne 404, utilisation du fallback closest-match.');
-          const endpointFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
-          response = await fetch(endpointFallback);
-        }
-        if (!response.ok) throw new Error(await response.text());
-        const product = await response.json();
-        if (product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
-          throw new Error('La marque de l\'article ne correspond pas.');
-        }
-        setArticle(product);
-      } catch (err) {
-        setErrorArticle(err.message);
-      } finally {
-        setLoadingArticle(false);
-      }
-    };
-    fetchProduct();
-  }, [brandName, decodedArticleName]);
+    fetchCommandes();
+    socket.on('commandeUpdate', fetchCommandes);
+    return () => socket.off('commandeUpdate');
+  }, [fetchCommandes]);
 
-  // États pour le formulaire
-  const [userInfo, setUserInfo] = useState({
-    clientType: 'particulier', nom: '', email: '', phone: '', address: '', postalCode: '', ville: '', additionalInfo: '',
-  });
-  const [keyInfo, setKeyInfo] = useState({ keyNumber: '', propertyCardNumber: '', frontPhoto: null, backPhoto: null });
-  const [isCleAPasse, setIsCleAPasse] = useState(false);
-  const [lostCartePropriete, setLostCartePropriete] = useState(false);
-  const [idCardInfo, setIdCardInfo] = useState({ idCardFront: null, idCardBack: null, domicileJustificatif: '' });
-  const [attestationPropriete, setAttestationPropriete] = useState(false);
-  const [deliveryType, setDeliveryType] = useState('');
-  const [shippingMethod, setShippingMethod] = useState('magasin');
-  const [quantity, setQuantity] = useState(1);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [ordering, setOrdering] = useState(false);
-  const [openCGV, setOpenCGV] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [openImageModal, setOpenImageModal] = useState(false);
-
-  const articlePrice = article ? (isCleAPasse && article.prixCleAPasse ? parseFloat(article.prixCleAPasse)
-    : mode === 'postal' ? parseFloat(article.prixSansCartePropriete)
-    : parseFloat(article.prix)) : 0;
-  const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
-  const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-  const dossierFees = { anker: 80, bricard: 60, fichet: 205, heracles: 60, laperche: 60, medeco: 60, picard: 80, vachette: 96 };
-  const normalizedMarque = article ? normalizeString(article.marque) : '';
-  const dossierFee = lostCartePropriete && dossierFees[normalizedMarque] ? dossierFees[normalizedMarque] : 0;
-  const totalPrice = safeArticlePrice + shippingFee + dossierFee;
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name in userInfo) setUserInfo({ ...userInfo, [name]: value });
-    else if (name in keyInfo) setKeyInfo({ ...keyInfo, [name]: value });
+  const openCancelDialog = commande => {
+    setCommandeToCancel(commande);
+    setCancellationReason('');
+    setOpenDialog(true);
   };
-  const handlePhotoUpload = (e) => { const { name, files } = e.target; if (files[0]) setKeyInfo({ ...keyInfo, [name]: files[0] }); };
-  const handleIdCardUpload = async (e) => { const { name, files } = e.target; if (files[0]) {
-    if (name === 'domicileJustificatif') {
-      const fd = new FormData(); fd.append('pdf', files[0]);
-      try {
-        const res = await fetch('https://cl-back.onrender.com/upload/pdf', { method: 'POST', body: fd });
-        if (!res.ok) throw new Error('Erreur upload');
-        const d = await res.json();
-        setIdCardInfo({ ...idCardInfo, domicileJustificatif: d.filePath });
-      } catch {
-        setSnackbarMessage('Erreur lors de l\'upload du justificatif');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      }
-    } else {
-      setIdCardInfo({ ...idCardInfo, [name]: files[0] });
-    }
-  }};
 
-  const handleOrder = async () => {
-    if (!termsAccepted) {
-      setSnackbarMessage('Veuillez accepter les Conditions Générales de Vente.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
-    }
-    setOrdering(true);
+  const handleConfirmCancel = async () => {
+    if (!commandeToCancel || !cancellationReason.trim()) return alert("Veuillez saisir une raison d'annulation.");
     try {
-      const fd = new FormData();
-      Object.entries(userInfo).forEach(([k, v]) => fd.append(k, v));
-      fd.append('prix', totalPrice.toFixed(2));
-      fd.append('articleName', article?.nom || '');
-      fd.append('quantity', quantity);
-      if (mode === 'numero') {
-        if (article?.besoinNumeroCle) fd.append('keyNumber', article.nom);
-        if (article?.besoinNumeroCarte) {
-          if (!lostCartePropriete) fd.append('propertyCardNumber', keyInfo.propertyCardNumber);
-          else {
-            fd.append('idCardFront', idCardInfo.idCardFront);
-            fd.append('idCardBack', idCardInfo.idCardBack);
-            fd.append('domicileJustificatifPath', idCardInfo.domicileJustificatif);
-            fd.append('attestationPropriete', attestationPropriete.toString());
-          }
-        }
-      }
-      fd.append('deliveryType', deliveryType);
-      fd.append('shippingMethod', shippingMethod);
-      fd.append('isCleAPasse', isCleAPasse.toString());
-      if (article?.besoinPhoto) {
-        fd.append('frontPhoto', keyInfo.frontPhoto);
-        fd.append('backPhoto', keyInfo.backPhoto);
-      }
-      const commandeRes = await fetch('https://cl-back.onrender.com/commande/create', { method: 'POST', body: fd });
-      if (!commandeRes.ok) throw new Error(await commandeRes.text());
-      const { numeroCommande } = await commandeRes.json();
-      const paymentPayload = {
-        amount: totalPrice * 100,
-        currency: 'eur',
-        description: `Veuillez procéder au paiement pour ${userInfo.nom}`,
-        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`
-      };
-      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentPayload)
-      });
-      if (!payRes.ok) throw new Error(await payRes.text());
-      const { paymentUrl } = await payRes.json();
-      window.location.href = paymentUrl;
-    } catch (e) {
-      setSnackbarMessage(`Erreur : ${e.message}`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      setOrdering(false);
+      const resp = await fetch(
+        `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
+        { method: 'DELETE', headers: { Accept: 'application/json' } }
+      );
+      const data = await resp.json();
+      alert(data.success ? 'Commande annulée.' : 'Erreur lors de l\'annulation.');
+      fetchCommandes();
+    } catch {
+      alert('Erreur lors de l\'annulation.');
+    } finally {
+      setOpenDialog(false);
+      setCommandeToCancel(null);
     }
   };
 
-  const handleCloseSnackbar = (event, reason) => { if (reason === 'clickaway') return; setSnackbarOpen(false); };
+  const handleImageClick = url => {
+    setSelectedImage(url);
+    setZoom(1);
+    setOpenImageDialog(true);
+  };
 
-  if (loadingArticle) {
-    return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleWheel = e => {
+    e.preventDefault();
+    setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
+  };
 
-  if (errorArticle || !article) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Typography variant="h4" color="error" gutterBottom>
-          {errorArticle || "Produit non disponible"}
-        </Typography>
-        <Button variant="contained" onClick={() => navigate('/')}>
-          Retour à l’accueil
-        </Button>
-      </Container>
-    );
-  }
+  const handlePdfDisplay = path => window.open(`https://cl-back.onrender.com/${path.replace(/\\/g, '/')}`, '_blank');
+
+  const generateInvoiceDoc = commande => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const m = 15;
+    doc.setFillColor(27,94,32).rect(0,m,210,40,'F');
+    doc.addImage(logo,'PNG',m,m,32,32);
+    doc.setFontSize(8).setTextColor(255);
+    doc.text([
+      'REPRODUCTION EN LIGNE',
+      'www.votresite-reproduction.com',
+      'Service en ligne de reproductions',
+      'Tél : 01 42 67 47 28',
+      'Email : contact@reproduction.com'
+    ], m+37, m+12, { lineHeightFactor:1.5 });
+    const rightX = 210 - m;
+    doc.setFont('helvetica','bold').setFontSize(10).text('Facturé à :', rightX, m+12,{align:'right'});
+    doc.setFont('helvetica','normal').setFontSize(8);
+    [commande.nom, commande.adressePostale, commande.telephone?`Tél : ${commande.telephone}`:'', commande.adresseMail?`Email : ${commande.adresseMail}`:'']
+      .filter(Boolean)
+      .forEach((t,i)=> doc.text(t, rightX, m+17+i*5, {align:'right'}));
+    const date = commande.createdAt?new Date(commande.createdAt).toLocaleDateString():'Non renseignée';
+    doc.setFontSize(9).setTextColor(27,94,32).text(`Date de commande : ${date}`, m, m+45);
+    let y = m+55;
+    const article = Array.isArray(commande.cle)?commande.cle.join(', '):(commande.cle||'Article');
+    const marque = commande.marque||'Reproduction En Ligne';
+    const quant = commande.quantity||1;
+    const prixTTC = parseFloat(commande.prix);
+    const ht = (prixTTC/1.2).toFixed(2);
+    doc.autoTable({ startY:y, head:[['Article','Marque','Quantité','Sous-total']], body:[[article,marque,quant,`${ht} €`]], theme:'grid', headStyles:{fillColor:[27,94,32],textColor:255}, styles:{fontSize:12,halign:'left'}, margin:{left:m,right:m} });
+    y = doc.lastAutoTable.finalY+10;
+    const frais=0; const tva=(prixTTC-ht).toFixed(2);
+    doc.setFontSize(12).setTextColor(27,94,32)
+      .text('Sous-total',rightX-80,y).text(`${ht} €`,rightX,y,{align:'right'});
+    y+=7;
+    doc.text('Frais de livraison',rightX-80,y).text(`${frais.toFixed(2)} €`,rightX,y,{align:'right'});
+    y+=7;
+    doc.setFont('helvetica','bold').text('Total TTC',rightX-80,y).text(`${prixTTC.toFixed(2)} €`,rightX,y,{align:'right'});
+    y+=7;
+    doc.setFont('helvetica','normal').text('TVA',rightX-80,y).text(`${tva} €`,rightX,y,{align:'right'});
+    y+=15;
+    const cond = "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne...";
+    const lines = doc.splitTextToSize(cond,180);
+    doc.setFontSize(10).setTextColor(27,94,32).text(lines,105,y,{align:'center'});
+    doc.text('Bonne journée.',105,y+lines.length*5,{align:'center'});
+    return doc;
+  };
+
+  const showInvoice = c => window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
+  const downloadInvoice = c => generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
+  const printInvoice = c=>{const d=generateInvoiceDoc(c);d.autoPrint();window.open(d.output('bloburl'),'_blank');};
+
+  const sorted = [...commandes].sort((a,b)=>b.id.localeCompare(a.id));
 
   return (
-    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={4}>
-          {/* Section Formulaire */}
-          <Grid item xs={12}>
-            <SectionPaper>
-              <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
-              <Divider sx={{ mb: 3 }} />
-              {/* ... (Le formulaire complet) ... */}
-              <Box>
-                <FormControlLabel
-                  control={<ModernCheckbox checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />}
-                  label={
-                    <>
-                      J'accepte les{' '}
-                      <Button
-                        variant="text"
-                        color="primary"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenCGV(true);
-                        }}
-                        sx={{ textTransform: 'none' }}
-                      >
-                        Conditions Générales de Vente
-                      </Button>
-                    </>
-                  }
-                />
+    <Container maxWidth="lg" sx={{py:4,fontFamily:'Poppins',backgroundColor:'rgba(240,255,245,0.5)'}}>
+      <Typography variant="h4" align="center" gutterBottom sx={{color:'green.700',fontWeight:600}}>Détails des Commandes Payées</Typography>
+      {loading && <Box sx={{display:'flex',justifyContent:'center',my:4}}><CircularProgress color="success"/></Box>}
+      {error && <Alert severity="error">{error}</Alert>}
+      {!loading && sorted.length===0 && !error && <Typography align="center">Aucune commande payée trouvée.</Typography>}
+      <Grid container spacing={3}>
+        {sorted.map(c=> (
+          <Grid item xs={12} key={c.id}><Card sx={{borderRadius:3,boxShadow:3,border:'1px solid',borderColor:'green.100',overflow:'hidden'}}>
+            <CardContent sx={{backgroundColor:'white'}}>
+              <Typography variant="subtitle1" sx={{fontWeight:500,color:'green.700',mb:1}}>Produit Commandé :</Typography>
+              <Box sx={{display:'flex',alignItems:'center',gap:1,mb:2}}><Typography>{Array.isArray(c.cle)?c.cle.join(', '):c.cle||'Non renseigné'}</Typography></Box>
+              <Divider sx={{mb:2}}/>
+              <Typography variant="subtitle1" sx={{fontWeight:500,color:'green.700',mb:1}}>Informations Client :</Typography>
+              <Box sx={{mb:2}}>
+                <Typography variant="h5" sx={{fontWeight:600,color:'green.800'}}>{c.nom}</Typography>
+                <Typography variant="body1" sx={{fontWeight:500,color:'green.700',mt:1}}>Numéro de commande : {c.numeroCommande||'Non renseigné'}</Typography>
+                <Typography variant="body1" sx={{fontWeight:500,color:'green.700',mt:1}}>Date de commande : {c.createdAt?new Date(c.createdAt).toLocaleDateString():'Non renseignée'}</Typography>
+                <Box sx={{display:'flex',alignItems:'center',mb:0.5}}><LocationOnIcon sx={{color:'green.500',mr:1}}/><Typography>{c.adressePostale.split(',')[0].trim()}</Typography></Box>
               </Box>
-            </SectionPaper>
-          </Grid>
-          {/* Section Récapitulatif */}
-          <Grid item xs={12}>
-            <SummaryCard>
-              {/* ... (Le récapitulatif complet) ... */}
-            </SummaryCard>
-          </Grid>
-        </Grid>
-      </Container>
-      {/* Modals et Snackbars */}
-      <Dialog open={openImageModal} onClose={() => setOpenImageModal(false)} maxWidth="md" fullWidth>
-        <DialogContent sx={{ p: 0 }}>
-          <img src={article?.imageUrl} alt={article?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
+              <Typography variant="subtitle1" sx={{fontWeight:500,color:'green.700',mb:1}}>Prix : {c.prix?`${parseFloat(c.prix).toFixed(2)} € TTC`:'-'}</Typography>
+            </CardContent>
+            <CardActions sx={{justifyContent:'space-between',backgroundColor:'green.50',p:2}}>
+              <Button variant="contained" color="primary" onClick={()=>showInvoice(c)}>Afficher Facture</Button>
+              <Button variant="contained" color="secondary" onClick={()=>downloadInvoice(c)}>Télécharger Facture</Button>
+              <Button variant="contained" color="info" onClick={()=>printInvoice(c)}>Imprimer Facture</Button>
+              <Button variant="contained" startIcon={<CancelIcon/>} sx={{borderRadius:20,backgroundColor:'red.400','&:hover':{backgroundColor:'red.600'}}} onClick={()=>openCancelDialog(c)}>Annuler la commande</Button>
+            </CardActions>
+          </Card></Grid>
+        ))}
+      </Grid>
+      <Dialog open={openDialog} onClose={()=>setOpenDialog(false)} fullScreen={fullScreen} PaperProps={{sx:{borderRadius:3,p:2,backgroundColor:'green.50'}}}>
+        <DialogTitle sx={{fontWeight:600,color:'green.800'}}>Confirmer l'annulation</DialogTitle>
+        <DialogContent>
+          <Typography>Raison de l'annulation :</Typography>
+          <TextField fullWidth variant="outlined" margin="dense" value={cancellationReason} onChange={e=>setCancellationReason(e.target.value)} required />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={()=>setOpenDialog(false)} color="success">Annuler</Button>
+          <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancellationReason.trim()}>Confirmer</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={openImageDialog} onClose={()=>{setOpenImageDialog(false);setZoom(1);}} fullScreen={fullScreen} maxWidth="lg" fullWidth onWheel={handleWheel} sx={{p:0,display:'flex',justifyContent:'center',alignItems:'center',maxHeight:'90vh',overflow:'hidden'}}>
+        <DialogActions sx={{justifyContent:'flex-end',p:1}}><IconButton onClick={()=>{setOpenImageDialog(false);setZoom(1);}}><CloseIcon/></IconButton></DialogActions>
+        <DialogContent>
+          {selectedImage&&<Box component="img" src={selectedImage} alt="Enlargi" sx={{maxWidth:'100%',maxHeight:'80vh',transform:`scale(${zoom})`,transition:'transform 0.2s',transformOrigin:'center',borderRadius:2}}/>}
         </DialogContent>
       </Dialog>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbarSeverity}
-          iconMapping={{
-            success: <CheckCircle fontSize="inherit" sx={{ color: '#1B5E20' }} />, 
-            error: <ErrorIcon fontSize="inherit" sx={{ color: '#1B5E20' }} />
-          }}
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
-    </Box>
+    </Container>
   );
 };
 
