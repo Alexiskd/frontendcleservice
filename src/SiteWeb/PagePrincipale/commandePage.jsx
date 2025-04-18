@@ -37,8 +37,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// ← chemin corrigé : PagePrincipale → api
-import { preloadKeysData } from '../../../api/brandsApi';
+// Chemin corrigé vers brandsApi.js dans src/SiteWeb
+import { preloadKeysData } from '../brandsApi';
 
 const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
   <Box sx={{ mb: 2 }}>
@@ -73,10 +73,9 @@ const SummaryCard = styled(Card)(({ theme }) => ({
 }));
 
 const CommandePage = () => {
-  // Scroll to top
   useEffect(() => window.scrollTo(0, 0), []);
 
-  const { brandName, articleType, articleName } = useParams();
+  const { brandName, articleName } = useParams();
   const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
   const [searchParams] = useSearchParams();
   const mode = searchParams.get('mode');
@@ -92,7 +91,6 @@ const CommandePage = () => {
   const handleCloseImageModal = () => setOpenImageModal(false);
 
   const [userInfo, setUserInfo] = useState({
-    clientType: 'particulier',
     nom: '',
     email: '',
     phone: '',
@@ -126,12 +124,10 @@ const CommandePage = () => {
   const [ordering, setOrdering] = useState(false);
   const [openCGV, setOpenCGV] = useState(false);
 
-  // Load article
   const loadArticle = useCallback(async () => {
     setLoadingArticle(true);
     setErrorArticle(null);
     try {
-      // URL entourée de `` pour être valide
       const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
         decodedArticleName
       )}`;
@@ -143,10 +139,7 @@ const CommandePage = () => {
       const text = await res.text();
       if (!text) throw new Error('Réponse vide du serveur.');
       const data = JSON.parse(text);
-      if (
-        data.manufacturer &&
-        data.manufacturer.toLowerCase() !== brandName.toLowerCase()
-      ) {
+      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase()) {
         throw new Error("La marque ne correspond pas.");
       }
       setArticle(data);
@@ -161,14 +154,12 @@ const CommandePage = () => {
     loadArticle();
   }, [loadArticle]);
 
-  // Preload keys
   useEffect(() => {
     if (brandName && article) {
       preloadKeysData(brandName)
         .then((keys) => {
           const found = keys.find(
-            (k) =>
-              k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
           );
           if (found) setPreloadedKey(found);
         })
@@ -188,7 +179,7 @@ const CommandePage = () => {
   const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
 
   const validateForm = () => {
-    // ... validation logic ...
+    // logique de validation...
     return true;
   };
 
@@ -208,14 +199,12 @@ const CommandePage = () => {
     setOrdering(true);
     try {
       const fd = new FormData();
-      // append fields...
-      const cmdRes = await fetch(
-        'https://cl-back.onrender.com/commande/create',
-        { method: 'POST', body: fd }
-      );
+      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
+        method: 'POST',
+        body: fd,
+      });
       if (!cmdRes.ok) {
-        const errText = await cmdRes.text();
-        throw new Error(`Création commande : ${errText}`);
+        throw new Error(`Création commande : ${await cmdRes.text()}`);
       }
       const { numeroCommande } = await cmdRes.json();
       const payload = {
@@ -225,17 +214,13 @@ const CommandePage = () => {
         success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
         cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
       };
-      const payRes = await fetch(
-        'https://cl-back.onrender.com/stripe/create',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
+      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
       if (!payRes.ok) {
-        const errText = await payRes.text();
-        throw new Error(`Paiement : ${errText}`);
+        throw new Error(`Paiement : ${await payRes.text()}`);
       }
       const { paymentUrl } = await payRes.json();
       window.location.href = paymentUrl;
@@ -268,21 +253,18 @@ const CommandePage = () => {
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
-        {/* ... le reste du formulaire et résumé ... */}
+        {/* ... votre formulaire et récapitulatif ici ... */}
       </Container>
 
-      {/* Modals & Snackbar */}
+      {/* Modal d’image */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
         <DialogContent sx={{ p: 0 }}>
           <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
         </DialogContent>
       </Dialog>
 
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
-      >
+      {/* Notification */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
         <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
       </Snackbar>
 
@@ -292,4 +274,3 @@ const CommandePage = () => {
 };
 
 export default CommandePage;
-
