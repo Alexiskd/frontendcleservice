@@ -119,7 +119,8 @@ const ProductPage = () => {
 
         // Si aucune correspondance n'est trouvée dans le préchargement, fallback sur l'endpoint best-by-name
         if (!foundProduct) {
-          const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
+          const cleanedProductNameForURL = decodedProductName.trim().replace(/\s+/g, ' ').replace(/ /g, '%20');
+          const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(cleanedProductNameForURL)}`;
           const response = await fetch(url);
           if (!response.ok) {
             const serverMessage = await response.text();
@@ -270,47 +271,20 @@ const ProductPage = () => {
                   )}
                   {mainPrice && (
                     <Typography variant="h5" sx={{ color: '#1B5E20', whiteSpace: 'nowrap' }}>
-                      {mainPrice} €
+                      {mainPrice.toLocaleString('fr-FR', {
+                        style: 'currency',
+                        currency: 'EUR',
+                      })}
                     </Typography>
                   )}
                 </Box>
-                {isCoffreFort && (
-                  <Typography variant="subtitle1" sx={{ color: '#D32F2F', mb: 1 }}>
-                    Clé Coffre Fort
-                  </Typography>
-                )}
-                <Divider sx={{ my: 2 }} />
-                <InfoBox>
-                  <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
-                    Processus de fabrication
-                  </Typography>
-                  <Typography variant="subtitle1">{processText}</Typography>
-                </InfoBox>
-                <InfoBox>
-                  <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
-                    Autre moyen de reproduction
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé.
-                  </Typography>
-                </InfoBox>
-                {Number(product.prixCleAPasse) > 0 && (
-                  <InfoBox>
-                    <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
-                      Clé de passe
-                    </Typography>
-                    <Grid container>
-                      <Grid item xs={12} sm={4}>
-                        <Typography variant="subtitle1">{cleAPasseText}</Typography>
-                      </Grid>
-                    </Grid>
-                  </InfoBox>
-                )}
-                <Box display="flex" justifyContent="space-between">
-                  <StyledButton onClick={() => handleOrderNow('reproduction')}>
-                    Commander maintenant
+                {processText && <InfoBox>{processText}</InfoBox>}
+                {cleAPasseText && <InfoBox>{cleAPasseText}</InfoBox>}
+                {product.typeReproduction && (
+                  <StyledButton onClick={() => handleOrderNow('default')} sx={{ marginTop: 2 }}>
+                    Commander
                   </StyledButton>
-                </Box>
+                )}
               </CardContent>
             </Grid>
           </Grid>
