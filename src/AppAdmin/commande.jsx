@@ -43,7 +43,6 @@ const Commande = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Décodage Base64 / data URI
   const decodeImage = img => {
     if (!img) return '';
     if (img.startsWith('data:')) return img;
@@ -115,9 +114,7 @@ const Commande = () => {
   const generateInvoiceDoc = commande => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
-    // En‑tête
     doc.setFillColor(27,94,32).rect(0, m, 210, 40, 'F');
-    // Infos site
     doc.setFontSize(8).setTextColor(255,255,255);
     doc.text(
       [
@@ -131,7 +128,6 @@ const Commande = () => {
       m + 12,
       { lineHeightFactor: 1.5 }
     );
-    // Infos client
     const rightX = 210 - m;
     doc.setFont('helvetica','bold').setFontSize(10)
        .text('Facturé à :', rightX, m + 12, { align: 'right' });
@@ -144,13 +140,11 @@ const Commande = () => {
     ].filter(Boolean).forEach((t, i) =>
       doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
     );
-    // Date de commande
     const date = commande.createdAt
       ? new Date(commande.createdAt).toLocaleDateString('fr-FR')
       : 'Non renseignée';
     doc.setFontSize(9).setTextColor(27,94,32)
        .text(`Date de commande : ${date}`, m, m + 45);
-    // Détails
     let y = m + 55;
     const article = Array.isArray(commande.cle) ? commande.cle.join(', ') : (commande.cle || 'Article');
     const marque = commande.marque || 'Reproduction En Ligne';
@@ -167,7 +161,6 @@ const Commande = () => {
       margin: { left: m, right: m },
     });
     y = doc.lastAutoTable.finalY + 10;
-    // Totaux
     const frais = 0.00;
     const tva = (ttc - ht).toFixed(2);
     doc.setFontSize(12).setTextColor(27,94,32)
@@ -178,7 +171,6 @@ const Commande = () => {
     doc.setFont('helvetica','bold').text('Total TTC', rightX - 80, y).text(`${ttc.toFixed(2)} €`, rightX, y, { align: 'right' });
     y += 7;
     doc.setFont('helvetica','normal').text('TVA', rightX - 80, y).text(`${tva} €`, rightX, y, { align: 'right' });
-    // Conditions générales
     y += 15;
     const cond = "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin.";
     const lines = doc.splitTextToSize(cond, 180);
@@ -191,7 +183,6 @@ const Commande = () => {
   const downloadInvoice = c => generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
   const printInvoice = c => { const d = generateInvoiceDoc(c); d.autoPrint(); window.open(d.output('bloburl'), '_blank'); };
 
-  // Tri décroissant par date d'enregistrement
   const sorted = [...commandes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
@@ -260,7 +251,6 @@ const Commande = () => {
         ))}
       </Grid>
 
-      {/* Dialog d'annulation */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen}>
         <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>Confirmer l'annulation</DialogTitle>
         <DialogContent>
@@ -288,7 +278,6 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog de zoom image */}
       <Dialog
         open={openImageDialog}
         onClose={() => setOpenImageDialog(false)}
