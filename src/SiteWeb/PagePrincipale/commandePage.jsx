@@ -14,14 +14,12 @@ import {
   Grid,
 } from "@mui/material";
 
-// Initialisation de la connexion au socket
 const socket = io(import.meta.env.VITE_SERVER_URL);
 
 function CommandePage() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fonction pour récupérer les commandes depuis le serveur
   const fetchCommandes = async () => {
     try {
       const response = await axios.get(
@@ -35,28 +33,23 @@ function CommandePage() {
     }
   };
 
-  // Effet de bord pour récupérer les commandes et mettre à jour en temps réel via socket
   useEffect(() => {
     fetchCommandes();
 
-    // Écoute des événements de mise à jour de commande
     socket.on("commandeUpdated", () => {
       fetchCommandes();
     });
 
     return () => {
-      // Nettoyage du socket lors du démontage du composant
       socket.off("commandeUpdated");
     };
   }, []);
 
-  // Fonction pour générer la facture en PDF
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
     logoImg.src = "/logo.png"; // Le fichier logo.png doit être dans le dossier public
 
-    // Une fois que l'image est chargée, on ajoute le logo et les informations
     logoImg.onload = () => {
       doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
       doc.setFontSize(18);
@@ -66,13 +59,11 @@ function CommandePage() {
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
       doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
 
-      // Préparer les produits pour le tableau
       const body = commande.produits.map((produit) => [
         produit.nom,
         produit.prix.toFixed(2) + " €",
       ]);
 
-      // Ajouter le tableau des produits à la facture
       doc.autoTable({
         startY: 60,
         head: [["Produit", "Prix"]],
@@ -85,7 +76,6 @@ function CommandePage() {
         doc.lastAutoTable.finalY + 10
       );
 
-      // Sauvegarder la facture en PDF
       doc.save(`facture-${commande._id}.pdf`);
     };
   };
