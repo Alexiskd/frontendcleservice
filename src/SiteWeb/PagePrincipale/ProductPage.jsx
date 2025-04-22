@@ -1,3 +1,4 @@
+// src/SiteWeb/PagePrincipale/ProductPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import {
@@ -20,9 +21,8 @@ import { styled } from '@mui/material/styles';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-
-// Import depuis brandsApi.js qui se trouve dans le dossier SiteWeb
-import { preloadKeysData } from "../brandsApi.js";
+// Import via alias
+import { preloadKeysData } from '@utils/preloadData.js';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: 8,
@@ -46,12 +46,11 @@ const StyledButton = styled(Button)(({ theme }) => ({
 
 const InfoBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  borderRadius: 4,
+  borderRadius: theme.spacing(0.5),
   background: 'linear-gradient(45deg, #e8f5e9, #f1f8e9)',
   marginBottom: theme.spacing(2),
 }));
 
-// Fonction utilitaire pour déterminer le délai de livraison
 const getDeliveryDelay = (typeReproduction) => {
   switch (typeReproduction) {
     case 'copie':
@@ -65,7 +64,6 @@ const getDeliveryDelay = (typeReproduction) => {
   }
 };
 
-// Recherche simple dans la liste des clés préchargées
 const findProductInKeys = (keys, productName) => {
   return keys.find((item) =>
     item.nom.trim().toLowerCase() === productName.trim().toLowerCase()
@@ -79,10 +77,11 @@ const ProductPage = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  // Message d'erreur générique
   const [error, setError] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false); // Dialog state for image view
+  const [imageToShow, setImageToShow] = useState(""); // Image to display in the dialog
 
-  // Cas particulier pour "/cle-izis-cassee.php"
+  // Cas particulier pour l'ancien format (ex : /cle-izis-cassee.php)
   if (!productName && location.pathname === '/cle-izis-cassee.php') {
     productName = "Clé-Izis-Cavers-Reparation-de-clé";
   }
@@ -99,7 +98,6 @@ const ProductPage = () => {
     );
   }
 
-  // Nettoyage du nom du produit : suppression de suffixe éventuel et remplacement des tirets par des espaces
   let cleanedProductName = productName;
   if (cleanedProductName.endsWith('-reproduction-cle.html')) {
     cleanedProductName = cleanedProductName.replace(/-reproduction-cle\.html$/, '');
@@ -113,14 +111,10 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Préchargement des clés pour la marque donnée via brandsApi.js
         const keys = await preloadKeysData(brandName);
         let foundProduct = findProductInKeys(keys, decodedProductName);
-
-        // Si aucune correspondance n'est trouvée dans le préchargement, fallback sur l'endpoint best-by-name
         if (!foundProduct) {
-          const cleanedProductNameForURL = decodedProductName.trim().replace(/\s+/g, ' ').replace(/ /g, '%20');
-          const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(cleanedProductNameForURL)}`;
+          const url = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedProductName)}`;
           const response = await fetch(url);
           if (!response.ok) {
             const serverMessage = await response.text();
@@ -162,6 +156,15 @@ const ProductPage = () => {
       navigate(`/produit/${brandName}/${encodeURIComponent(formattedProductName)}`);
     }
   }, [navigate, product, brandName]);
+
+  const handleDialogOpen = (imageUrl) => {
+    setImageToShow(imageUrl);
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+  };
 
   if (loading) {
     return (
@@ -224,7 +227,12 @@ const ProductPage = () => {
             name="description"
             content={`Découvrez ${product.nom} de ${brandName}. Réparation et reproduction de clé en ligne.`}
           />
-          <link rel="canonical" href={`https://www.votresite.com/cle-izis-cassee.php`} />
+          <link
+            rel="canonical"
+            href={`https://www.votresite.com/produit/${brandName}/${encodeURIComponent(
+              product.nom.trim().replace(/\s+/g, '-')
+            )}`}
+          />
         </Helmet>
       </HelmetProvider>
       <Container sx={{ mt: 2, mb: 4 }}>
@@ -241,7 +249,7 @@ const ProductPage = () => {
                     p: 2,
                     cursor: 'pointer',
                   }}
-                  onClick={handleViewProduct}
+                  onClick={() => handleDialogOpen(product.imageUrl)} // Open dialog to view image
                 >
                   <CardMedia
                     component="img"
@@ -260,7 +268,11 @@ const ProductPage = () => {
             )}
             <Grid item xs={12} md={8}>
               <CardContent>
-                <Typography variant="h4" sx={{ color: '#1B5E20', mb: 1, cursor: 'pointer' }} onClick={handleViewProduct}>
+                <Typography
+                  variant="h4"
+                  sx={{ color: '#1B5E20', mb: 1, cursor: 'pointer' }}
+                  onClick={handleViewProduct}
+                >
                   {product.nom}
                 </Typography>
                 <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -271,25 +283,97 @@ const ProductPage = () => {
                   )}
                   {mainPrice && (
                     <Typography variant="h5" sx={{ color: '#1B5E20', whiteSpace: 'nowrap' }}>
-                      {mainPrice.toLocaleString('fr-FR', {
-                        style: 'currency',
-                        currency: 'EUR',
-                      })}
+                      {mainPrice} €
                     </Typography>
                   )}
                 </Box>
-                {processText && <InfoBox>{processText}</InfoBox>}
-                {cleAPasseText && <InfoBox>{cleAPasseText}</InfoBox>}
-                {product.typeReproduction && (
-                  <StyledButton onClick={() => handleOrderNow('default')} sx={{ marginTop: 2 }}>
-                    Commander
-                  </StyledButton>
+                {isCoffreFort && (
+                  <Typography variant="subtitle1" sx={{ color: '#D32F2F', mb: 1 }}>
+                    Clé Coffre Fort
+                  </Typography>
                 )}
+                <Divider sx={{ my: 2 }} />
+                <InfoBox>
+                  <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
+                    Processus de fabrication
+                  </Typography>
+                  <Typography variant="subtitle1">{processText}</Typography>
+                </InfoBox>
+                <InfoBox>
+                  <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
+                    Autre moyen de reproduction
+                  </Typography>
+                  <Typography variant="subtitle1">
+                    Notre boutique, située au 20 rue de Lévis 75017 Paris, vous accueille pour la reproduction de votre clé.
+                  </Typography>
+                </InfoBox>
+                {Number(product.prixCleAPasse) > 0 && (
+                  <InfoBox>
+                    <Typography variant="h6" sx={{ color: '#1B5E20', mb: 2 }}>
+                      Clé de passe
+                    </Typography>
+                    <Grid container>
+                      <Grid item xs={12} sm={4}>
+                        Copie fabricant d'une clé de passe
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        {product.prixCleAPasse} €
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        {cleAPasseText}
+                      </Grid>
+                    </Grid>
+                  </InfoBox>
+                )}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body1">{product.descriptionNumero}</Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <InfoBox>
+                      <Typography variant="h6" sx={{ color: '#1B5E20', mb: 1 }}>
+                        Délai de livraison
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#1B5E20' }}>
+                        {getDeliveryDelay(product.typeReproduction)}
+                      </Typography>
+                    </InfoBox>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <InfoBox>
+                      <Typography variant="h6" sx={{ color: '#1B5E20', mb: 1 }}>
+                        Moyens de paiement
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#1B5E20' }}>
+                        Paiement par carte uniquement (Mastercard, Visa, American Express).
+                      </Typography>
+                    </InfoBox>
+                  </Grid>
+                </Grid>
+                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {Number(product.prix) > 0 && (
+                    <StyledButton onClick={() => handleOrderNow('numero')} startIcon={<ConfirmationNumberIcon />}>
+                      Commander par numéro
+                    </StyledButton>
+                  )}
+                  {Number(product.prixSansCartePropriete) > 0 && (
+                    <StyledButton onClick={() => handleOrderNow('carte-propriete')} startIcon={<LocalShippingIcon />}>
+                      Commander par carte de propriété
+                    </StyledButton>
+                  )}
+                </Box>
               </CardContent>
             </Grid>
           </Grid>
         </StyledCard>
       </Container>
+      <Dialog open={dialogOpen} onClose={handleDialogClose} maxWidth="md" fullWidth>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center' }}>
+          {imageToShow && (
+            <Box component="img" src={imageToShow} alt="Image du produit" sx={{ maxWidth: '100%', maxHeight: 500 }} />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
