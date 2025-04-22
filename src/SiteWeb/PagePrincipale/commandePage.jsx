@@ -120,12 +120,12 @@ const CommandePage = () => {
     doc.addImage(logo, 'PNG', m, m, 32, 32);
     // Infos site
     doc.setFontSize(8).setTextColor(255);
-    doc.text([
-      'REPRODUCTION EN LIGNE',
-      'www.votresite-reproduction.com',
-      'Service en ligne de reproductions',
-      'Tél : 01 42 67 47 28',
-      'Email : contact@reproduction.com'
+    doc.text([ 
+      'REPRODUCTION EN LIGNE', 
+      'www.votresite-reproduction.com', 
+      'Service en ligne de reproductions', 
+      'Tél : 01 42 67 47 28', 
+      'Email : contact@reproduction.com' 
     ], m + 37, m + 12, { lineHeightFactor: 1.5 });
     // Infos client
     const rightX = 210 - m;
@@ -208,80 +208,79 @@ const CommandePage = () => {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {commandes.length === 0 && !loading && (
-        <Alert severity="info">Aucune commande trouvée.</Alert>
+      {!loading && !error && sorted.length === 0 && (
+        <Typography align="center">Aucune commande payée trouvée.</Typography>
       )}
 
       <Grid container spacing={3}>
-        {sorted.map(commande => (
-          <Grid item key={commande.id} xs={12} sm={6} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Commande #{commande.numeroCommande}</Typography>
-                <Typography variant="body1">Nom: {commande.nom}</Typography>
-                <Typography variant="body2">Email: {commande.adresseMail}</Typography>
-                <Typography variant="body2">Téléphone: {commande.telephone}</Typography>
-                <Typography variant="body2">Statut: {commande.status}</Typography>
+        {sorted.map(c => (
+          <Grid item xs={12} key={c.id}>
+            <Card sx={{ borderRadius:3, boxShadow:3, border:'1px solid', borderColor:'green.100', overflow:'hidden' }}>
+              <CardContent sx={{ backgroundColor:'white' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
+                  Produit Commandé :
+                </Typography>
+                <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+                  <LocationOnIcon sx={{ color:'green.700' }} />
+                  <Typography variant="body2" color="text.secondary">{c.adressePostale}</Typography>
+                </Box>
+                <Divider sx={{ my:2 }} />
+                <Typography variant="h6" sx={{ color:'green.700', fontWeight:500 }}>
+                  Commande N° {c.numeroCommande}
+                </Typography>
               </CardContent>
-              <CardActions>
-                <Button onClick={() => openCancelDialog(commande)} color="error">Annuler</Button>
-                <Button onClick={() => showInvoice(commande)} color="success">Voir la Facture</Button>
-                <Button onClick={() => downloadInvoice(commande)} color="primary">Télécharger</Button>
+              <CardActions sx={{ justifyContent:'space-between', backgroundColor:'green.50' }}>
+                <Button size="small" color="success" onClick={() => showInvoice(c)}>
+                  Voir la facture
+                </Button>
+                <Button size="small" color="error" onClick={() => openCancelDialog(c)}>
+                  Annuler
+                </Button>
               </CardActions>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        fullScreen={fullScreen}
-      >
-        <DialogTitle>Annuler la commande #{commandeToCancel?.numeroCommande}</DialogTitle>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen}>
+        <DialogTitle sx={{ backgroundColor:'green.50' }}>
+          <IconButton edge="end" color="inherit" onClick={() => setOpenDialog(false)} aria-label="close">
+            <CloseIcon />
+          </IconButton>
+          Annuler la commande
+        </DialogTitle>
         <DialogContent>
+          <Typography variant="body2" sx={{ mb:2 }}>
+            Vous êtes sur le point d'annuler la commande n° {commandeToCancel?.numeroCommande}.
+          </Typography>
           <TextField
-            fullWidth
             label="Raison de l'annulation"
-            multiline
-            rows={4}
             value={cancellationReason}
             onChange={e => setCancellationReason(e.target.value)}
-            variant="outlined"
+            fullWidth
+            multiline
+            minRows={3}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="primary">Fermer</Button>
-          <Button onClick={handleConfirmCancel} color="error">Annuler la commande</Button>
+          <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
+          <Button color="error" onClick={handleConfirmCancel}>Confirmer</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)}>
-        <DialogTitle>Image de la commande</DialogTitle>
+      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <IconButton edge="end" color="inherit" onClick={() => setOpenImageDialog(false)} aria-label="close">
+            <CancelIcon />
+          </IconButton>
+        </DialogTitle>
         <DialogContent>
-          <Box sx={{ textAlign: 'center', position: 'relative' }}>
-            <IconButton
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                zIndex: 1,
-              }}
-              onClick={() => setOpenImageDialog(false)}
-            >
-              <CloseIcon />
-            </IconButton>
-            <img
-              src={decodeImage(selectedImage)}
-              alt="Commande"
-              style={{
-                width: `${zoom * 100}%`,
-                transition: 'width 0.2s',
-                cursor: 'zoom-in',
-              }}
-              onWheel={handleWheel}
-            />
-          </Box>
+          <img
+            src={decodeImage(selectedImage)}
+            alt="Commande Image"
+            style={{ width: `calc(100% * ${zoom})`, transition: 'transform 0.1s ease-out' }}
+            onWheel={handleWheel}
+          />
         </DialogContent>
       </Dialog>
     </Container>
