@@ -59,7 +59,8 @@ const Commande = () => {
       });
       if (!res.ok) {
         if (res.status === 500) {
-          throw new Error('Erreur interne du serveur. Réessayez plus tard.');
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.message || 'Erreur interne du serveur.');
         }
         throw new Error(`Erreur (status ${res.status})`);
       }
@@ -117,7 +118,7 @@ const Commande = () => {
   const generateInvoiceDoc = commande => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
-    // En-tête
+    // En‑tête
     doc.setFillColor(27,94,32).rect(0,m,210,40,'F');
     // Infos site
     doc.setFontSize(8).setTextColor(255,255,255);
@@ -161,7 +162,7 @@ const Commande = () => {
     const ht = (ttc / 1.2).toFixed(2);
     doc.autoTable({
       startY: y,
-      head: [['Article','Marque','Quantité','Sous-total']],
+      head: [['Article','Marque','Quantité','Sous‑total']],
       body: [[article, marque, qt, `${ht} €`]],
       theme: 'grid',
       headStyles: { fillColor:[27,94,32], textColor:255 },
@@ -173,7 +174,7 @@ const Commande = () => {
     const frais = 0.00;
     const tva = (ttc - ht).toFixed(2);
     doc.setFontSize(12).setTextColor(27,94,32)
-       .text('Sous-total', rightX-80, y).text(`${ht} €`, rightX, y, { align:'right' });
+       .text('Sous‑total', rightX-80, y).text(`${ht} €`, rightX, y, { align:'right' });
     y += 7;
     doc.text('Frais de livraison', rightX-80, y).text(`${frais.toFixed(2)} €`, rightX, y, { align:'right' });
     y += 7;
@@ -326,4 +327,3 @@ const Commande = () => {
 };
 
 export default Commande;
-
