@@ -1,121 +1,69 @@
-import React, { useState, useEffect } from "react";
-import { Box, Container, Typography, Button, Grid, CircularProgress } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import { socket } from "../socket"; // Ajustez le chemin si nécessaire
-import { getCommandeData } from "../../api/commandeApi"; // Vérifiez également ce chemin
-import { getBrands } from "../../api/brandsApi"; // Assurez-vous que ce fichier existe
+import React, { useEffect, useState } from "react";
+import { Box, Container, Grid, Paper, Typography, CircularProgress } from "@mui/material";
+import { socket } from "../socket";  // Assurez-vous que le chemin est correct
+import CommandeItem from "../components/CommandeItem";  // Votre composant pour afficher chaque commande
+import { fetchCommandes } from "../api/commandesApi";  // Supposons que vous avez une fonction d'API pour récupérer les commandes
 
 const CommandePage = () => {
   const [commandes, setCommandes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [brands, setBrands] = useState([]);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
+  // Récupérer les commandes au montage du composant
   useEffect(() => {
-    // Récupérer les données des commandes
-    const fetchCommandes = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getCommandeData();
-        setCommandes(data);
-      } catch (err) {
-        setError("Erreur lors de la récupération des commandes.");
+        const result = await fetchCommandes();
+        setCommandes(result);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des commandes", error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    // Récupérer les données des marques
-    const fetchBrands = async () => {
-      try {
-        const data = await getBrands();
-        setBrands(data);
-      } catch (err) {
-        setError("Erreur lors de la récupération des marques.");
-      }
-    };
+    fetchData();
+  }, []);
 
-    fetchCommandes();
-    fetchBrands();
-
-    // Écoute des événements en temps réel avec Socket.io
-    socket.on("updateCommandes", (newCommande) => {
-      setCommandes((prevCommandes) => [...prevCommandes, newCommande]);
+  // Gérer la réception d'événements via socket.io
+  useEffect(() => {
+    // Lorsqu'un événement 'commande-updated' est émis par le serveur
+    socket.on("commande-updated", (updatedCommande) => {
+      setCommandes((prevCommandes) =>
+        prevCommandes.map((commande) =>
+          commande.id === updatedCommande.id ? updatedCommande : commande
+        )
+      );
     });
 
+    // Nettoyer l'événement au démontage du composant
     return () => {
-      socket.off("updateCommandes");
+      socket.off("commande-updated");
     };
   }, []);
 
-  const handleViewDetails = (commandeId) => {
-    navigate(`/commande/${commandeId}`);
-  };
-
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <Typography color="error">{error}</Typography>
-      </Box>
-    );
-  }
-
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Liste des Commandes
+      <Typography variant="h4" gutterBottom align="center">
+        Gestion des Commandes
       </Typography>
-      {commandes.length === 0 ? (
-        <Typography variant="h6">Aucune commande trouvée.</Typography>
-      ) : (
-        <Grid container spacing={2}>
-          {commandes.map((commande) => (
+      <Grid container spacing={3}>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          commandes.map((commande) => (
             <Grid item xs={12} sm={6} md={4} key={commande.id}>
-              <Box border={1} padding={2} borderRadius={2} boxShadow={2}>
-                <Typography variant="h6">{commande.nom}</Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {commande.details}
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleViewDetails(commande.id)}
-                >
-                  Voir Détails
-                </Button>
-              </Box>
+              <Paper elevation={3} sx={{ padding: 2 }}>
+                <CommandeItem commande={commande} />
+              </Paper>
             </Grid>
-          ))}
-        </Grid>
-      )}
-
-      <Box mt={4}>
-        <Typography variant="h5" gutterBottom>
-          Marques disponibles
-        </Typography>
-        <Grid container spacing={2}>
-          {brands.map((brand) => (
-            <Grid item xs={12} sm={6} md={4} key={brand.id}>
-              <Box border={1} padding={2} borderRadius={2} boxShadow={2}>
-                <Typography variant="h6">{brand.name}</Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {brand.description}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+          ))
+        )}
+      </Grid>
     </Container>
   );
 };
 
 export default CommandePage;
+
