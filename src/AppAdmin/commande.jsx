@@ -58,7 +58,6 @@ const Commande = () => {
         headers: { Accept: 'application/json' },
       });
       if (!res.ok) {
-        // Lis le message d'erreur renvoyé par le backend
         const errBody = await res.json().catch(() => ({}));
         throw new Error(errBody.message || `Erreur (status ${res.status})`);
       }
