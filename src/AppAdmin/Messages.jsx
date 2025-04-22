@@ -1,4 +1,5 @@
 // AppAdmin/Messages.jsx
+
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -85,12 +86,14 @@ const Messages = () => {
       <TitleTypography variant="h4" gutterBottom>
         Messages de Contact
       </TitleTypography>
+
       {messages.length === 0 ? (
         <Typography variant="h6" align="center">
           Aucun message trouvé.
         </Typography>
       ) : (
-        messages.map((msg) => (
+        // On crée une copie inversée pour afficher le plus récent en premier
+        {[...messages].reverse().map((msg) => (
           <MessagePaper key={msg.id}>
             <Typography
               variant="h6"
@@ -98,18 +101,21 @@ const Messages = () => {
             >
               {msg.name} (<em style={{ color: '#777777' }}>{msg.email}</em>)
             </Typography>
+
             <DividerStyled />
+
             <Typography
               variant="body1"
               sx={{ fontFamily: 'Roboto, sans-serif', color: '#333333' }}
             >
               {msg.message}
             </Typography>
+
             <MessageCaption variant="caption">
               Envoyé le {new Date(msg.createdAt).toLocaleString()}
             </MessageCaption>
           </MessagePaper>
-        ))
+        )))
       )}
     </ContainerBox>
   );
