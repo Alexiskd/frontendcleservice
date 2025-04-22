@@ -208,64 +208,25 @@ const CommandePage = () => {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !error && sorted.length === 0 && (
-        <Typography align="center">Aucune commande payée trouvée.</Typography>
+      {commandes.length === 0 && !loading && (
+        <Alert severity="info">Aucune commande trouvée.</Alert>
       )}
 
       <Grid container spacing={3}>
-        {sorted.map(c => (
-          <Grid item xs={12} key={c.id}>
-            <Card sx={{ borderRadius:3, boxShadow:3, border:'1px solid', borderColor:'green.100', overflow:'hidden' }}>
-              <CardContent sx={{ backgroundColor:'white' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
-                  Produit Commandé :
-                </Typography>
-                <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2 }}>
-                  <Typography>
-                    {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
-                  </Typography>
-                </Box>
-                <Divider sx={{ mb:2 }} />
-                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
-                  Informations Client :
-                </Typography>
-                <Box sx={{ mb:2 }}>
-                  <Typography variant="h5" sx={{ fontWeight:600, color:'green.800' }}>
-                    {c.nom}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight:500, color:'green.700', mt:1 }}>
-                    Numéro de commande : {c.numeroCommande || 'Non renseigné'}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight:500, color:'green.700', mt:1 }}>
-                    Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Non renseignée'}
-                  </Typography>
-                  <Box sx={{ display:'flex', alignItems:'center', mb:0.5 }}>
-                    <LocationOnIcon sx={{ color:'green.500', mr:1 }} />
-                    <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
-                  </Box>
-                </Box>
-                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700' }}>
-                  Prix : {c.prix ? `${parseFloat(c.prix).toFixed(2)} € TTC` : '-'}
-                </Typography>
+        {sorted.map(commande => (
+          <Grid item key={commande.id} xs={12} sm={6} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6">Commande #{commande.numeroCommande}</Typography>
+                <Typography variant="body1">Nom: {commande.nom}</Typography>
+                <Typography variant="body2">Email: {commande.adresseMail}</Typography>
+                <Typography variant="body2">Téléphone: {commande.telephone}</Typography>
+                <Typography variant="body2">Statut: {commande.status}</Typography>
               </CardContent>
-              <CardActions sx={{ justifyContent:'space-between', backgroundColor:'green.50', p:2 }}>
-                <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
-                  Afficher Facture
-                </Button>
-                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
-                  Télécharger Facture
-                </Button>
-                <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
-                  Imprimer Facture
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<CancelIcon />}
-                  sx={{ borderRadius:20, backgroundColor:'red.400', '&:hover':{ backgroundColor:'red.600' } }}
-                  onClick={() => openCancelDialog(c)}
-                >
-                  Annuler la commande
-                </Button>
+              <CardActions>
+                <Button onClick={() => openCancelDialog(commande)} color="error">Annuler</Button>
+                <Button onClick={() => showInvoice(commande)} color="success">Voir la Facture</Button>
+                <Button onClick={() => downloadInvoice(commande)} color="primary">Télécharger</Button>
               </CardActions>
             </Card>
           </Grid>
@@ -276,72 +237,51 @@ const CommandePage = () => {
         open={openDialog}
         onClose={() => setOpenDialog(false)}
         fullScreen={fullScreen}
-        PaperProps={{ sx:{ borderRadius:3, p:2, backgroundColor:'green.50' } }}
       >
-        <DialogTitle sx={{ fontWeight:600, color:'green.800' }}>
-          Confirmer l'annulation
-        </DialogTitle>
+        <DialogTitle>Annuler la commande #{commandeToCancel?.numeroCommande}</DialogTitle>
         <DialogContent>
-          <Typography>Raison de l'annulation :</Typography>
           <TextField
             fullWidth
-            variant="outlined"
-            margin="dense"
+            label="Raison de l'annulation"
+            multiline
+            rows={4}
             value={cancellationReason}
             onChange={e => setCancellationReason(e.target.value)}
-            required
+            variant="outlined"
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="success">Annuler</Button>
-          <Button
-            onClick={handleConfirmCancel}
-            variant="contained"
-            color="error"
-            disabled={!cancellationReason.trim()}
-          >
-            Confirmer
-          </Button>
+          <Button onClick={() => setOpenDialog(false)} color="primary">Fermer</Button>
+          <Button onClick={handleConfirmCancel} color="error">Annuler la commande</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={openImageDialog}
-        onClose={() => { setOpenImageDialog(false); setZoom(1); }}
-        fullScreen={fullScreen}
-        maxWidth="lg"
-        fullWidth
-        onWheel={handleWheel}
-        sx={{
-          p:0,
-          display:'flex',
-          justifyContent:'center',
-          alignItems:'center',
-          maxHeight:'90vh',
-          overflow:'hidden',
-        }}
-      >
-        <DialogActions sx={{ justifyContent:'flex-end', p:1 }}>
-          <IconButton onClick={() => { setOpenImageDialog(false); setZoom(1); }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogActions>
+      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)}>
+        <DialogTitle>Image de la commande</DialogTitle>
         <DialogContent>
-          {selectedImage && (
-            <Box
-              component="img"
-              src={selectedImage}
-              alt="Enlargi"
+          <Box sx={{ textAlign: 'center', position: 'relative' }}>
+            <IconButton
               sx={{
-                maxWidth:'100%',
-                maxHeight:'80vh',
-                transform:`scale(${zoom})`,
-                transition:'transform 0.2s',
-                transformOrigin:'center',
-                borderRadius:2
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                zIndex: 1,
               }}
+              onClick={() => setOpenImageDialog(false)}
+            >
+              <CloseIcon />
+            </IconButton>
+            <img
+              src={decodeImage(selectedImage)}
+              alt="Commande"
+              style={{
+                width: `${zoom * 100}%`,
+                transition: 'width 0.2s',
+                cursor: 'zoom-in',
+              }}
+              onWheel={handleWheel}
             />
-          )}
+          </Box>
         </DialogContent>
       </Dialog>
     </Container>
