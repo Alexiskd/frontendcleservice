@@ -281,7 +281,8 @@ const Commande = () => {
             onClick={handleConfirmCancel}
             variant="contained"
             color="error"
-            disabled={!cancellationReason.trim()}>
+            disabled={!cancellationReason.trim()}
+          >
             Confirmer
           </Button>
         </DialogActions>
@@ -293,7 +294,8 @@ const Commande = () => {
         onClose={() => setOpenImageDialog(false)}
         fullScreen={fullScreen}
         maxWidth="lg"
-        onWheel={handleWheel}>
+        onWheel={handleWheel}
+      >
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
           <IconButton onClick={() => setOpenImageDialog(false)}>
             <CloseIcon />
@@ -322,4 +324,3 @@ const Commande = () => {
 };
 
 export default Commande;
-
