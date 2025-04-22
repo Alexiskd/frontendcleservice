@@ -58,11 +58,9 @@ const Commande = () => {
         headers: { Accept: 'application/json' },
       });
       if (!res.ok) {
-        if (res.status === 500) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.message || 'Erreur interne du serveur.');
-        }
-        throw new Error(`Erreur (status ${res.status})`);
+        // Lis le message d'erreur renvoyé par le backend
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || `Erreur (status ${res.status})`);
       }
       const { data } = await res.json();
       setCommandes(Array.isArray(data) ? data : []);
@@ -119,7 +117,7 @@ const Commande = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
     // En‑tête
-    doc.setFillColor(27,94,32).rect(0,m,210,40,'F');
+    doc.setFillColor(27,94,32).rect(0, m, 210, 40, 'F');
     // Infos site
     doc.setFontSize(8).setTextColor(255,255,255);
     doc.text(
@@ -137,15 +135,15 @@ const Commande = () => {
     // Infos client
     const rightX = 210 - m;
     doc.setFont('helvetica','bold').setFontSize(10)
-       .text('Facturé à :', rightX, m + 12, { align:'right' });
+       .text('Facturé à :', rightX, m + 12, { align: 'right' });
     doc.setFont('helvetica','normal').setFontSize(8);
     [
       commande.nom,
       commande.adressePostale,
       commande.telephone && `Tél : ${commande.telephone}`,
       commande.adresseMail && `Email : ${commande.adresseMail}`,
-    ].filter(Boolean).forEach((t,i) =>
-      doc.text(t, rightX, m + 17 + i*5, { align:'right' })
+    ].filter(Boolean).forEach((t, i) =>
+      doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
     );
     // Date de commande
     const date = commande.createdAt
@@ -165,46 +163,46 @@ const Commande = () => {
       head: [['Article','Marque','Quantité','Sous‑total']],
       body: [[article, marque, qt, `${ht} €`]],
       theme: 'grid',
-      headStyles: { fillColor:[27,94,32], textColor:255 },
-      styles: { fontSize:12, halign:'left' },
-      margin: { left:m, right:m }
+      headStyles: { fillColor: [27,94,32], textColor: 255 },
+      styles: { fontSize: 12, halign: 'left' },
+      margin: { left: m, right: m },
     });
     y = doc.lastAutoTable.finalY + 10;
     // Totaux
     const frais = 0.00;
     const tva = (ttc - ht).toFixed(2);
     doc.setFontSize(12).setTextColor(27,94,32)
-       .text('Sous‑total', rightX-80, y).text(`${ht} €`, rightX, y, { align:'right' });
+       .text('Sous‑total', rightX - 80, y).text(`${ht} €`, rightX, y, { align: 'right' });
     y += 7;
-    doc.text('Frais de livraison', rightX-80, y).text(`${frais.toFixed(2)} €`, rightX, y, { align:'right' });
+    doc.text('Frais de livraison', rightX - 80, y).text(`${frais.toFixed(2)} €`, rightX, y, { align: 'right' });
     y += 7;
-    doc.setFont('helvetica','bold').text('Total TTC', rightX-80, y).text(`${ttc.toFixed(2)} €`, rightX, y, { align:'right' });
+    doc.setFont('helvetica','bold').text('Total TTC', rightX - 80, y).text(`${ttc.toFixed(2)} €`, rightX, y, { align: 'right' });
     y += 7;
-    doc.setFont('helvetica','normal').text('TVA', rightX-80, y).text(`${tva} €`, rightX, y, { align:'right' });
+    doc.setFont('helvetica','normal').text('TVA', rightX - 80, y).text(`${tva} €`, rightX, y, { align: 'right' });
     // Conditions générales
     y += 15;
     const cond = "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin.";
     const lines = doc.splitTextToSize(cond, 180);
-    doc.setFontSize(10).setTextColor(27,94,32).text(lines, 105, y, { align:'center' });
-    doc.text('Bonne journée.', 105, y + lines.length*5, { align:'center' });
+    doc.setFontSize(10).setTextColor(27,94,32).text(lines, 105, y, { align: 'center' });
+    doc.text('Bonne journée.', 105, y + lines.length * 5, { align: 'center' });
     return doc;
   };
 
   const showInvoice = c => window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
   const downloadInvoice = c => generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
-  const printInvoice = c => { const d = generateInvoiceDoc(c); d.autoPrint(); window.open(d.output('bloburl'),'_blank'); };
+  const printInvoice = c => { const d = generateInvoiceDoc(c); d.autoPrint(); window.open(d.output('bloburl'), '_blank'); };
 
   // Tri décroissant par date d'enregistrement
-  const sorted = [...commandes].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const sorted = [...commandes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
-    <Container maxWidth="lg" sx={{ py:4, fontFamily:'Poppins', backgroundColor:'rgba(240,255,245,0.5)' }}>
-      <Typography variant="h4" align="center" gutterBottom sx={{ color:'green.700', fontWeight:600 }}>
+    <Container maxWidth="lg" sx={{ py: 4, fontFamily: 'Poppins', backgroundColor: 'rgba(240,255,245,0.5)' }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ color: 'green.700', fontWeight: 600 }}>
         Détails des Commandes Payées
       </Typography>
 
       {loading && (
-        <Box sx={{ display:'flex', justifyContent:'center', my:4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress color="success" />
         </Box>
       )}
@@ -216,30 +214,30 @@ const Commande = () => {
       <Grid container spacing={3}>
         {sorted.map(c => (
           <Grid item xs={12} key={c.id}>
-            <Card sx={{ borderRadius:3, boxShadow:3, border:'1px solid', borderColor:'green.100' }}>
+            <Card sx={{ borderRadius: 3, boxShadow: 3, border: '1px solid', borderColor: 'green.100' }}>
               <CardContent>
-                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
                   Produit Commandé :
                 </Typography>
                 <Typography mb={2}>
                   {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
                 </Typography>
-                <Divider sx={{ mb:2 }} />
-                <Typography variant="h5" sx={{ fontWeight:600, color:'green.800' }}>
+                <Divider sx={{ mb: 2 }} />
+                <Typography variant="h5" sx={{ fontWeight: 600, color: 'green.800' }}>
                   {c.nom}
                 </Typography>
-                <Typography sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
                   Numéro de commande : {c.numeroCommande || 'Non renseigné'}
                 </Typography>
-                <Typography sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
                   Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : 'Non renseignée'}
                 </Typography>
-                <Box sx={{ display:'flex', alignItems:'center', mt:1 }}>
-                  <LocationOnIcon sx={{ color:'green.500', mr:1 }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                  <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
                   <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
                 </Box>
               </CardContent>
-              <CardActions sx={{ justifyContent:'space-between', backgroundColor:'green.50', p:2 }}>
+              <CardActions sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}>
                 <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
                   Afficher Facture
                 </Button>
@@ -252,7 +250,7 @@ const Commande = () => {
                 <Button
                   variant="contained"
                   startIcon={<CancelIcon />}
-                  sx={{ borderRadius:20, backgroundColor:'red.400', '&:hover':{ backgroundColor:'red.600' } }}
+                  sx={{ borderRadius: 20, backgroundColor: 'red.400', '&:hover': { backgroundColor: 'red.600' } }}
                   onClick={() => openCancelDialog(c)}
                 >
                   Annuler la commande
@@ -265,7 +263,7 @@ const Commande = () => {
 
       {/* Dialog d'annulation */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle sx={{ fontWeight:600, color:'green.800' }}>Confirmer l'annulation</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>Confirmer l'annulation</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -299,7 +297,7 @@ const Commande = () => {
         maxWidth="lg"
         onWheel={handleWheel}
       >
-        <DialogActions sx={{ justifyContent:'flex-end', p:1 }}>
+        <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
           <IconButton onClick={() => setOpenImageDialog(false)}>
             <CloseIcon />
           </IconButton>
@@ -311,12 +309,12 @@ const Commande = () => {
               src={decodeImage(selectedImage)}
               alt="Zoom"
               sx={{
-                maxWidth:'100%',
-                maxHeight:'80vh',
-                transform:`scale(${zoom})`,
-                transition:'transform 0.2s',
-                transformOrigin:'center',
-                borderRadius:2,
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                transform: `scale(${zoom})`,
+                transition: 'transform 0.2s',
+                transformOrigin: 'center',
+                borderRadius: 2,
               }}
             />
           )}
