@@ -45,38 +45,47 @@ function CommandePage() {
     };
   }, []);
 
+  const remplirPDF = (doc, commande) => {
+    doc.setFontSize(18);
+    doc.text("Facture", 105, 20, null, null, "center");
+
+    doc.setFontSize(12);
+    doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
+    doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
+
+    const body = commande.produits.map((produit) => [
+      produit.nom,
+      produit.prix.toFixed(2) + " €",
+    ]);
+
+    doc.autoTable({
+      startY: 60,
+      head: [["Produit", "Prix"]],
+      body: body,
+    });
+
+    doc.text(
+      `Total : ${commande.total.toFixed(2)} €`,
+      14,
+      doc.lastAutoTable.finalY + 10
+    );
+
+    doc.save(`facture-${commande._id}.pdf`);
+  };
+
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
-    logoImg.src = "/logo.png"; // Le fichier logo.png doit être dans le dossier public
+    logoImg.src = "/logo.png";
 
     logoImg.onload = () => {
       doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
-      doc.setFontSize(18);
-      doc.text("Facture", 105, 20, null, null, "center");
+      remplirPDF(doc, commande);
+    };
 
-      doc.setFontSize(12);
-      doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
-      doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
-
-      const body = commande.produits.map((produit) => [
-        produit.nom,
-        produit.prix.toFixed(2) + " €",
-      ]);
-
-      doc.autoTable({
-        startY: 60,
-        head: [["Produit", "Prix"]],
-        body: body,
-      });
-
-      doc.text(
-        `Total : ${commande.total.toFixed(2)} €`,
-        14,
-        doc.lastAutoTable.finalY + 10
-      );
-
-      doc.save(`facture-${commande._id}.pdf`);
+    logoImg.onerror = () => {
+      console.warn("Logo introuvable, génération du PDF sans logo.");
+      remplirPDF(doc, commande);
     };
   };
 
