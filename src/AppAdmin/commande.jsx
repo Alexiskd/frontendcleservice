@@ -94,10 +94,10 @@ const Commande = () => {
         { method: 'DELETE', headers: { Accept: 'application/json' } }
       );
       const { success } = await resp.json();
-      alert(success ? 'Commande annulée.' : 'Erreur lors de l\'annulation.');
+      alert(success ? 'Commande annulée.' : "Erreur lors de l'annulation.");
       fetchCommandes();
     } catch {
-      alert('Erreur lors de l\'annulation.');
+      alert("Erreur lors de l'annulation.");
     } finally {
       setOpenDialog(false);
     }
