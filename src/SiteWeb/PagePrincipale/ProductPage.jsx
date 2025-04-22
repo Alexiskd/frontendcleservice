@@ -21,14 +21,20 @@ const ProductPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const decodedProductName = decodeURIComponent(productName as string);
-  const brandName = decodedProductName.split(" ")[0];
+  const decodedProductName = decodeURIComponent(productName as string).replace(/\s+/g, " ").trim();
+
+  const extractBrandFromName = (name: string): string => {
+    const keywords = ["mul-t-lock", "multlock", "fichet", "vachette", "bricard", "heracles"];
+    const lower = name.toLowerCase();
+    return keywords.find(k => lower.includes(k)) || lower.split(" ")[0];
+  };
 
   const fetchProduct = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      const brandName = extractBrandFromName(decodedProductName);
       const keys = await preloadKeysData(brandName);
       let foundProduct = findProductInKeys(keys, decodedProductName);
 
@@ -72,7 +78,12 @@ const ProductPage = () => {
   return (
     <div className="max-w-3xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">{product.nom}</h1>
-      <img src={product.imageUrl} alt={product.nom} className="w-full max-w-md mb-4 rounded-xl shadow-lg" />
+      <img
+        src={product.imageUrl || "/default-key.jpg"}
+        alt={product.nom}
+        onError={(e) => (e.currentTarget as HTMLImageElement).src = "/default-key.jpg"}
+        className="w-full max-w-md mb-4 rounded-xl shadow-lg"
+      />
       <p className="text-lg mb-2">Marque : <strong>{product.marque}</strong></p>
       <p className="text-lg mb-2">Prix : <strong>{product.prix.toFixed(2)} €</strong></p>
       <p className="text-base text-gray-700">{product.description}</p>
@@ -81,4 +92,5 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
+
 
