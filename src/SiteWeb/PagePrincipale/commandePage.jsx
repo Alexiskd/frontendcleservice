@@ -120,12 +120,12 @@ const CommandePage = () => {
     doc.addImage(logo, 'PNG', m, m, 32, 32);
     // Infos site
     doc.setFontSize(8).setTextColor(255);
-    doc.text([ 
-      'REPRODUCTION EN LIGNE', 
-      'www.votresite-reproduction.com', 
-      'Service en ligne de reproductions', 
-      'Tél : 01 42 67 47 28', 
-      'Email : contact@reproduction.com' 
+    doc.text([
+      'REPRODUCTION EN LIGNE',
+      'www.votresite-reproduction.com',
+      'Service en ligne de reproductions',
+      'Tél : 01 42 67 47 28',
+      'Email : contact@reproduction.com'
     ], m + 37, m + 12, { lineHeightFactor: 1.5 });
     // Infos client
     const rightX = 210 - m;
@@ -220,21 +220,51 @@ const CommandePage = () => {
                 <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
                   Produit Commandé :
                 </Typography>
-                <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
-                  <LocationOnIcon sx={{ color:'green.700' }} />
-                  <Typography variant="body2" color="text.secondary">{c.adressePostale}</Typography>
+                <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2 }}>
+                  <Typography>
+                    {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
+                  </Typography>
                 </Box>
-                <Divider sx={{ my:2 }} />
-                <Typography variant="h6" sx={{ color:'green.700', fontWeight:500 }}>
-                  Commande N° {c.numeroCommande}
+                <Divider sx={{ mb:2 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
+                  Informations Client :
+                </Typography>
+                <Box sx={{ mb:2 }}>
+                  <Typography variant="h5" sx={{ fontWeight:600, color:'green.800' }}>
+                    {c.nom}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                    Numéro de commande : {c.numeroCommande || 'Non renseigné'}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                    Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Non renseignée'}
+                  </Typography>
+                  <Box sx={{ display:'flex', alignItems:'center', mb:0.5 }}>
+                    <LocationOnIcon sx={{ color:'green.500', mr:1 }} />
+                    <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
+                  </Box>
+                </Box>
+                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700' }}>
+                  Prix : {c.prix ? `${parseFloat(c.prix).toFixed(2)} € TTC` : '-'}
                 </Typography>
               </CardContent>
-              <CardActions sx={{ justifyContent:'space-between', backgroundColor:'green.50' }}>
-                <Button size="small" color="success" onClick={() => showInvoice(c)}>
-                  Voir la facture
+              <CardActions sx={{ justifyContent:'space-between', backgroundColor:'green.50', p:2 }}>
+                <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
+                  Afficher Facture
                 </Button>
-                <Button size="small" color="error" onClick={() => openCancelDialog(c)}>
-                  Annuler
+                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
+                  Télécharger Facture
+                </Button>
+                <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
+                  Imprimer Facture
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<CancelIcon />}
+                  sx={{ borderRadius:20, backgroundColor:'red.400', '&:hover':{ backgroundColor:'red.600' } }}
+                  onClick={() => openCancelDialog(c)}
+                >
+                  Annuler la commande
                 </Button>
               </CardActions>
             </Card>
@@ -242,45 +272,76 @@ const CommandePage = () => {
         ))}
       </Grid>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle sx={{ backgroundColor:'green.50' }}>
-          <IconButton edge="end" color="inherit" onClick={() => setOpenDialog(false)} aria-label="close">
-            <CloseIcon />
-          </IconButton>
-          Annuler la commande
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullScreen={fullScreen}
+        PaperProps={{ sx:{ borderRadius:3, p:2, backgroundColor:'green.50' } }}
+      >
+        <DialogTitle sx={{ fontWeight:600, color:'green.800' }}>
+          Confirmer l'annulation
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb:2 }}>
-            Vous êtes sur le point d'annuler la commande n° {commandeToCancel?.numeroCommande}.
-          </Typography>
+          <Typography>Raison de l'annulation :</Typography>
           <TextField
-            label="Raison de l'annulation"
+            fullWidth
+            variant="outlined"
+            margin="dense"
             value={cancellationReason}
             onChange={e => setCancellationReason(e.target.value)}
-            fullWidth
-            multiline
-            minRows={3}
+            required
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
-          <Button color="error" onClick={handleConfirmCancel}>Confirmer</Button>
+          <Button onClick={() => setOpenDialog(false)} color="success">Annuler</Button>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            disabled={!cancellationReason.trim()}
+          >
+            Confirmer
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <IconButton edge="end" color="inherit" onClick={() => setOpenImageDialog(false)} aria-label="close">
-            <CancelIcon />
+      <Dialog
+        open={openImageDialog}
+        onClose={() => { setOpenImageDialog(false); setZoom(1); }}
+        fullScreen={fullScreen}
+        maxWidth="lg"
+        fullWidth
+        onWheel={handleWheel}
+        sx={{
+          p:0,
+          display:'flex',
+          justifyContent:'center',
+          alignItems:'center',
+          maxHeight:'90vh',
+          overflow:'hidden',
+        }}
+      >
+        <DialogActions sx={{ justifyContent:'flex-end', p:1 }}>
+          <IconButton onClick={() => { setOpenImageDialog(false); setZoom(1); }}>
+            <CloseIcon />
           </IconButton>
-        </DialogTitle>
+        </DialogActions>
         <DialogContent>
-          <img
-            src={decodeImage(selectedImage)}
-            alt="Commande Image"
-            style={{ width: `calc(100% * ${zoom})`, transition: 'transform 0.1s ease-out' }}
-            onWheel={handleWheel}
-          />
+          {selectedImage && (
+            <Box
+              component="img"
+              src={selectedImage}
+              alt="Enlargi"
+              sx={{
+                maxWidth:'100%',
+                maxHeight:'80vh',
+                transform:`scale(${zoom})`,
+                transition:'transform 0.2s',
+                transformOrigin:'center',
+                borderRadius:2
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </Container>
