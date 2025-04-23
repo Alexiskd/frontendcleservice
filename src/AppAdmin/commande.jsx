@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import io from 'socket.io-client';
 import {
   Container,
@@ -89,7 +89,6 @@ const Commande = () => {
 
   useEffect(() => {
     fetchCommandes();
-
     socket.on('commandeUpdate', () => {
       fetchCommandes();
     });
@@ -151,7 +150,6 @@ const Commande = () => {
     window.open(fullPdfUrl, '_blank');
   };
 
-  // Ouverture du formulaire d'édition avec les données existantes, y compris "ville"
   const openEditDialogForCommande = (commande) => {
     setEditFormData({
       id: commande.id,
@@ -202,9 +200,9 @@ const Commande = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const margin = 15;
 
+    // En-tête moderne avec fond vert et logo
     doc.setFillColor(27, 94, 32);
     doc.rect(0, margin, 210, 40, 'F');
-
     const logoWidth = 32, logoHeight = 32;
     doc.addImage(logo, 'PNG', margin, margin, logoWidth, logoHeight);
     const leftTextX = margin + logoWidth + 5;
@@ -224,6 +222,7 @@ const Commande = () => {
       { lineHeightFactor: 1.5 }
     );
 
+    // Coordonnées du client (droite)
     const rightX = 210 - margin;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -241,24 +240,37 @@ const Commande = () => {
     });
 
     let currentY = margin + 45;
-    const articleText =
-      commande.cle && commande.cle.length
-        ? Array.isArray(commande.cle)
-          ? commande.cle.join(', ')
-          : commande.cle
-        : 'Article';
-    const reference =
-      commande.numeroCle && commande.numeroCle.length
-        ? Array.isArray(commande.numeroCle)
-          ? commande.numeroCle.join(', ')
-          : commande.numeroCle
-        : 'N/A';
+
+    // Calcul des montants
+    const prixProduit = parseFloat(commande.prix);
+    let fraisLivraison = 0.0;
+    let fraisAffichage = "0.00 €";
+    if (commande.shippingMethod === 'expedition') {
+      fraisLivraison = 8;
+      fraisAffichage = "-8.00 €";
+    }
+    const totalTTC = prixProduit - fraisLivraison;
+
+    // Détermination du nom du produit
+    // On priorise le champ numeroCle s'il est renseigné, sinon produitCommande ou cle
+    const produit = commande.numeroCle || commande.produitCommande ||
+      (commande.cle && commande.cle.length
+        ? (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle)
+        : 'Produit');
+    const marque = commande.marque || '';
+    const produitAffiche = marque ? `${produit} (${marque})` : produit;
     const quantite = commande.quantity ? commande.quantity.toString() : "1";
-    const prixTTC = parseFloat(commande.prix);
-    const tauxTVA = 0.20;
-    const prixHT = prixTTC / (1 + tauxTVA);
-    const tableHead = [['Article', 'Référence', 'Quantité', 'Sous-total']];
-    const tableBody = [[articleText, reference, quantite, prixHT.toFixed(2) + ' €']];
+    const unitPrice = parseFloat(quantite) > 0 ? prixProduit / parseFloat(quantite) : prixProduit;
+
+    // Tableau récapitulatif moderne
+    const tableHead = [['Nom du produit', 'Quantité', 'Prix Unitaire', 'Frais de port', 'Total TTC']];
+    const tableBody = [[
+      produitAffiche,
+      quantite,
+      unitPrice.toFixed(2) + ' €',
+      fraisAffichage,
+      totalTTC.toFixed(2) + ' €'
+    ]];
 
     doc.autoTable({
       startY: currentY,
@@ -271,36 +283,38 @@ const Commande = () => {
     });
     currentY = doc.lastAutoTable.finalY + 10;
 
-    const fraisLivraison = 0.0,
-      totalTTC = prixTTC,
-      montantTVA = prixTTC - prixHT;
-    const rightAlignX = 210 - margin;
-
-    doc.setFontSize(12);
-    doc.setTextColor(27, 94, 32);
-    doc.text('Sous-total', rightAlignX - 80, currentY);
-    doc.text(prixHT.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.text('Frais de livraison', rightAlignX - 80, currentY);
-    doc.text(fraisLivraison.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total TTC', rightAlignX - 80, currentY);
-    doc.text(totalTTC.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('TVA', rightAlignX - 80, currentY);
-    doc.text(montantTVA.toFixed(2) + ' €', rightAlignX, currentY, { align: 'right' });
-    currentY += 15;
-
+    // Affichage des modes d'envoi et de récupération
     doc.setFontSize(10);
     doc.setTextColor(27, 94, 32);
+    doc.text(
+      `Mode d'envoi : ${commande.deliveryType || (commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné')}`,
+      margin,
+      currentY
+    );
+    currentY += 7;
+    const recuperation = commande.shippingMethod === 'expedition' ? 'Expédition' : 'En magasin';
+    doc.text(`Mode de récupération : ${recuperation}`, margin, currentY);
+    currentY += 10;
+
+    // Détails complémentaires de la commande
+    doc.setFontSize(10);
+    doc.text("Détails de la commande :", margin, currentY);
+    currentY += 7;
+    doc.setFontSize(8);
+    doc.text(`Numéro de commande : ${commande.numeroCommande}`, margin, currentY);
+    currentY += 6;
+    doc.text(`Statut : ${commande.status}`, margin, currentY);
+    currentY += 10;
+
+    // Mode de règlement et conditions de vente
+    doc.setFontSize(12);
+    doc.text('Mode de règlement : Carte Bancaire (CB)', margin, currentY);
+    currentY += 10;
     const conditions =
-      "CONDITIONS GÉNÉRALES DE VENTE: La pose ayant été reconnue satisfaisante, notre installation est payable au monteur, comptant. En cas de retard de paiement, indemnité forfaitaire de 40€ sera due pour frais de recouvrement et taux de pénalité de retard sera appliqué (3 fois le taux d’intérêt légal). Nos coordonnées bancaires : IBAN : FR76 1820 6004 1744 1936 2200 145 - BIC : AGRIFRPP882";
+      "CONDITIONS GÉNÉRALES DE VENTE EN LIGNE : Les produits commandés sur notre site sont vendus exclusivement en ligne et payables par carte bancaire (CB). La commande est confirmée dès réception du paiement. En cas d'annulation, des frais pourront être appliqués conformément à notre politique. Nos coordonnées bancaires : IBAN : FR76 1820 6004 1744 1936 2200 145 - BIC : AGRIFRPP882";
     const conditionsLines = doc.splitTextToSize(conditions, 180);
     doc.text(conditionsLines, 105, currentY, { align: 'center' });
     currentY += conditionsLines.length * 5;
-    doc.text("Bonne journée.", 105, currentY, { align: 'center' });
 
     return doc;
   };
@@ -321,7 +335,6 @@ const Commande = () => {
     window.open(doc.output('bloburl'), '_blank');
   };
 
-  // Affichage des commandes dans l'ordre décroissant (inversion de l'ordre d'affichage)
   const sortedCommandes = [...commandes].sort((a, b) => b.id.localeCompare(a.id));
 
   return (
@@ -359,34 +372,54 @@ const Commande = () => {
                 overflow: 'hidden',
               }}
             >
-              <CardContent sx={{ backgroundColor: 'white' }}>
-                {/* Affichage du produit commandé */}
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
-                  Produit Commandé :
+              <CardContent sx={{ backgroundColor: '#fff', p: 3 }}>
+                {/* Affichage du nom du produit en premier */}
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'green.800', mb: 1 }}>
+                  Nom du produit :
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Typography variant="body2">
-                    {Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle || 'Non renseigné'}
+                  <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
+                    {commande.numeroCle ||
+                      (commande.produitCommande
+                        ? commande.produitCommande
+                        : (Array.isArray(commande.cle)
+                            ? commande.cle.join(', ')
+                            : commande.cle || 'Non renseigné'))}
+                    {commande.marque ? ` (${commande.marque})` : ''}
                   </Typography>
                   {commande.isCleAPasse && (
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
                       (Clé à passe)
                     </Typography>
                   )}
                 </Box>
 
+                {/* Section Modes d'envoi et de récupération */}
+                <Box sx={{ backgroundColor: '#f5f5f5', borderRadius: 2, p: 2, mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                    Modes de Livraison
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2">
+                      Mode d'envoi : {commande.deliveryType || (commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné')}
+                    </Typography>
+                    <Typography variant="body2">
+                      Mode de récupération : {commande.shippingMethod === 'expedition' ? 'Expédition' : 'En magasin'}
+                    </Typography>
+                  </Box>
+                </Box>
+
                 <Divider sx={{ mb: 2 }} />
 
-                {/* Affichage des informations client */}
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
+                {/* Informations Client */}
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'green.800', mb: 1 }}>
                   Informations Client :
                 </Typography>
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 600, color: 'green.800' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     {commande.nom}
                   </Typography>
-                  {/* Affichage du numéro de commande */}
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
                     Numéro de commande : {commande.numeroCommande || "Non renseigné"}
                   </Typography>
                   {(() => {
@@ -395,21 +428,20 @@ const Commande = () => {
                       <>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                           <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
-                          <Typography variant="body1">
+                          <Typography variant="body2">
                             {adresseParts[0] ? adresseParts[0].trim() : commande.adressePostale}
                           </Typography>
                         </Box>
                         {adresseParts[1] && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, ml: 4 }}>
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
-                              Code Postal :
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, ml: 3 }}>
+                            <Typography variant="caption" sx={{ mr: 1 }}>
+                              CP :
                             </Typography>
-                            <Typography variant="body1">{adresseParts[1].trim()}</Typography>
+                            <Typography variant="body2">{adresseParts[1].trim()}</Typography>
                           </Box>
                         )}
-                        {/* Affichage inconditionnel du champ Ville sous forme d'input en lecture seule */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, ml: 4 }}>
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, ml: 3 }}>
+                          <Typography variant="caption" sx={{ mr: 1 }}>
                             Ville :
                           </Typography>
                           <TextField
@@ -423,31 +455,32 @@ const Commande = () => {
                       </>
                     );
                   })()}
-                  {commande.quantity && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
-                        Quantité de copies :
-                      </Typography>
-                      <Typography variant="body1">{commande.quantity}</Typography>
-                    </Box>
-                  )}
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                    <PhoneIcon sx={{ color: 'green.500', mr: 1 }} />
-                    <Typography variant="body1">{commande.telephone}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <Typography variant="caption" sx={{ mr: 1 }}>
+                      Copies :
+                    </Typography>
+                    <Typography variant="body2">{commande.quantity}</Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <PhoneIcon sx={{ color: 'green.500', mr: 1 }} />
+                    <Typography variant="body2">{commande.telephone}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                     <EmailIcon sx={{ color: 'green.500', mr: 1 }} />
-                    <Typography variant="body1">{commande.adresseMail}</Typography>
+                    <Typography variant="body2">{commande.adresseMail}</Typography>
                   </Box>
                 </Box>
 
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
-                  Prix : {commande.prix ? `${parseFloat(commande.prix).toFixed(2)} € TTC` : '-'}
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'green.800', mb: 1 }}>
+                  Prix :
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  {commande.prix ? `${parseFloat(commande.prix).toFixed(2)} € TTC` : '-'}
                 </Typography>
 
                 {commande.propertyCardNumber && (
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       Numéro de la carte de propriété :
                     </Typography>
                     <Typography variant="body2">{commande.propertyCardNumber}</Typography>
@@ -455,15 +488,15 @@ const Commande = () => {
                 )}
                 {commande.hasCartePropriete === false && (
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
-                      Documents complémentaires (en cas de perte de la carte) :
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                      Documents complémentaires :
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                       {commande.idCardFront && (
                         <Box
                           component="img"
                           src={decodeImage(commande.idCardFront)}
-                          alt="Carte d'identité Recto"
+                          alt="ID Recto"
                           sx={{
                             width: 80,
                             height: 80,
@@ -479,7 +512,7 @@ const Commande = () => {
                         <Box
                           component="img"
                           src={decodeImage(commande.idCardBack)}
-                          alt="Carte d'identité Verso"
+                          alt="ID Verso"
                           sx={{
                             width: 80,
                             height: 80,
@@ -497,7 +530,7 @@ const Commande = () => {
                           size="small"
                           onClick={() => handlePdfDisplay(commande.domicileJustificatif)}
                         >
-                          Voir Justificatif de Domicile (PDF)
+                          Voir Justificatif (PDF)
                         </Button>
                       )}
                     </Box>
@@ -508,6 +541,7 @@ const Commande = () => {
                     )}
                   </Box>
                 )}
+
                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                   {commande.urlPhotoRecto && (
                     <Box
@@ -553,11 +587,7 @@ const Commande = () => {
                 <Button variant="contained" color="info" onClick={() => printInvoice(commande)}>
                   Imprimer Facture
                 </Button>
-                <Button
-                  variant="contained"
-                  color="warning"
-                  onClick={() => openEditDialogForCommande(commande)}
-                >
+                <Button variant="contained" color="warning" onClick={() => openEditDialogForCommande(commande)}>
                   Modifier la commande
                 </Button>
                 <Button
@@ -629,7 +659,6 @@ const Commande = () => {
             value={editFormData.nom}
             onChange={handleEditFormChange}
           />
-          {/* Champ pour la ville (input) */}
           <TextField
             label="Ville"
             fullWidth
