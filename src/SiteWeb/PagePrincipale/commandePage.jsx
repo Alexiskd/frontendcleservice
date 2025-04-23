@@ -19,22 +19,16 @@ const socket = io(import.meta.env.VITE_SERVER_URL);
 function CommandePage() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const fetchCommandes = async () => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
-      if (Array.isArray(response.data)) {
-        setCommandes(response.data);
-      } else {
-        setError("Les données reçues ne sont pas un tableau.");
-      }
+      setCommandes(response.data);
       setLoading(false);
     } catch (error) {
       console.error("Erreur lors de la récupération des commandes :", error);
-      setError("Erreur lors de la récupération des commandes.");
       setLoading(false);
     }
   };
@@ -57,38 +51,32 @@ function CommandePage() {
     logoImg.src = "/logo.png"; // chemin vers le fichier dans /public
 
     logoImg.onload = () => {
-      try {
-        doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
-        doc.setFontSize(18);
-        doc.text("Facture", 105, 20, null, null, "center");
+      doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
+      doc.setFontSize(18);
+      doc.text("Facture", 105, 20, null, null, "center");
 
-        doc.setFontSize(12);
-        doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
-        doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
+      doc.setFontSize(12);
+      doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
+      doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
 
-        const body = Array.isArray(commande.produits)
-          ? commande.produits.map((produit) => [
-              produit.nom,
-              produit.prix.toFixed(2) + " €",
-            ])
-          : [];
+      const body = commande.produits.map((produit) => [
+        produit.nom,
+        produit.prix.toFixed(2) + " €",
+      ]);
 
-        doc.autoTable({
-          startY: 60,
-          head: [["Produit", "Prix"]],
-          body: body,
-        });
+      doc.autoTable({
+        startY: 60,
+        head: [["Produit", "Prix"]],
+        body: body,
+      });
 
-        doc.text(
-          `Total : ${commande.total.toFixed(2)} €`,
-          14,
-          doc.lastAutoTable.finalY + 10
-        );
+      doc.text(
+        `Total : ${commande.total.toFixed(2)} €`,
+        14,
+        doc.lastAutoTable.finalY + 10
+      );
 
-        doc.save(`facture-${commande._id}.pdf`);
-      } catch (error) {
-        console.error("Erreur lors de la génération de la facture :", error);
-      }
+      doc.save(`facture-${commande._id}.pdf`);
     };
   };
 
@@ -101,8 +89,6 @@ function CommandePage() {
         <Box display="flex" justifyContent="center" my={4}>
           <CircularProgress />
         </Box>
-      ) : error ? (
-        <Typography color="error" align="center">{error}</Typography>
       ) : (
         <Grid container spacing={2}>
           {commandes.map((commande) => (
@@ -118,10 +104,9 @@ function CommandePage() {
                   <Typography variant="body2">
                     Produits :
                     <ul>
-                      {Array.isArray(commande.produits) &&
-                        commande.produits.map((produit, idx) => (
-                          <li key={idx}>{produit.nom}</li>
-                        ))}
+                      {commande.produits.map((produit, idx) => (
+                        <li key={idx}>{produit.nom}</li>
+                      ))}
                     </ul>
                   </Typography>
                   <Button
