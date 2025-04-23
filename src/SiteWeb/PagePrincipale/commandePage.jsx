@@ -26,12 +26,15 @@ function CommandePage() {
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
 
-      console.log("Données reçues :", response.data);
+      console.log("Réponse API :", response.data);
 
+      // Vérification si data est un tableau ou contient un tableau
       if (Array.isArray(response.data)) {
         setCommandes(response.data);
+      } else if (Array.isArray(response.data.commandes)) {
+        setCommandes(response.data.commandes);
       } else {
-        console.error("La réponse attendue n'est pas un tableau :", response.data);
+        console.error("Format inattendu des données :", response.data);
         setCommandes([]);
       }
 
@@ -68,7 +71,7 @@ function CommandePage() {
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
       doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
 
-      const body = Array.isArray(commande.produits) && commande.produits.length > 0
+      const body = Array.isArray(commande.produits)
         ? commande.produits.map((produit) => [
             produit.nom,
             produit.prix.toFixed(2) + " €",
@@ -115,14 +118,15 @@ function CommandePage() {
                     </Typography>
                     <Typography variant="body2">
                       Produits :
-                      {Array.isArray(commande.produits) && commande.produits.length > 0 ? (
+                      {Array.isArray(commande.produits) &&
+                      commande.produits.length > 0 ? (
                         <ul>
                           {commande.produits.map((produit, idx) => (
                             <li key={idx}>{produit.nom}</li>
                           ))}
                         </ul>
                       ) : (
-                        <p>Pas de produits pour cette commande</p>
+                        <p>Aucun produit</p>
                       )}
                     </Typography>
                     <Button
@@ -138,7 +142,7 @@ function CommandePage() {
             ))
           ) : (
             <Grid item xs={12}>
-              <Typography variant="h6" align="center">
+              <Typography align="center">
                 Aucune commande à afficher
               </Typography>
             </Grid>
@@ -150,5 +154,6 @@ function CommandePage() {
 }
 
 export default CommandePage;
+
 
 
