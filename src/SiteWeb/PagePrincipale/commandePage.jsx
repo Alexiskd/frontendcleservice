@@ -1,129 +1,112 @@
-import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
-import axios from "axios";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
-import {
-  Box,
-  CircularProgress,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Grid,
-} from "@mui/material";
+import React, { useEffect, useState } from 'react';
+import { Container, Box, Typography, Button, CircularProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import jsPDF from 'jspdf';
+import ConditionsGeneralesVentePopup from '@components/ConditionsGeneralesVentePopup'; // Assurez-vous que le chemin est correct
 
-const socket = io(import.meta.env.VITE_SERVER_URL);
-
-function CommandePage() {
-  const [commandes, setCommandes] = useState([]);
+const CommandePage = () => {
+  const navigate = useNavigate();
+  const [commande, setCommande] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const fetchCommandes = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
-      );
-      setCommandes(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des commandes :", error);
-      setLoading(false);
-    }
-  };
+  const [socket, setSocket] = useState(null);
+  const [showConditions, setShowConditions] = useState(false);
 
   useEffect(() => {
-    fetchCommandes();
+    const socketInstance = io('https://your-socket-server-url'); // Remplace par ton URL de socket.io
+    setSocket(socketInstance);
 
-    socket.on("commandeUpdated", () => {
-      fetchCommandes();
+    socketInstance.on('commandeUpdated', (updatedCommande) => {
+      setCommande(updatedCommande);
     });
 
     return () => {
-      socket.off("commandeUpdated");
+      socketInstance.disconnect();
     };
   }, []);
 
-  const generatePDF = (commande) => {
-    const doc = new jsPDF();
-    const logoImg = new Image();
-    logoImg.src = "/logo.png"; // chemin vers le fichier dans /public
-
-    logoImg.onload = () => {
-      doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
-      doc.setFontSize(18);
-      doc.text("Facture", 105, 20, null, null, "center");
-
-      doc.setFontSize(12);
-      doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
-      doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
-
-      const body = commande.produits.map((produit) => [
-        produit.nom,
-        produit.prix.toFixed(2) + " €",
-      ]);
-
-      doc.autoTable({
-        startY: 60,
-        head: [["Produit", "Prix"]],
-        body: body,
-      });
-
-      doc.text(
-        `Total : ${commande.total.toFixed(2)} €`,
-        14,
-        doc.lastAutoTable.finalY + 10
-      );
-
-      doc.save(`facture-${commande._id}.pdf`);
+  useEffect(() => {
+    const fetchCommande = async () => {
+      try {
+        const response = await fetch('/api/commande'); // Remplace par ton endpoint pour récupérer la commande
+        const data = await response.json();
+        setCommande(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Erreur de récupération de commande:', error);
+        setLoading(false);
+      }
     };
+
+    fetchCommande();
+  }, []);
+
+  const handleAnnulation = async () => {
+    try {
+      await fetch('/api/commande/annuler', { method: 'POST' }); // Remplace par l'endpoint pour annuler la commande
+      setCommande(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Erreur lors de l\'annulation de la commande:', error);
+    }
   };
+
+  const handleGeneratePDF = () => {
+    const doc = new jsPDF();
+    doc.text('Facture de commande', 10, 10);
+    doc.text(`Commande ID: ${commande.id}`, 10, 20);
+    doc.text(`Montant total: ${commande.montantTotal}`, 10, 30);
+    // Ajoutez d'autres informations nécessaires
+    doc.save(`facture-${commande.id}.pdf`);
+  };
+
+  const handleShowConditions = () => {
+    setShowConditions(true);
+  };
+
+  const handleCloseConditions = () => {
+    setShowConditions(false);
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Container>
-      <Typography variant="h4" align="center" gutterBottom>
-        Commandes Payées
-      </Typography>
-      {loading ? (
-        <Box display="flex" justifyContent="center" my={4}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Grid container spacing={2}>
-          {commandes.map((commande) => (
-            <Grid item xs={12} sm={6} md={4} key={commande._id}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6">
-                    Commande #{commande._id.slice(-6)}
-                  </Typography>
-                  <Typography variant="body2">
-                    Total : {commande.total.toFixed(2)} €
-                  </Typography>
-                  <Typography variant="body2">
-                    Produits :
-                    <ul>
-                      {commande.produits.map((produit, idx) => (
-                        <li key={idx}>{produit.nom}</li>
-                      ))}
-                    </ul>
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => generatePDF(commande)}
-                  >
-                    Télécharger la facture
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
+      <Box mt={4}>
+        <Typography variant="h4">Détails de la commande</Typography>
+        {commande ? (
+          <Box mt={2}>
+            <Typography variant="h6">ID de la commande: {commande.id}</Typography>
+            <Typography variant="body1">Montant total: {commande.montantTotal}€</Typography>
+            <Typography variant="body1">Status: {commande.status}</Typography>
+            <Box mt={2}>
+              <Button variant="contained" color="primary" onClick={handleGeneratePDF}>
+                Télécharger la facture
+              </Button>
+              <Button variant="outlined" color="secondary" onClick={handleAnnulation} sx={{ ml: 2 }}>
+                Annuler la commande
+              </Button>
+            </Box>
+            <Box mt={2}>
+              <Button variant="text" onClick={handleShowConditions}>
+                Voir les conditions générales de vente
+              </Button>
+            </Box>
+          </Box>
+        ) : (
+          <Typography variant="body1">Aucune commande en cours.</Typography>
+        )}
+      </Box>
+
+      <ConditionsGeneralesVentePopup open={showConditions} onClose={handleCloseConditions} />
     </Container>
   );
-}
+};
 
 export default CommandePage;
