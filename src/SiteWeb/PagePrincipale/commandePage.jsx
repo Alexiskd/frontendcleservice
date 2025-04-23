@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
 import jsPDF from "jspdf";
@@ -19,6 +19,16 @@ const socket = io(import.meta.env.VITE_SERVER_URL);
 function CommandePage() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const logoRef = useRef(null);
+
+  // Précharger le logo une seule fois
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/logo.png";
+    img.onload = () => {
+      logoRef.current = img;
+    };
+  }, []);
 
   const fetchCommandes = async () => {
     try {
@@ -28,7 +38,6 @@ function CommandePage() {
 
       console.log("Réponse API :", response.data);
 
-      // Vérification si data est un tableau ou contient un tableau
       if (Array.isArray(response.data)) {
         setCommandes(response.data);
       } else if (Array.isArray(response.data.commandes)) {
@@ -58,14 +67,15 @@ function CommandePage() {
   }, []);
 
   const generatePDF = (commande) => {
-    const doc = new jsPDF();
-    const logoImg = new Image();
-    logoImg.src = "/logo.png";
+    try {
+      const doc = new jsPDF();
 
-    logoImg.onload = () => {
-      doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
+      if (logoRef.current) {
+        doc.addImage(logoRef.current, "PNG", 10, 10, 30, 30);
+      }
+
       doc.setFontSize(18);
-      doc.text("Facture", 105, 20, null, null, "center");
+      doc.text("Facture", 105, 20, { align: "center" });
 
       doc.setFontSize(12);
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
@@ -91,7 +101,9 @@ function CommandePage() {
       );
 
       doc.save(`facture-${commande._id}.pdf`);
-    };
+    } catch (err) {
+      console.error("Erreur lors de la génération du PDF :", err);
+    }
   };
 
   return (
