@@ -166,8 +166,3 @@ function CommandePage() {
 }
 
 export default CommandePage;
-
-
-
-
-
