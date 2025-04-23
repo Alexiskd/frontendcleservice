@@ -59,10 +59,13 @@ function CommandePage() {
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
       doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
 
-      const body = commande.produits.map((produit) => [
-        produit.nom,
-        produit.prix.toFixed(2) + " €",
-      ]);
+      // Vérifier si "produits" est un tableau avant d'appeler map()
+      const body = Array.isArray(commande.produits) && commande.produits.length > 0
+        ? commande.produits.map((produit) => [
+            produit.nom,
+            produit.prix.toFixed(2) + " €",
+          ])
+        : [];
 
       doc.autoTable({
         startY: 60,
