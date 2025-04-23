@@ -48,7 +48,13 @@ function CommandePage() {
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
-    logoImg.src = "/logo.png"; // chemin vers le fichier dans /public
+    logoImg.src = `/logos/${commande.marque}.png`; // Chemin vers le logo basé sur la marque
+
+    // Gestion de l'erreur si le logo est introuvable
+    logoImg.onerror = () => {
+      console.error(`Logo non trouvé pour ${commande.marque}`);
+      logoImg.src = '/logos/default-logo.png'; // Logo par défaut si le logo spécifique est introuvable
+    };
 
     logoImg.onload = () => {
       doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
