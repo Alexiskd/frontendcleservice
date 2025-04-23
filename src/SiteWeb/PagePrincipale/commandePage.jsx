@@ -20,17 +20,13 @@ function CommandePage() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fonction pour récupérer les commandes
   const fetchCommandes = async () => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
-      console.log("Réponse API :", response.data); // Vérification de la structure des données
-      if (Array.isArray(response.data)) {
-        setCommandes(response.data);
-      } else {
-        console.error("Les données reçues ne sont pas un tableau.");
-      }
+      setCommandes(response.data);
       setLoading(false);
     } catch (error) {
       console.error("Erreur lors de la récupération des commandes :", error);
@@ -38,18 +34,22 @@ function CommandePage() {
     }
   };
 
+  // Effect hook pour récupérer les commandes au chargement de la page
   useEffect(() => {
     fetchCommandes();
 
+    // Ecoute des événements de mise à jour de commande via Socket.io
     socket.on("commandeUpdated", () => {
       fetchCommandes();
     });
 
+    // Cleanup au démontage du composant
     return () => {
       socket.off("commandeUpdated");
     };
   }, []);
 
+  // Fonction pour générer le PDF de la facture
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
@@ -64,23 +64,27 @@ function CommandePage() {
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
       doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
 
+      // Corps du tableau de produits
       const body = commande.produits.map((produit) => [
         produit.nom,
         produit.prix.toFixed(2) + " €",
       ]);
 
+      // Ajout du tableau à la facture
       doc.autoTable({
         startY: 60,
         head: [["Produit", "Prix"]],
         body: body,
       });
 
+      // Ajout du total de la commande
       doc.text(
         `Total : ${commande.total.toFixed(2)} €`,
         14,
         doc.lastAutoTable.finalY + 10
       );
 
+      // Sauvegarde du PDF
       doc.save(`facture-${commande._id}.pdf`);
     };
   };
@@ -132,4 +136,3 @@ function CommandePage() {
 }
 
 export default CommandePage;
-
