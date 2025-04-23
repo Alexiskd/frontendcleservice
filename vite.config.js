@@ -14,7 +14,5 @@ export default defineConfig({
     preview: {
       allowedHosts: ['www.cleservice.com'], // Allow the specified host
     },
-  },
-});
-
-});
+  }, // Make sure this closing brace is for the "server" configuration
+}); // Make sure this is the last closing brace for "defineConfig"
