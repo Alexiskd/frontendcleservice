@@ -185,7 +185,7 @@ const Commande = () => {
     const cond = "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin.";
     const lines = doc.splitTextToSize(cond, 180);
     doc.setFontSize(10).setTextColor(27,94,32).text(lines, 105, y, { align:'center' });
-    doc.text('Bonne journée.', 105, y + lines.length*5, { align:'center' });
+    
     return doc;
   };
 
