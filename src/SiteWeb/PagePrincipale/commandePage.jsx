@@ -91,35 +91,45 @@ function CommandePage() {
         </Box>
       ) : (
         <Grid container spacing={2}>
-          {commandes.map((commande) => (
-            <Grid item xs={12} sm={6} md={4} key={commande._id}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6">
-                    Commande #{commande._id.slice(-6)}
-                  </Typography>
-                  <Typography variant="body2">
-                    Total : {commande.total.toFixed(2)} €
-                  </Typography>
-                  <Typography variant="body2">
-                    Produits :
-                    <ul>
-                      {commande.produits.map((produit, idx) => (
-                        <li key={idx}>{produit.nom}</li>
-                      ))}
-                    </ul>
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => generatePDF(commande)}
-                  >
-                    Télécharger la facture
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          {commandes.length === 0 ? (
+            <Typography variant="h6" align="center" fullWidth>
+              Aucune commande à afficher
+            </Typography>
+          ) : (
+            commandes.map((commande) => (
+              <Grid item xs={12} sm={6} md={4} key={commande._id}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6">
+                      Commande #{commande._id.slice(-6)}
+                    </Typography>
+                    <Typography variant="body2">
+                      Total : {commande.total.toFixed(2)} €
+                    </Typography>
+                    <Typography variant="body2">
+                      Produits :
+                      {Array.isArray(commande.produits) && commande.produits.length > 0 ? (
+                        <ul>
+                          {commande.produits.map((produit, idx) => (
+                            <li key={idx}>{produit.nom}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>Pas de produits pour cette commande</p>
+                      )}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => generatePDF(commande)}
+                    >
+                      Télécharger la facture
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          )}
         </Grid>
       )}
     </Container>
