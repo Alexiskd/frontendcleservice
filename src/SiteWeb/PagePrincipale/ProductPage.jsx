@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import { Box, Typography, CircularProgress, Button } from "@mui/material";
-import ZoomableImage from "@components/ZoomableImage";
-import preloadData from "@utils/preloadData";
+import { Box, Typography, CircularProgress } from "@mui/material";
+// import ZoomableImage from "@components/ZoomableImage"; // Commenté si ZoomableImage est manquant
 
 const ProductPage = () => {
   const { productName } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // État pour gérer l'erreur
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,7 +28,6 @@ const ProductPage = () => {
           setProduct(res.data);
           preloadData.set(`product-${productName}`, res.data);
         } catch (err2) {
-          setError("Produit non trouvé."); // Enregistrer l'erreur
           console.error("Produit non trouvé.");
         }
       } finally {
@@ -49,19 +46,6 @@ const ProductPage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" height="50vh">
-        <Typography variant="h6" align="center" mt={2}>
-          {error}
-        </Typography>
-        <Button variant="contained" onClick={() => window.location.reload()} mt={2}>
-          Réessayer
-        </Button>
-      </Box>
-    );
-  }
-
   if (!product) {
     return (
       <Typography variant="h6" align="center" mt={4}>
@@ -75,8 +59,8 @@ const ProductPage = () => {
       <Typography variant="h4" gutterBottom>
         {product.nom}
       </Typography>
-      {/* Vérification si l'image existe avant de l'afficher */}
-      <ZoomableImage src={product.image || "/default-image.jpg"} alt={product.nom} />
+      {/* Affichage d'une image normale si ZoomableImage est manquant */}
+      <img src={product.image} alt={product.nom} style={{ width: "100%", maxWidth: "500px" }} />
       <Typography variant="body1" mt={2}>
         {product.description}
       </Typography>
@@ -85,4 +69,3 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
-
