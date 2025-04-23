@@ -25,7 +25,12 @@ function CommandePage() {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
-      setCommandes(response.data);
+      console.log("Réponse API :", response.data); // Vérification de la structure des données
+      if (Array.isArray(response.data)) {
+        setCommandes(response.data);
+      } else {
+        console.error("Les données reçues ne sont pas un tableau.");
+      }
       setLoading(false);
     } catch (error) {
       console.error("Erreur lors de la récupération des commandes :", error);
@@ -48,13 +53,7 @@ function CommandePage() {
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
-    logoImg.src = `/logos/${commande.marque}.png`; // Chemin vers le logo basé sur la marque
-
-    // Gestion de l'erreur si le logo est introuvable
-    logoImg.onerror = () => {
-      console.error(`Logo non trouvé pour ${commande.marque}`);
-      logoImg.src = '/logos/default-logo.png'; // Logo par défaut si le logo spécifique est introuvable
-    };
+    logoImg.src = "/logo.png"; // chemin vers le fichier dans /public
 
     logoImg.onload = () => {
       doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
