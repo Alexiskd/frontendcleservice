@@ -54,6 +54,9 @@ const CommandePage = () => {
               <Typography variant="h6">Commande {commande.id}</Typography>
               <Typography variant="body1">Marque: {commande.marque}</Typography>
               <Typography variant="body2">Description: {commande.description}</Typography>
+              {commande.imageBase64 && (
+                <img src={`data:image/webp;base64,${commande.imageBase64}`} alt="Commande Image" width="100%" />
+              )}
             </Box>
           </Grid>
         ))
