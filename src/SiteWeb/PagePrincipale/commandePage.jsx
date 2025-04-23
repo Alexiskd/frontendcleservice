@@ -48,7 +48,7 @@ function CommandePage() {
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
-    logoImg.src = "/logo.png"; // chemin vers le fichier dans /public
+    logoImg.src = "/logo.png"; // Le fichier logo.png doit être dans le dossier public
 
     logoImg.onload = () => {
       doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
@@ -127,4 +127,3 @@ function CommandePage() {
 }
 
 export default CommandePage;
-
