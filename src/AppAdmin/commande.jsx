@@ -171,7 +171,7 @@ const Commande = () => {
     let y = m + 55;
     doc.autoTable({
       startY: y,
-      head: [['Article', 'Marque', 'Quantité', 'Sous-total']],
+      head: [['Article', 'Type', 'Quantité', 'Sous-total']],
       body: [['Article', 'Reproduction En Ligne', '1', '156.67 €']],
       theme: 'grid',
       headStyles: { fillColor: [27, 94, 32], textColor: 255 },
