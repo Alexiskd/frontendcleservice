@@ -247,7 +247,7 @@ const Commande = () => {
     let fraisAffichage = "0.00 €";
     if (commande.shippingMethod === 'expedition') {
       fraisLivraison = 8;
-      fraisAffichage = "-8.00 €";
+      fraisAffichage = "8.00 €";
     }
     const totalTTC = prixProduit - fraisLivraison;
 
