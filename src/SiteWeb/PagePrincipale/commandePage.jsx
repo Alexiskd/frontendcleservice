@@ -25,7 +25,16 @@ function CommandePage() {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
-      setCommandes(response.data);
+
+      console.log("Données reçues :", response.data);
+
+      if (Array.isArray(response.data)) {
+        setCommandes(response.data);
+      } else {
+        console.error("La réponse attendue n'est pas un tableau :", response.data);
+        setCommandes([]);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error("Erreur lors de la récupération des commandes :", error);
@@ -48,7 +57,7 @@ function CommandePage() {
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
-    logoImg.src = "/logo.png"; // Le fichier logo.png doit être dans le dossier public
+    logoImg.src = "/logo.png";
 
     logoImg.onload = () => {
       doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
@@ -59,7 +68,6 @@ function CommandePage() {
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
       doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
 
-      // Vérifier si "produits" est un tableau avant d'appeler map()
       const body = Array.isArray(commande.produits) && commande.produits.length > 0
         ? commande.produits.map((produit) => [
             produit.nom,
@@ -94,11 +102,7 @@ function CommandePage() {
         </Box>
       ) : (
         <Grid container spacing={2}>
-          {commandes.length === 0 ? (
-            <Typography variant="h6" align="center" fullWidth>
-              Aucune commande à afficher
-            </Typography>
-          ) : (
+          {Array.isArray(commandes) && commandes.length > 0 ? (
             commandes.map((commande) => (
               <Grid item xs={12} sm={6} md={4} key={commande._id}>
                 <Card>
@@ -132,6 +136,12 @@ function CommandePage() {
                 </Card>
               </Grid>
             ))
+          ) : (
+            <Grid item xs={12}>
+              <Typography variant="h6" align="center">
+                Aucune commande à afficher
+              </Typography>
+            </Grid>
           )}
         </Grid>
       )}
@@ -140,3 +150,4 @@ function CommandePage() {
 }
 
 export default CommandePage;
+
