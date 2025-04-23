@@ -587,9 +587,7 @@ const Commande = () => {
                 <Button variant="contained" color="info" onClick={() => printInvoice(commande)}>
                   Imprimer Facture
                 </Button>
-                <Button variant="contained" color="warning" onClick={() => openEditDialogForCommande(commande)}>
-                  Modifier la commande
-                </Button>
+                
                 <Button
                   variant="contained"
                   startIcon={<CancelIcon />}
