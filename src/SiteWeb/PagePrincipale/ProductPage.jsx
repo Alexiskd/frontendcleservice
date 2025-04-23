@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { Box, Typography, CircularProgress } from "@mui/material";
-// import ZoomableImage from "@components/ZoomableImage"; // Commenté si ZoomableImage est manquant
+// import ZoomableImage from "@components/ZoomableImage"; // Commented if ZoomableImage is missing
+
+const preloadData = new Map(); // Defining the cache using Map
 
 const ProductPage = () => {
   const { productName } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -28,7 +31,7 @@ const ProductPage = () => {
           setProduct(res.data);
           preloadData.set(`product-${productName}`, res.data);
         } catch (err2) {
-          console.error("Produit non trouvé.");
+          setError("Produit introuvable.");
         }
       } finally {
         setLoading(false);
@@ -46,6 +49,14 @@ const ProductPage = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Typography variant="h6" align="center" mt={4}>
+        {error}
+      </Typography>
+    );
+  }
+
   if (!product) {
     return (
       <Typography variant="h6" align="center" mt={4}>
@@ -59,7 +70,7 @@ const ProductPage = () => {
       <Typography variant="h4" gutterBottom>
         {product.nom}
       </Typography>
-      {/* Affichage d'une image normale si ZoomableImage est manquant */}
+      {/* Display image, fallback to regular if ZoomableImage is missing */}
       <img src={product.image} alt={product.nom} style={{ width: "100%", maxWidth: "500px" }} />
       <Typography variant="body1" mt={2}>
         {product.description}
@@ -69,3 +80,4 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
+
