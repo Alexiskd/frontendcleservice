@@ -171,7 +171,7 @@ const Commande = () => {
     let y = m + 55;
     doc.autoTable({
       startY: y,
-      head: [['Article', 'Marque', 'Quantité', 'Sous-total']],
+      head: [['Article', 'Type', 'Quantité', 'Sous-total']],
       body: [['Article', 'Reproduction En Ligne', '1', '156.67 €']],
       theme: 'grid',
       headStyles: { fillColor: [27, 94, 32], textColor: 255 },
@@ -201,13 +201,7 @@ const Commande = () => {
       "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin. En cas de retard de paiement, des pénalités pourront être appliquées.";
     doc.setFontSize(10).setTextColor(27, 94, 32);
     doc.text(doc.splitTextToSize(cond, 180), 105, y, { align: 'center' });
-    doc.text(
-      'Bonne journée.',
-      105,
-      y + doc.splitTextToSize(cond, 180).length * 5,
-      { align: 'center' }
-    );
-
+    
     return doc;
   };
 
@@ -251,10 +245,8 @@ const Commande = () => {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && sorted.length === 0 && !error && (  
-        <Typography align="center">
-          Aucune commande payée trouvée.
-        </Typography>
+      {!loading && sorted.length === 0 && !error && (
+        <Typography align="center">Aucune commande payée trouvée.</Typography>
       )}
 
       <Grid container spacing={3}>
