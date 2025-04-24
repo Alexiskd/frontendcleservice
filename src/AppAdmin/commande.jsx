@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
   Container,
@@ -200,7 +200,7 @@ const Commande = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const margin = 15;
 
-    // En-tête moderne avec fond vert et logo
+    // En-tête
     doc.setFillColor(27, 94, 32);
     doc.rect(0, margin, 210, 40, 'F');
     const logoWidth = 32, logoHeight = 32;
@@ -208,7 +208,7 @@ const Commande = () => {
     const leftTextX = margin + logoWidth + 5;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(255,255,255);
     doc.text(
       [
         "MAISON BOUVET",
@@ -222,98 +222,70 @@ const Commande = () => {
       { lineHeightFactor: 1.5 }
     );
 
-    // Coordonnées du client (droite)
+    // Client
     const rightX = 210 - margin;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.text("Facturé à :", rightX, margin + 12, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const rightTexts = [
+    [
       commande.nom,
       commande.adressePostale,
       commande.telephone ? `Tél : ${commande.telephone}` : '',
       commande.adresseMail ? `Email : ${commande.adresseMail}` : '',
-    ].filter(Boolean);
-    rightTexts.forEach((txt, i) => {
-      doc.text(txt, rightX, margin + 17 + i * 5, { align: 'right' });
-    });
+    ]
+      .filter(Boolean)
+      .forEach((txt, i) =>
+        doc.text(txt, rightX, margin + 17 + i*5, { align: 'right' })
+      );
 
     let currentY = margin + 45;
-
-    // Calcul des montants
     const prixProduit = parseFloat(commande.prix);
-    let fraisLivraison = 0.0;
-    let fraisAffichage = "0.00 €";
-    if (commande.shippingMethod === 'expedition') {
-      fraisLivraison = 8;
-      fraisAffichage = "8.00 €";
-    }
+    const fraisLivraison = commande.shippingMethod === 'expedition' ? 8 : 0;
+    const fraisAffichage = fraisLivraison > 0 ? "8.00 €" : "0.00 €";
     const totalTTC = prixProduit - fraisLivraison;
 
-    // Détermination du nom du produit
-    const produit = commande.numeroCle || commande.produitCommande ||
-      (commande.cle && commande.cle.length
-        ? (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle)
-        : 'Produit');
+    // Produit
+    const produit = commande.numeroCle || commande.produitCommande || (commande.cle?.join?.(', ') ?? 'Produit');
     const marque = commande.marque || '';
     const produitAffiche = marque ? `${produit} (${marque})` : produit;
-    const quantite = commande.quantity ? commande.quantity.toString() : "1";
-    const unitPrice = parseFloat(quantite) > 0 ? prixProduit / parseFloat(quantite) : prixProduit;
-
-    // Tableau récapitulatif moderne
-    const tableHead = [['Nom du produit', 'Quantité', 'Prix Unitaire', 'Frais de port', 'Total TTC']];
-    const tableBody = [[
-      produitAffiche,
-      quantite,
-      unitPrice.toFixed(2) + ' €',
-      fraisAffichage,
-      totalTTC.toFixed(2) + ' €'
-    ]];
+    const quantite = commande.quantity?.toString() || "1";
+    const unitPrice = parseFloat(quantite) > 0 ? prixProduit/parseFloat(quantite) : prixProduit;
 
     doc.autoTable({
       startY: currentY,
-      head: tableHead,
-      body: tableBody,
-      theme: 'grid',
-      headStyles: { fillColor: [27, 94, 32], textColor: 255, halign: 'left' },
-      styles: { fontSize: 12, halign: 'left' },
-      margin: { left: margin, right: margin },
+      head: [['Produit','Quantité','Prix Unitaire','Frais port','Total TTC']],
+      body: [[produitAffiche,quantite,unitPrice.toFixed(2)+' €',fraisAffichage, totalTTC.toFixed(2)+' €']],
+      theme:'grid',
+      headStyles:{ fillColor:[27,94,32], textColor:255 },
+      styles:{ fontSize:12 },
+      margin:{ left:margin, right:margin }
     });
     currentY = doc.lastAutoTable.finalY + 10;
 
-    // Affichage des modes d'envoi et de récupération
+    // Modes
     doc.setFontSize(10);
-    doc.setTextColor(27, 94, 32);
-    doc.text(
-      `Mode d'envoi : ${commande.deliveryType || (commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné')}`,
-      margin,
-      currentY
-    );
-    currentY += 7;
-    const recuperation = commande.shippingMethod === 'expedition' ? 'Expédition' : 'En magasin';
-    doc.text(`Mode de récupération : ${recuperation}`, margin, currentY);
-    currentY += 10;
+    doc.setTextColor(27,94,32);
+    doc.text(`Mode d'envoi : ${commande.deliveryType || commande.typeLivraison?.join(', ') || 'Non renseigné'}`, margin, currentY);
+    currentY+=7;
+    doc.text(`Mode récupération : ${commande.shippingMethod==='expedition'?'Expédition':'En magasin'}`, margin, currentY);
+    currentY+=10;
 
-    // Détails complémentaires de la commande
+    // Détails commande
     doc.setFontSize(10);
-    doc.text("Détails de la commande :", margin, currentY);
-    currentY += 7;
+    doc.text("Détails :", margin, currentY); currentY+=7;
     doc.setFontSize(8);
-    doc.text(`Numéro de commande : ${commande.numeroCommande}`, margin, currentY);
-    currentY += 6;
-    doc.text(`Statut : ${commande.status}`, margin, currentY);
-    currentY += 10;
+    doc.text(`N° commande : ${commande.numeroCommande}`, margin, currentY); currentY+=6;
+    doc.text(`Statut : ${commande.status}`, margin, currentY); currentY+=10;
 
-    // Mode de règlement et conditions de vente
+    // Réglement & CGV
     doc.setFontSize(12);
-    doc.text('Mode de règlement : Carte Bancaire (CB)', margin, currentY);
-    currentY += 10;
-    const conditions =
-      "CONDITIONS GÉNÉRALES DE VENTE EN LIGNE : Les produits commandés sur notre site sont vendus exclusivement en ligne et payables par carte bancaire (CB). La commande est confirmée dès réception du paiement. En cas d'annulation, des frais pourront être appliqués conformément à notre politique. Nos coordonnées bancaires : IBAN : FR76 1820 6004 1744 1936 2200 145 - BIC : AGRIFRPP882";
-    const conditionsLines = doc.splitTextToSize(conditions, 180);
-    doc.text(conditionsLines, 105, currentY, { align: 'center' });
-    currentY += conditionsLines.length * 5;
+    doc.text('Règlement : Carte Bancaire (CB)', margin, currentY); currentY+=10;
+    const conditions = "CGV en ligne: produits vendus exclusivement en ligne. Paiement CB. Annulation possible frais applicables. Coordonnées bancaires: IBAN FR76... BIC AGRIFRPP882";
+    doc.setFontSize(8);
+    const lines = doc.splitTextToSize(conditions, 180);
+    doc.text(lines, 105, currentY, { align:'center' });
 
     return doc;
   };
@@ -322,103 +294,124 @@ const Commande = () => {
     const doc = generateInvoiceDoc(commande);
     window.open(doc.output('dataurlnewwindow'), '_blank');
   };
-
   const downloadInvoice = (commande) => {
     const doc = generateInvoiceDoc(commande);
     doc.save(`facture_${commande.numeroCommande}.pdf`);
   };
-
   const printInvoice = (commande) => {
     const doc = generateInvoiceDoc(commande);
     doc.autoPrint();
     window.open(doc.output('bloburl'), '_blank');
   };
 
-  const sortedCommandes = [...commandes].sort((a, b) => b.id.localeCompare(a.id));
+  const sortedCommandes = [...commandes].sort((a,b)=>b.id.localeCompare(a.id));
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{
-        py: 4,
-        fontFamily: '"Poppins", sans-serif',
-        backgroundColor: 'rgba(240, 255, 245, 0.5)',
-      }}
-    >
-      <Typography variant="h4" align="center" gutterBottom sx={{ color: 'green.700', fontWeight: 600 }}>
+    <Container maxWidth="lg" sx={{ py:4, backgroundColor:'rgba(240,255,245,0.5)' }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ color:'green.700' }}>
         Détails des Commandes Payées
       </Typography>
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress color="success" />
-        </Box>
-      )}
+      {loading && <Box sx={{ textAlign:'center', my:4 }}><CircularProgress color="success"/></Box>}
       {error && <Alert severity="error">{error}</Alert>}
-      {!loading && sortedCommandes.length === 0 && !error && (
-        <Typography align="center" variant="body1">
-          Aucune commande payée trouvée.
-        </Typography>
+      {!loading && !error && sortedCommandes.length===0 && (
+        <Typography align="center">Aucune commande payée trouvée.</Typography>
       )}
       <Grid container spacing={3}>
-        {sortedCommandes.map((commande) => (
-          <Grid item xs={12} key={commande.id}>
-            <Card
-              sx={{
-                borderRadius: 3,
-                boxShadow: 3,
-                border: '1px solid',
-                borderColor: 'green.100',
-                overflow: 'hidden',
-              }}
-            >
-              <CardContent sx={{ backgroundColor: '#fff', p: 3 }}>
-                {/* Affichage du nom du produit en premier */}
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'green.800', mb: 1 }}>
+        {sortedCommandes.map(cmd => (
+          <Grid item xs={12} key={cmd.id}>
+            <Card sx={{ borderRadius:3, boxShadow:3, border:'1px solid green.100' }}>
+              <CardContent sx={{ p:3 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight:600, color:'green.800', mb:1 }}>
                   Nom du produit :
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
-                    {commande.numeroCle ||
-                      (commande.produitCommande
-                        ? commande.produitCommande
-                        : (Array.isArray(commande.cle)
-                            ? commande.cle.join(', ')
-                            : commande.cle || 'Non renseigné'))}
-                    {commande.marque ? ` (${commande.marque})` : ''}
+                <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2 }}>
+                  <Typography variant="body1" sx={{ fontSize:'1.1rem' }}>
+                    {cmd.numeroCle || cmd.produitCommande || (Array.isArray(cmd.cle)?cmd.cle.join(', '):cmd.cle)||'Non renseigné'}
+                    {cmd.marque?` (${cmd.marque})`:''}
                   </Typography>
-                  {commande.isCleAPasse && (
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
-                      (Clé à passe)
-                    </Typography>
-                  )}
+                  {cmd.isCleAPasse && <CheckCircleIcon color="secondary" />}
                 </Box>
 
-                {/* Section Modes d'envoi et...  */}
-                {/* ... reste du JSX ... */}
+                <Box sx={{ backgroundColor:'#f5f5f5', borderRadius:2, p:2, mb:2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight:600, mb:1 }}>Modes de Livraison</Typography>
+                  <Box sx={{ display:'flex', justifyContent:'space-between' }}>
+                    <Typography variant="body2">
+                      Envoi : {cmd.deliveryType || cmd.typeLivraison?.join(', ')||'Non renseigné'}
+                    </Typography>
+                    <Typography variant="body2">
+                      Récup : {cmd.shippingMethod==='expedition'?'Expédition':'En magasin'}
+                    </Typography>
+                  </Box>
+                </Box>
 
+                <Divider sx={{ mb:2 }}/>
+
+                <Typography variant="subtitle1" sx={{ fontWeight:600, color:'green.800', mb:1 }}>
+                  Informations Client :
+                </Typography>
+                <Box sx={{ mb:2 }}>
+                  <Typography variant="h6" sx={{ fontWeight:600 }}>{cmd.nom}</Typography>
+                  <Typography variant="body2" sx={{ mt:1 }}>N° commande : {cmd.numeroCommande}</Typography>
+                  <Box sx={{ display:'flex', alignItems:'center', mb:0.5 }}>
+                    <LocationOnIcon sx={{ color:'green.500', mr:1 }}/>
+                    <Typography variant="body2">{cmd.adressePostale}</Typography>
+                  </Box>
+                  <Box sx={{ display:'flex', alignItems:'center', mt:1 }}>
+                    <PhoneIcon sx={{ color:'green.500', mr:1 }}/>
+                    <Typography variant="body2">{cmd.telephone}</Typography>
+                  </Box>
+                  <Box sx={{ display:'flex', alignItems:'center', mt:1 }}>
+                    <EmailIcon sx={{ color:'green.500', mr:1 }}/>
+                    <Typography variant="body2">{cmd.adresseMail}</Typography>
+                  </Box>
+                </Box>
+
+                <Typography variant="subtitle1" sx={{ fontWeight:600, color:'green.800', mb:1 }}>
+                  Prix :
+                </Typography>
+                <Typography variant="body2" sx={{ mb:2 }}>
+                  {parseFloat(cmd.prix).toFixed(2)} € TTC
+                </Typography>
+
+                {cmd.propertyCardNumber && (
+                  <Box sx={{ mt:2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight:600 }}>N° carte propriété :</Typography>
+                    <Typography variant="body2">{cmd.propertyCardNumber}</Typography>
+                  </Box>
+                )}
+
+                <Box sx={{ display:'flex', gap:2, mt:2 }}>
+                  {cmd.urlPhotoRecto && (
+                    <Box
+                      component="img"
+                      src={decodeImage(cmd.urlPhotoRecto)}
+                      alt="Recto"
+                      sx={{ width:80, height:80, objectFit:'cover', borderRadius:'50%', cursor:'pointer' }}
+                      onClick={()=>handleImageClick(decodeImage(cmd.urlPhotoRecto))}
+                    />
+                  )}
+                  {cmd.urlPhotoVerso && (
+                    <Box
+                      component="img"
+                      src={decodeImage(cmd.urlPhotoVerso)}
+                      alt="Verso"
+                      sx={{ width:80, height:80, objectFit:'cover', borderRadius:'50%', cursor:'pointer' }}
+                      onClick={()=>handleImageClick(decodeImage(cmd.urlPhotoVerso))}
+                    />
+                  )}
+                </Box>
               </CardContent>
-              <CardActions sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}>
-                {/* Boutons d'actions */}
-                <Button variant="contained" color="primary" onClick={() => showInvoice(commande)}>
-                  Afficher Facture
-                </Button>
-                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(commande)}>
-                  Télécharger Facture
-                </Button>
-                <Button variant="contained" color="info" onClick={() => printInvoice(commande)}>
-                  Imprimer Facture
-                </Button>
+              <CardActions sx={{ justifyContent:'space-between', p:2, backgroundColor:'green.50' }}>
+                <Button variant="contained" color="primary" onClick={()=>showInvoice(cmd)}>Afficher Facture</Button>
+                <Button variant="contained" color="secondary" onClick={()=>downloadInvoice(cmd)}>Télécharger Facture</Button>
+                <Button variant="contained" color="info" onClick={()=>printInvoice(cmd)}>Imprimer Facture</Button>
                 <Button
                   variant="contained"
+                  color="error"
                   startIcon={<CancelIcon />}
-                  sx={{
-                    borderRadius: 20,
-                    backgroundColor: 'red.400',
-                    '&:hover': { backgroundColor: 'red.600' },
-                  }}
-                  onClick={() => openCancelDialog(commande)}
+                  onClick={()=>openCancelDialog(cmd)}
                 >
-                  Annuler la commande
+                  Annuler
                 </Button>
               </CardActions>
             </Card>
@@ -426,60 +419,45 @@ const Commande = () => {
         ))}
       </Grid>
 
-      {/* Dialogues */}
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        fullScreen={fullScreen}
-        PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}
-      >
-        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>
-          Confirmer l'annulation
-        </DialogTitle>
+      {/* Dialog annulation */}
+      <Dialog open={openDialog} onClose={()=>setOpenDialog(false)} fullScreen={fullScreen} PaperProps={{ sx:{ p:2 } }}>
+        <DialogTitle>Confirmer l'annulation</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
-            margin="dense"
-            label="Raison de l'annulation"
-            type="text"
+            label="Raison"
             fullWidth
             variant="outlined"
             value={cancellationReason}
-            onChange={(e) => setCancellationReason(e.target.value)}
-            required
+            onChange={e=>setCancellationReason(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="success">
-            Annuler
-          </Button>
-          <Button
-            onClick={handleConfirmCancel}
-            variant="contained"
-            color="error"
-            disabled={!cancellationReason.trim()}
-          >
+          <Button onClick={()=>setOpenDialog(false)}>Annuler</Button>
+          <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancellationReason.trim()}>
             Confirmer
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} maxWidth="lg">
-        <DialogContent onWheel={handleWheel} sx={{ p: 0, display: 'flex', justifyContent: 'center' }}>
+      {/* Dialog image */}
+      <Dialog open={openImageDialog} onClose={()=>setOpenImageDialog(false)} maxWidth="lg" fullScreen={fullScreen}>
+        <DialogActions>
+          <IconButton onClick={()=>setOpenImageDialog(false)}><CloseIcon/></IconButton>
+        </DialogActions>
+        <DialogContent onWheel={handleWheel} sx={{ textAlign:'center' }}>
           {selectedImage && (
             <Box
               component="img"
               src={selectedImage}
               alt="Zoom"
-              sx={{ maxWidth: '100%', maxHeight: '80vh', transform: `scale(${zoom})` }}
+              sx={{ transform:`scale(${zoom})`, transition:'transform 0.2s' }}
             />
           )}
         </DialogContent>
       </Dialog>
-
     </Container>
   );
 };
 
 export default Commande;
-
