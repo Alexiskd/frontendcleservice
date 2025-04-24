@@ -1,3 +1,4 @@
+// src/components/Commande.jsx
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
@@ -24,7 +25,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import logo from './logo.png';
+import logo from '../assets/logo.png';
 
 const socket = io('https://cl-back.onrender.com');
 
@@ -32,9 +33,11 @@ const Commande = () => {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
-  const [commandeToCancel, setCommandeToCancel] = useState(null);
+  const [toCancel, setToCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
+
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
   const [zoom, setZoom] = useState(1);
@@ -42,11 +45,9 @@ const Commande = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Convertit un buffer en URL d'image
   const decodeImage = (img) =>
     img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
-  // Récupère la liste des commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     try {
@@ -63,21 +64,18 @@ const Commande = () => {
     }
   };
 
-  // Écoute des mises à jour via WebSocket
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
     return () => socket.off('commandeUpdate', fetchCommandes);
   }, []);
 
-  // Ouvre la boîte de dialogue pour annuler
   const openCancel = (cmd) => {
-    setCommandeToCancel(cmd);
+    setToCancel(cmd);
     setCancelReason('');
     setOpenCancelDialog(true);
   };
 
-  // Confirme et envoie l'annulation
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Veuillez saisir une raison.');
@@ -85,7 +83,7 @@ const Commande = () => {
     }
     try {
       const res = await fetch(
-        `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
+        `https://cl-back.onrender.com/commande/cancel/${toCancel.numeroCommande}`,
         { method: 'DELETE' }
       );
       const { success } = await res.json();
@@ -99,26 +97,21 @@ const Commande = () => {
     }
   };
 
-  // Ouvre la boîte de dialogue pour afficher l'image
   const openImage = (img) => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
     setOpenImageDialog(true);
   };
 
-  // Gère le zoom avec la molette
   const onWheel = (e) => {
     e.preventDefault();
     setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  // Génère le PDF de la facture
   const generatePdf = (cmd) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
-    // En-tête
-    doc.setFillColor(27, 94, 32);
-    doc.rect(0, m, 210, 40, 'F');
+    doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
     doc.addImage(logo, 'PNG', m, m, 32, 32);
     doc.setTextColor(255, 255, 255).setFontSize(8);
     doc.text(
@@ -127,13 +120,12 @@ const Commande = () => {
       m + 12,
       { lineHeightFactor: 1.5 }
     );
-    // Coordonnées client
     doc.setTextColor(0).setFontSize(8);
     const rightX = 210 - m;
     [cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
-    // Tableau récapitulatif
+
     const yStart = m + 45;
     const prix = parseFloat(cmd.prix);
     const port = cmd.shippingMethod === 'expedition' ? 8 : 0;
@@ -172,9 +164,7 @@ const Commande = () => {
 
       {loading && <CircularProgress />}
       {error && <Alert severity="error">{error}</Alert>}
-      {!loading && !error && commandes.length === 0 && (
-        <Typography>Aucune commande trouvée.</Typography>
-      )}
+      {!loading && !error && commandes.length === 0 && <Typography>Aucune commande trouvée.</Typography>}
 
       <Grid container spacing={3}>
         {commandes.map((cmd) => (
@@ -221,7 +211,6 @@ const Commande = () => {
         ))}
       </Grid>
 
-      {/* Dialogue d'annulation */}
       <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)} fullScreen={fullScreen}>
         <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
@@ -241,7 +230,6 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialogue d'image zoomable */}
       <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={onWheel}>
         <DialogActions>
           <IconButton onClick={() => setOpenImageDialog(false)}>
