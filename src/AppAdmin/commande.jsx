@@ -42,11 +42,11 @@ const Commande = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Convertit un buffer base64 en URL valide
+  // Convertit un buffer en URL d'image
   const decodeImage = (img) =>
     img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
-  // Charge la liste des commandes payées
+  // Récupère la liste des commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     try {
@@ -63,21 +63,21 @@ const Commande = () => {
     }
   };
 
-  // WebSocket pour mises à jour en temps réel
+  // Écoute des mises à jour via WebSocket
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
     return () => socket.off('commandeUpdate', fetchCommandes);
   }, []);
 
-  // Ouvre le dialogue d'annulation
+  // Ouvre la boîte de dialogue pour annuler
   const openCancel = (cmd) => {
     setCommandeToCancel(cmd);
     setCancelReason('');
     setOpenCancelDialog(true);
   };
 
-  // Confirme l'annulation côté API
+  // Confirme et envoie l'annulation
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Veuillez saisir une raison.');
@@ -99,14 +99,14 @@ const Commande = () => {
     }
   };
 
-  // Ouvre le dialogue d'affichage d'image
+  // Ouvre la boîte de dialogue pour afficher l'image
   const openImage = (img) => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
     setOpenImageDialog(true);
   };
 
-  // Zoom sur l'image avec molette
+  // Gère le zoom avec la molette
   const onWheel = (e) => {
     e.preventDefault();
     setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
@@ -117,7 +117,8 @@ const Commande = () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
     // En-tête
-    doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
+    doc.setFillColor(27, 94, 32);
+    doc.rect(0, m, 210, 40, 'F');
     doc.addImage(logo, 'PNG', m, m, 32, 32);
     doc.setTextColor(255, 255, 255).setFontSize(8);
     doc.text(
@@ -126,14 +127,12 @@ const Commande = () => {
       m + 12,
       { lineHeightFactor: 1.5 }
     );
-
     // Coordonnées client
     doc.setTextColor(0).setFontSize(8);
     const rightX = 210 - m;
     [cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
-
     // Tableau récapitulatif
     const yStart = m + 45;
     const prix = parseFloat(cmd.prix);
@@ -173,7 +172,9 @@ const Commande = () => {
 
       {loading && <CircularProgress />}
       {error && <Alert severity="error">{error}</Alert>}
-      {!loading && !error && commandes.length === 0 && <Typography>Aucune commande trouvée.</Typography>}
+      {!loading && !error && commandes.length === 0 && (
+        <Typography>Aucune commande trouvée.</Typography>
+      )}
 
       <Grid container spacing={3}>
         {commandes.map((cmd) => (
