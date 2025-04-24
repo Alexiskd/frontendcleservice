@@ -25,8 +25,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-// Utilisation de l’alias @ pour pointer sur src/
-import logo from '@/assets/logo.png';
+// Logo placé à côté de ce fichier : src/AppAdmin/logo.png
+import logo from './logo.png';
 
 const socket = io('https://cl-back.onrender.com');
 
@@ -46,9 +46,11 @@ const Commande = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Si img n'inclut pas déjà 'data:', on préfixe pour base64
   const decodeImage = (img) =>
     img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
+  // Récupère les commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     try {
@@ -65,18 +67,21 @@ const Commande = () => {
     }
   };
 
+  // WebSocket pour rafraîchir automatiquement
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
     return () => socket.off('commandeUpdate', fetchCommandes);
   }, []);
 
+  // Prépare l'annulation
   const openCancel = (cmd) => {
     setToCancel(cmd);
     setCancelReason('');
     setOpenCancelDialog(true);
   };
 
+  // Envoie l'annulation
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Veuillez saisir une raison.');
@@ -98,17 +103,20 @@ const Commande = () => {
     }
   };
 
+  // Ouvre la visionneuse d'image
   const openImage = (img) => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
     setOpenImageDialog(true);
   };
 
+  // Zoom molette
   const onWheel = (e) => {
     e.preventDefault();
     setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
+  // Génère la facture PDF
   const generatePdf = (cmd) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
@@ -213,7 +221,6 @@ const Commande = () => {
         ))}
       </Grid>
 
-      {/* Dialogue d'annulation */}
       <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)} fullScreen={fullScreen}>
         <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
@@ -233,7 +240,6 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialogue d'image zoomable */}
       <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={onWheel}>
         <DialogActions>
           <IconButton onClick={() => setOpenImageDialog(false)}>
