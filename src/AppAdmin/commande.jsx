@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import {
   Container,
@@ -17,14 +17,15 @@ import {
   DialogActions,
   IconButton,
   TextField,
+  Divider,
   useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import CancelIcon from '@mui/icons-material/Cancel';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import logo from './logo.png';
 
 const socket = io('https://cl-back.onrender.com');
 
@@ -32,188 +33,231 @@ const Commande = () => {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const [commandeToCancel, setCommandeToCancel] = useState(null);
-  const [cancelReason, setCancelReason] = useState('');
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
   const [openImageDialog, setOpenImageDialog] = useState(false);
-  const [selectedImage, setSelectedImage] = useState('');
   const [zoom, setZoom] = useState(1);
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Convertit un buffer en URL d'image
-  const decodeImage = (img) =>
-    img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
+  const decodeImage = img => {
+    if (!img) return '';
+    if (img.startsWith('data:')) return img;
+    return `data:image/png;base64,${img}`;
+  };
 
-  // Récupère la liste des commandes payées
-  const fetchCommandes = async () => {
+  const fetchCommandes = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('https://cl-back.onrender.com/commande/paid');
-      if (!res.ok) throw new Error(`status ${res.status}`);
+      const res = await fetch('https://cl-back.onrender.com/commande/paid', {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) {
+        if (res.status === 500) {
+          throw new Error('Erreur interne du serveur. Réessayez plus tard.');
+        }
+        throw new Error(`Erreur (status ${res.status})`);
+      }
       const { data } = await res.json();
-      setCommandes(data);
-      setError(null);
+      setCommandes(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error(e);
-      setError('Erreur lors du chargement des commandes.');
+      setError(e.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Écoute des mises à jour via WebSocket
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
-    return () => socket.off('commandeUpdate', fetchCommandes);
-  }, []);
+    return () => socket.off('commandeUpdate');
+  }, [fetchCommandes]);
 
-  // Ouvre la boîte de dialogue pour annuler
-  const openCancel = (cmd) => {
-    setCommandeToCancel(cmd);
-    setCancelReason('');
-    setOpenCancelDialog(true);
+  const openCancelDialog = commande => {
+    setCommandeToCancel(commande);
+    setCancellationReason('');
+    setOpenDialog(true);
   };
 
-  // Confirme et envoie l'annulation
-  const handleCancel = async () => {
-    if (!cancelReason.trim()) {
-      alert('Veuillez saisir une raison.');
-      return;
+  const handleConfirmCancel = async () => {
+    if (!commandeToCancel || !cancellationReason.trim()) {
+      return alert("Veuillez saisir une raison d'annulation.");
     }
     try {
-      const res = await fetch(
+      const resp = await fetch(
         `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
-        { method: 'DELETE' }
+        { method: 'DELETE', headers: { Accept: 'application/json' } }
       );
-      const { success } = await res.json();
-      alert(success ? 'Commande annulée.' : 'Échec de l’annulation.');
+      const { success } = await resp.json();
+      alert(success ? 'Commande annulée.' : 'Erreur lors de l\'annulation.');
       fetchCommandes();
-    } catch (e) {
-      console.error(e);
-      alert('Erreur réseau');
+    } catch {
+      alert('Erreur lors de l\'annulation.');
     } finally {
-      setOpenCancelDialog(false);
+      setOpenDialog(false);
     }
   };
 
-  // Ouvre la boîte de dialogue pour afficher l'image
-  const openImage = (img) => {
-    setSelectedImage(decodeImage(img));
+  const handleImageClick = url => {
+    setSelectedImage(url);
     setZoom(1);
     setOpenImageDialog(true);
   };
 
-  // Gère le zoom avec la molette
-  const onWheel = (e) => {
+  const handleWheel = e => {
     e.preventDefault();
-    setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
+    setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  // Génère le PDF de la facture
-  const generatePdf = (cmd) => {
+  const generateInvoiceDoc = commande => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
-    // En-tête
-    doc.setFillColor(27, 94, 32);
-    doc.rect(0, m, 210, 40, 'F');
-    doc.addImage(logo, 'PNG', m, m, 32, 32);
-    doc.setTextColor(255, 255, 255).setFontSize(8);
+
+    doc.setFillColor(27,94,32).rect(0, m, 210, 40, 'F');
+    doc.setFontSize(8).setTextColor(255,255,255);
     doc.text(
-      ['MAISON BOUVET', '20 rue de Lévis', '75017 Paris', 'Tél : 01 42 67 47 28', 'contact@cleservice.com'],
+      [
+        'REPRODUCTION EN LIGNE',
+        'www.votresite-reproduction.com',
+        'Service en ligne de reproductions',
+        'Tél : 01 42 67 47 28',
+        'Email : contact@reproduction.com',
+      ],
       m + 37,
       m + 12,
       { lineHeightFactor: 1.5 }
     );
-    // Coordonnées client
-    doc.setTextColor(0).setFontSize(8);
+
     const rightX = 210 - m;
-    [cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
+    doc.setFont('helvetica','bold').setFontSize(10)
+       .text('Facturé à :', rightX, m + 12, { align: 'right' });
+    doc.setFont('helvetica','normal').setFontSize(8);
+    [
+      commande.nom,
+      commande.adressePostale,
+      commande.telephone && `Tél : ${commande.telephone}`,
+      commande.adresseMail && `Email : ${commande.adresseMail}`,
+    ]
       .filter(Boolean)
-      .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
-    // Tableau récapitulatif
-    const yStart = m + 45;
-    const prix = parseFloat(cmd.prix);
-    const port = cmd.shippingMethod === 'expedition' ? 8 : 0;
+      .forEach((t,i) =>
+        doc.text(t, rightX, m + 17 + i*5, { align: 'right' })
+      );
+
+    const date = commande.createdAt
+      ? new Date(commande.createdAt).toLocaleDateString('fr-FR')
+      : 'Non renseignée';
+    doc.setFontSize(9).setTextColor(27,94,32)
+       .text(`Date de commande : ${date}`, m, m + 45);
+
+    let y = m + 55;
+    const article = Array.isArray(commande.cle) ? commande.cle.join(', ') : (commande.cle || 'Article');
+    const marque = commande.marque || 'Reproduction En Ligne';
+    const qt = commande.quantity || 1;
+    const ttc = parseFloat(commande.prix) || 0;
+    const ht = (ttc/1.2).toFixed(2);
     doc.autoTable({
-      startY: yStart,
-      head: [['Produit', 'Qté', 'PU', 'Port', 'TTC']],
-      body: [
-        [
-          cmd.produitCommande || cmd.cle.join(', '),
-          cmd.quantity,
-          `${(prix / cmd.quantity).toFixed(2)} €`,
-          `${port.toFixed(2)} €`,
-          `${(prix - port).toFixed(2)} €`,
-        ],
-      ],
+      startY: y,
+      head: [['Article','Marque','Quantité','Sous-total']],
+      body: [[article, marque, qt, `${ht} €`]],
       theme: 'grid',
-      headStyles: { fillColor: [27, 94, 32], textColor: 255 },
-      margin: { left: m, right: m },
+      headStyles: { fillColor:[27,94,32], textColor:255 },
+      styles: { fontSize:12, halign:'left' },
+      margin: { left:m, right:m }
     });
+    y = doc.lastAutoTable.finalY + 10;
+
+    const frais = 0.00;
+    const tva = (ttc - ht).toFixed(2);
+    doc.setFontSize(12).setTextColor(27,94,32)
+       .text('Sous-total', rightX-80, y).text(`${ht} €`, rightX, y, { align:'right' });
+    y +=7;
+    doc.text('Frais de livraison', rightX-80, y).text(`${frais.toFixed(2)} €`, rightX, y, { align:'right' });
+    y +=7;
+    doc.setFont('helvetica','bold').text('Total TTC', rightX-80, y).text(`${ttc.toFixed(2)} €`, rightX, y, { align:'right' });
+    y +=7;
+    doc.setFont('helvetica','normal').text('TVA', rightX-80, y).text(`${tva} €`, rightX, y, { align:'right' });
+
+    y += 15;
+    const cond = "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin.";
+    const lines = doc.splitTextToSize(cond, 180);
+    doc.setFontSize(10).setTextColor(27,94,32).text(lines, 105, y, { align:'center' });
+    doc.text('Bonne journée.', 105, y + lines.length*5, { align:'center' });
     return doc;
   };
 
-  const viewPdf = (cmd) => window.open(generatePdf(cmd).output('dataurlnewwindow'));
-  const downloadPdf = (cmd) => generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`);
-  const printPdf = (cmd) => {
-    const doc = generatePdf(cmd);
-    doc.autoPrint();
-    window.open(doc.output('bloburl'));
-  };
+  const showInvoice = c => window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
+  const downloadInvoice = c => generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
+  const printInvoice = c => { const d = generateInvoiceDoc(c); d.autoPrint(); window.open(d.output('bloburl'), '_blank'); };
+
+  const sorted = [...commandes].sort(
+    (a,b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Typography variant="h4" align="center" gutterBottom>
-        Commandes Payées
+    <Container maxWidth="lg" sx={{ py:4, fontFamily:'Poppins', backgroundColor:'rgba(240,255,245,0.5)' }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ color:'green.700', fontWeight:600 }}>
+        Détails des Commandes Payées
       </Typography>
 
-      {loading && <CircularProgress />}
+      {loading && (
+        <Box sx={{ display:'flex', justifyContent:'center', my:4 }}>
+          <CircularProgress color="success" />
+        </Box>
+      )}
+
       {error && <Alert severity="error">{error}</Alert>}
-      {!loading && !error && commandes.length === 0 && (
-        <Typography>Aucune commande trouvée.</Typography>
+
+      {!loading && !error && sorted.length === 0 && (
+        <Typography align="center">Aucune commande payée trouvée.</Typography>
       )}
 
       <Grid container spacing={3}>
-        {commandes.map((cmd) => (
-          <Grid item xs={12} key={cmd.id}>
-            <Card>
+        {sorted.map(c => (
+          <Grid item xs={12} key={c.id}>
+            <Card sx={{ borderRadius:3, boxShadow:3, border:'1px solid', borderColor:'green.100' }}>
               <CardContent>
-                <Typography variant="h6">{cmd.produitCommande}</Typography>
-                <Box sx={{ display: 'flex', gap: 2, my: 1 }}>
-                  {cmd.urlPhotoRecto && (
-                    <Box
-                      component="img"
-                      src={decodeImage(cmd.urlPhotoRecto)}
-                      sx={{ width: 80, height: 80, cursor: 'pointer' }}
-                      onClick={() => openImage(cmd.urlPhotoRecto)}
-                    />
-                  )}
-                  {cmd.urlPhotoVerso && (
-                    <Box
-                      component="img"
-                      src={decodeImage(cmd.urlPhotoVerso)}
-                      sx={{ width: 80, height: 80, cursor: 'pointer' }}
-                      onClick={() => openImage(cmd.urlPhotoVerso)}
-                    />
-                  )}
+                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
+                  Produit Commandé :
+                </Typography>
+                <Typography mb={2}>
+                  {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
+                </Typography>
+                <Divider sx={{ mb:2 }} />
+                <Typography variant="h5" sx={{ fontWeight:600, color:'green.800' }}>
+                  {c.nom}
+                </Typography>
+                <Typography sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                  Numéro de commande : {c.numeroCommande || 'Non renseigné'}
+                </Typography>
+                <Typography sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                  Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : 'Non renseignée'}
+                </Typography>
+                <Box sx={{ display:'flex', alignItems:'center', mt:1 }}>
+                  <LocationOnIcon sx={{ color:'green.500', mr:1 }} />
+                  <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
                 </Box>
-                <Typography>Prix : {parseFloat(cmd.prix).toFixed(2)} €</Typography>
               </CardContent>
-              <CardActions>
-                <Button variant="contained" onClick={() => viewPdf(cmd)}>
-                  Voir Facture
+              <CardActions sx={{ justifyContent:'space-between', backgroundColor:'green.50', p:2 }}>
+                <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
+                  Afficher Facture
                 </Button>
-                <Button variant="outlined" onClick={() => downloadPdf(cmd)}>
-                  Télécharger
+                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
+                  Télécharger Facture
                 </Button>
-                <Button variant="outlined" onClick={() => printPdf(cmd)}>
-                  Imprimer
+                <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
+                  Imprimer Facture
                 </Button>
-                <Button color="error" startIcon={<CancelIcon />} onClick={() => openCancel(cmd)}>
-                  Annuler
+                <Button
+                  variant="contained"
+                  startIcon={<CancelIcon />}
+                  sx={{ borderRadius:20, backgroundColor:'red.400', '&:hover':{ backgroundColor:'red.600' } }}
+                  onClick={() => openCancelDialog(c)}
+                >
+                  Annuler la commande
                 </Button>
               </CardActions>
             </Card>
@@ -221,39 +265,55 @@ const Commande = () => {
         ))}
       </Grid>
 
-      {/* Dialogue d'annulation */}
-      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle>Annuler la commande</DialogTitle>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen}>
+        <DialogTitle sx={{ fontWeight:600, color:'green.800' }}>Confirmer l'annulation</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
-            label="Raison"
+            margin="dense"
+            label="Raison de l'annulation"
             fullWidth
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
+            variant="outlined"
+            value={cancellationReason}
+            onChange={e => setCancellationReason(e.target.value)}
+            required
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCancelDialog(false)}>Annuler</Button>
-          <Button variant="contained" color="error" onClick={handleCancel}>
+          <Button onClick={() => setOpenDialog(false)} color="success">Annuler</Button>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            disabled={!cancellationReason.trim()}
+          >
             Confirmer
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialogue d'image zoomable */}
-      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={onWheel}>
-        <DialogActions>
+      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} maxWidth="lg" onWheel={handleWheel}>
+        <DialogActions sx={{ justifyContent:'flex-end', p:1 }}>
           <IconButton onClick={() => setOpenImageDialog(false)}>
             <CloseIcon />
           </IconButton>
         </DialogActions>
-        <DialogContent sx={{ textAlign: 'center' }}>
-          <Box
-            component="img"
-            src={selectedImage}
-            sx={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }}
-          />
+        <DialogContent>
+          {selectedImage && (
+            <Box
+              component="img"
+              src={decodeImage(selectedImage)}
+              alt="Zoom"
+              sx={{
+                maxWidth:'100%',
+                maxHeight:'80vh',
+                transform:`scale(${zoom})`,
+                transition:'transform 0.2s',
+                transformOrigin:'center',
+                borderRadius:2
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </Container>
