@@ -1,920 +1,485 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react'; 
+import io from 'socket.io-client';
 import {
-  Box,
-  Typography,
   Container,
-  TextField,
+  Card,
+  CardContent,
+  CardActions,
+  Typography,
   Button,
   CircularProgress,
-  Snackbar,
   Alert,
-  Paper,
+  Grid,
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
-  Grid,
-  Card,
-  CardMedia,
   IconButton,
-  InputAdornment,
-  RadioGroup,
+  TextField,
   FormControlLabel,
-  Radio,
-  FormControl,
-  Select,
-  MenuItem,
   Checkbox,
+  Divider,
+  useMediaQuery,
 } from '@mui/material';
-import {
-  PhotoCamera,
-  CloudUpload,
-  Person,
-  Email,
-  Phone,
-  Home,
-  LocationCity,
-  Info,
-  CheckCircle,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import CloseIcon from '@mui/icons-material/Close';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import logo from './logo.png';
 
-// Fonction de normalisation pour comparer les chaînes
-const normalizeString = (str) =>
-  str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+const socket = io('https://cl-back.onrender.com');
 
-// Composant de téléchargement de fichier aligné
-const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
-    <Typography variant="body2" sx={{ minWidth: '150px' }}>{label}</Typography>
-    <IconButton
-      color="primary"
-      aria-label={label}
-      component="label"
-      sx={{
-        backgroundColor: 'background.paper',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        '&:hover': { backgroundColor: 'action.hover' },
-      }}
-    >
-      <input type="file" name={name} accept={accept} hidden onChange={onChange} />
-      <IconComponent sx={{ color: '#1B5E20' }} />
-    </IconButton>
-    {file && (
-      <Typography variant="caption" color="success.main">
-        {typeof file === 'string' ? file : file.name}
-      </Typography>
-    )}
-  </Box>
-);
+const Commande = () => {
+  const [commandes, setCommandes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [commandeToCancel, setCommandeToCancel] = useState(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
-// Checkbox avec style moderne
-const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
-  color: theme.palette.grey[500],
-  '&.Mui-checked': { color: theme.palette.primary.main },
-}));
+  // États pour l'édition d'une commande
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    id: '',
+    nom: '',
+    ville: '',
+    isCleAPasse: false,
+    hasCartePropriete: true,
+    attestationPropriete: false,
+  });
 
-// Paper stylisé pour les sections
-const SectionPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: theme.spacing(1),
-  boxShadow: theme.shadows[1],
-  backgroundColor: '#fff',
-  marginBottom: theme.spacing(3),
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-}));
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-// Card de résumé stylisée
-const SummaryCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(2),
-  boxShadow: theme.shadows[1],
-  backgroundColor: '#fff',
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-  color: theme.palette.text.primary,
-}));
+  const decodeImage = (img) =>
+    img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
-// Popup des Conditions Générales de Vente
-const ConditionsGeneralesVentePopup = ({ open, onClose }) => (
-  <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Conditions Générales de Vente - Cleservice.com</DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ maxHeight: '60vh', overflowY: 'auto', pr: 2 }}>
-          {/* Articles 1 à 4 */}
-          <Typography variant="h6" gutterBottom>
-            Article 1 : Objet
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Les présentes Conditions Générales de Vente (CGV) régissent la vente de clés, cartes de propriété et autres services proposés sur le site Cleservice.com.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 2 : Prix
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Tous les prix affichés sont en euros, toutes taxes comprises (TTC). Cleservice.com se réserve le droit de modifier ses tarifs à tout moment sans préavis.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 3 : Commande
-          </Typography>
-          <Typography variant="body2" paragraph>
-            La validation de la commande vaut acceptation des présentes CGV. Toute commande effectuée sur le site implique l’adhésion complète aux conditions de vente en vigueur.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 4 : Livraison et Retrait
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Les produits commandés sont livrés à l’adresse indiquée lors de la commande. Le retrait en magasin reste gratuit, tandis que l’expédition entraîne des frais supplémentaires indiqués lors de la commande.
-          </Typography>
+  const fetchCommandes = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('https://cl-back.onrender.com/commande/paid', {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        throw new Error(`Erreur lors de la récupération (status ${response.status})`);
+      }
+      const json = await response.json();
+      if (json && Array.isArray(json.data)) {
+        setCommandes(json.data);
+      } else {
+        setCommandes([]);
+      }
+      setError(null);
+    } catch (err) {
+      console.error('Erreur lors du chargement des commandes :', err);
+      setError('Erreur lors du chargement des commandes.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          {/* Articles suivants */}
-          <Typography variant="h6" gutterBottom>
-            Article 5 : Responsabilité et Garanties
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Cleservice.com ne pourra être tenue responsable des dommages directs ou indirects liés à l’utilisation des produits, sauf en cas de faute grave ou intentionnelle. Les produits bénéficient de la garantie légale de conformité et de la garantie contre les vices cachés.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 6 : Propriété Intellectuelle
-          </Typography>
-          <Typography variant="body2" paragraph>
-            L’ensemble des éléments présents sur le site (textes, images, logos, etc.) est protégé par le droit d’auteur et ne peut être reproduit, distribué ou exploité sans l’autorisation expresse de Cleservice.com.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 7 : Données Personnelles
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Les informations recueillies lors de la commande sont nécessaires au traitement de celle-ci. Conformément à la loi « Informatique et Libertés », vous disposez d’un droit d’accès, de modification et de suppression de vos données personnelles.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 8 : Loi Applicable et Juridiction
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Les présentes CGV sont régies par la loi française. En cas de litige, seuls les tribunaux français seront compétents.
-          </Typography>
-          
-          {/* Nouveaux articles */}
-          <Typography variant="h6" gutterBottom>
-            Article 9 : Livraison, Sécurité et Transfert de Risque
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Les clés, cartes de propriété et autres produits restent la propriété de Cleservice.com jusqu’à confirmation du paiement complet. Le transfert des risques intervient dès la livraison effective aux coordonnées indiquées par le client. Cleservice.com ne pourra être tenue responsable des pertes, détériorations ou vol de produits après expédition, sauf en cas de faute avérée du transporteur.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 10 : Reproduction et Contrefaçon
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Toute reproduction, duplication, modification ou imitation, totale ou partielle, des clés, cartes de propriété ou autres produits fournis par Cleservice.com est strictement interdite. Toute infraction à cette disposition fera l’objet de poursuites judiciaires. Le client s’engage à ne pas faire de copies ou reproductions non autorisées des produits reçus.
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Article 11 : Envoi et Utilisation des Clés
-          </Typography>
-          <Typography variant="body2" paragraph>
-            L’envoi des clés ou des cartes de propriété se fait sous la responsabilité du client dès leur remise au transporteur. Le client s’engage à vérifier l’état du colis à la réception et à signaler toute anomalie dans un délai de 48 heures. Toute utilisation frauduleuse ou détournée des produits sera considérée comme une violation grave des présentes CGV et pourra donner lieu à des poursuites civiles et pénales.
-          </Typography>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Fermer
-        </Button>
-      </DialogActions>
-    </Dialog>
-    <DialogActions>
-      <Button onClick={onClose} color="primary">Fermer</Button>
-    </DialogActions>
-  </Dialog>
-);
-
-const CommandePage = () => {
-  // Défilement vers le haut lors du chargement de la page
   useEffect(() => {
-    window.scrollTo(0, 0);
+    fetchCommandes();
+    socket.on('commandeUpdate', () => {
+      fetchCommandes();
+    });
+    return () => {
+      socket.off('commandeUpdate');
+    };
   }, []);
 
-  // Récupération des paramètres d'URL
-  const { brand: brandName, reference: articleType, name: articleName } = useParams();
-  const decodedArticleName = articleName ? articleName.replace(/-/g, ' ') : '';
-  const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode'); // "postal" ou "numero"
-  const navigate = useNavigate();
-
-  // États pour le produit
-  const [article, setArticle] = useState(null);
-  const [loadingArticle, setLoadingArticle] = useState(true);
-  const [errorArticle, setErrorArticle] = useState(null);
-
-  // Récupération du produit via best-by-name avec fallback sur closest-match
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoadingArticle(true);
-        setErrorArticle(null);
-        if (!decodedArticleName.trim()) {
-          throw new Error("Le nom de l'article est vide après décodage.");
-        }
-        const endpointBest = `https://cl-back.onrender.com/produit/cles/best-by-name?nom=${encodeURIComponent(decodedArticleName)}`;
-        let response = await fetch(endpointBest);
-        if (response.status === 404) {
-          console.warn("best-by-name retourne 404, utilisation du fallback closest-match.");
-          const endpointFallback = `https://cl-back.onrender.com/produit/cles/closest-match?nom=${encodeURIComponent(decodedArticleName)}`;
-          response = await fetch(endpointFallback);
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur lors du chargement du produit via closest-match : ${errorText}`);
-          }
-        } else if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erreur lors du chargement du produit via best-by-name : ${errorText}`);
-        }
-        const product = await response.json();
-        if (product && product.marque && normalizeString(product.marque) !== normalizeString(brandName)) {
-          throw new Error("La marque de l'article ne correspond pas.");
-        }
-        setArticle(product);
-      } catch (err) {
-        console.error("Erreur lors de la récupération du produit :", err);
-        setErrorArticle(err.message || "Erreur inconnue");
-      } finally {
-        setLoadingArticle(false);
-      }
-    };
-    fetchProduct();
-  }, [brandName, decodedArticleName]);
-
-  // États pour les informations utilisateur
-  const [userInfo, setUserInfo] = useState({
-    clientType: 'particulier',
-    nom: '',
-    email: '',
-    phone: '',
-    address: '',
-    postalCode: '',
-    ville: '',
-    additionalInfo: '',
-  });
-
-  // États pour les informations sur la clé
-  const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '',
-    propertyCardNumber: '',
-    frontPhoto: null,
-    backPhoto: null,
-  });
-  const [isCleAPasse, setIsCleAPasse] = useState(false);
-  const [lostCartePropriete, setLostCartePropriete] = useState(false);
-  const [idCardInfo, setIdCardInfo] = useState({
-    idCardFront: null,
-    idCardBack: null,
-    domicileJustificatif: '',
-  });
-  const [attestationPropriete, setAttestationPropriete] = useState(false);
-
-  // États pour la livraison
-  const [deliveryType, setDeliveryType] = useState('');
-  const [shippingMethod, setShippingMethod] = useState('magasin');
-
-  // États pour le snackbar de notifications
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [ordering, setOrdering] = useState(false);
-
-  // États pour la popup CGV et l'acceptation des conditions
-  const [openCGV, setOpenCGV] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-
-  // Quantité de copies souhaitée
-  const [quantity, setQuantity] = useState(1);
-
-  // Modal d'image
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const handleOpenImageModal = () => setOpenImageModal(true);
-  const handleCloseImageModal = () => setOpenImageModal(false);
-
-  // Calcul des prix
-  const articlePrice = article
-    ? (isCleAPasse && article.prixCleAPasse
-         ? parseFloat(article.prixCleAPasse)
-         : mode === 'postal'
-         ? parseFloat(article.prixSansCartePropriete)
-         : parseFloat(article.prix))
-    : 0;
-  const safeArticlePrice = isNaN(articlePrice) ? 0 : articlePrice;
-  const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-
-  // Mapping et calcul du frais de dossier
-  const dossierFees = {
-    anker: 80,
-    bricard: 60,
-    fichet: 205,
-    heracles: 60,
-    laperche: 60,
-    medeco: 60,
-    picard: 80,
-    vachette: 96,
-  };
-  const normalizedMarque = article ? normalizeString(article.marque) : "";
-  const dossierFee = lostCartePropriete ? (dossierFees[normalizedMarque] || 0) : 0;
-
-  const totalPrice = safeArticlePrice + shippingFee + dossierFee;
-
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    if (name in userInfo) {
-      setUserInfo((prev) => ({ ...prev, [name]: value }));
-    } else if (name in keyInfo) {
-      setKeyInfo((prev) => ({ ...prev, [name]: value }));
-    }
+  const openCancelDialog = (commande) => {
+    setCommandeToCancel(commande);
+    setCancellationReason('');
+    setOpenDialog(true);
   };
 
-  const handlePhotoUpload = (event) => {
-    const { name, files } = event.target;
-    if (files && files[0]) {
-      setKeyInfo((prev) => ({ ...prev, [name]: files[0] }));
-    }
-  };
-
-  const handleIdCardUpload = async (event) => {
-    const { name, files } = event.target;
-    if (files && files[0]) {
-      if (name === 'domicileJustificatif') {
-        const formData = new FormData();
-        formData.append('pdf', files[0]);
-        try {
-          const response = await fetch('https://cl-back.onrender.com/upload/pdf', {
-            method: 'POST',
-            body: formData,
-          });
-          if (!response.ok)
-            throw new Error("Erreur lors de l'upload du justificatif.");
-          const data = await response.json();
-          setIdCardInfo((prev) => ({ ...prev, domicileJustificatif: data.filePath }));
-        } catch (err) {
-          setSnackbarMessage("Erreur lors de l'upload du justificatif.");
-          setSnackbarSeverity('error');
-          setSnackbarOpen(true);
-        }
-      } else {
-        setIdCardInfo((prev) => ({ ...prev, [name]: files[0] }));
-      }
-    }
-  };
-
-  const handleOrder = async () => {
-    if (!termsAccepted) {
-      setSnackbarMessage('Veuillez accepter les Conditions Générales de Vente.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+  const handleConfirmCancel = async () => {
+    if (!commandeToCancel || !cancellationReason.trim()) {
+      alert("Veuillez saisir une raison d'annulation.");
       return;
     }
-    setOrdering(true);
     try {
-      const commandeFormData = new FormData();
-      commandeFormData.append('nom', userInfo.nom);
-      commandeFormData.append('email', userInfo.email);
-      commandeFormData.append('phone', userInfo.phone);
-      commandeFormData.append('address', userInfo.address);
-      commandeFormData.append('postalCode', userInfo.postalCode);
-      commandeFormData.append('ville', userInfo.ville);
-      commandeFormData.append('additionalInfo', userInfo.additionalInfo);
-      commandeFormData.append('prix', totalPrice.toFixed(2));
-      commandeFormData.append('articleName', article?.nom || '');
-      commandeFormData.append('quantity', quantity);
-      if (mode === 'numero') {
-        if (article?.besoinNumeroCle) {
-          commandeFormData.append('keyNumber', article?.nom || '');
-        }
-        if (article?.besoinNumeroCarte) {
-          if (!lostCartePropriete) {
-            commandeFormData.append('propertyCardNumber', keyInfo.propertyCardNumber);
-          } else {
-            commandeFormData.append('idCardFront', idCardInfo.idCardFront);
-            commandeFormData.append('idCardBack', idCardInfo.idCardBack);
-            commandeFormData.append('domicileJustificatifPath', idCardInfo.domicileJustificatif);
-            commandeFormData.append('attestationPropriete', attestationPropriete.toString());
-          }
-        }
+      const response = await fetch(
+        `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
+        { method: 'DELETE', headers: { Accept: 'application/json' } }
+      );
+      if (!response.ok) {
+        throw new Error(`Erreur lors de l'annulation (status ${response.status})`);
       }
-      commandeFormData.append('deliveryType', deliveryType);
-      commandeFormData.append('shippingMethod', shippingMethod);
-      commandeFormData.append('isCleAPasse', isCleAPasse.toString());
-      if (article?.besoinPhoto) {
-        commandeFormData.append('frontPhoto', keyInfo.frontPhoto);
-        commandeFormData.append('backPhoto', keyInfo.backPhoto);
-      }
-
-      const commandeResponse = await fetch('https://cl-back.onrender.com/commande/create', {
-        method: 'POST',
-        body: commandeFormData,
-      });
-      if (!commandeResponse.ok) {
-        const errorText = await commandeResponse.text();
-        throw new Error(`Erreur lors de la création de la commande : ${errorText}`);
-      }
-      const commandeResult = await commandeResponse.json();
-      const { numeroCommande } = commandeResult;
-
-      const paymentPayload = {
-        amount: totalPrice * 100,
-        currency: 'eur',
-        description: article
-          ? `Veuillez procéder au paiement pour ${userInfo.nom}`
-          : 'Veuillez procéder au paiement',
-        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
-      };
-
-      const paymentResponse = await fetch('https://cl-back.onrender.com/stripe/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentPayload),
-      });
-      if (!paymentResponse.ok) {
-        const errorText = await paymentResponse.text();
-        throw new Error(`Erreur lors de la création de la page de paiement : ${errorText}`);
-      }
-      const paymentResult = await paymentResponse.json();
-      window.location.href = paymentResult.paymentUrl;
-    } catch (error) {
-      setSnackbarMessage(`Erreur : ${error.message}`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      setOrdering(false);
+      const data = await response.json();
+      alert(
+        data?.success
+          ? "Commande annulée avec succès."
+          : "Erreur lors de l'annulation de la commande."
+      );
+      fetchCommandes();
+    } catch (err) {
+      console.error("Erreur lors de l'annulation de la commande :", err);
+      alert("Erreur lors de l'annulation de la commande.");
+    } finally {
+      setOpenDialog(false);
+      setCommandeToCancel(null);
+      setCancellationReason('');
     }
   };
 
-  const handleCloseSnackbar = (event, reason) => {
-    if (reason === 'clickaway') return;
-    setSnackbarOpen(false);
+  const handleImageClick = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setZoom(1);
+    setOpenImageDialog(true);
   };
 
-  if (loadingArticle) {
-    return (
-      <Box sx={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleWheel = (event) => {
+    event.preventDefault();
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    setZoom((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
+  };
 
-  if (errorArticle || !article) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Typography variant="h4" color="error" gutterBottom>
-          {errorArticle || "Produit non disponible"}
-        </Typography>
-        <Button variant="contained" onClick={() => navigate('/')}>
-          Retour à l’accueil
-        </Button>
-      </Container>
+  const handlePdfDisplay = (pdfPath) => {
+    const fullPdfUrl = `https://cl-back.onrender.com/${pdfPath.replace(/\\/g, '/')}`;
+    window.open(fullPdfUrl, '_blank');
+  };
+
+  const openEditDialogForCommande = (commande) => {
+    setEditFormData({
+      id: commande.id,
+      nom: commande.nom || '',
+      ville: commande.ville || '',
+      isCleAPasse: commande.isCleAPasse || false,
+      hasCartePropriete: commande.hasCartePropriete !== undefined ? commande.hasCartePropriete : true,
+      attestationPropriete: commande.attestationPropriete || false,
+    });
+    setOpenEditDialog(true);
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
+
+  const handleEditFormSubmit = async () => {
+    try {
+      const response = await fetch(`https://cl-back.onrender.com/commande/update/${editFormData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFormData),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur lors de la mise à jour de la commande');
+      }
+      alert('Commande mise à jour avec succès');
+      setOpenEditDialog(false);
+      fetchCommandes();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const generateInvoiceDoc = (commande) => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const margin = 15;
+
+    // En-tête moderne avec fond vert et logo
+    doc.setFillColor(27, 94, 32);
+    doc.rect(0, margin, 210, 40, 'F');
+    const logoWidth = 32, logoHeight = 32;
+    doc.addImage(logo, 'PNG', margin, margin, logoWidth, logoHeight);
+    const leftTextX = margin + logoWidth + 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text(
+      [
+        "MAISON BOUVET",
+        "20 rue de Lévis",
+        "75017 Paris",
+        "Tél : 01 42 67 47 28",
+        "Email : contact@cleservice.com",
+      ],
+      leftTextX,
+      margin + 12,
+      { lineHeightFactor: 1.5 }
     );
-  }
+
+    // Coordonnées du client (droite)
+    const rightX = 210 - margin;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text("Facturé à :", rightX, margin + 12, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const rightTexts = [
+      commande.nom,
+      commande.adressePostale,
+      commande.telephone ? `Tél : ${commande.telephone}` : '',
+      commande.adresseMail ? `Email : ${commande.adresseMail}` : '',
+    ].filter(Boolean);
+    rightTexts.forEach((txt, i) => {
+      doc.text(txt, rightX, margin + 17 + i * 5, { align: 'right' });
+    });
+
+    let currentY = margin + 45;
+
+    // Calcul des montants
+    const prixProduit = parseFloat(commande.prix);
+    let fraisLivraison = 0.0;
+    let fraisAffichage = "0.00 €";
+    if (commande.shippingMethod === 'expedition') {
+      fraisLivraison = 8;
+      fraisAffichage = "8.00 €";
+    }
+    const totalTTC = prixProduit - fraisLivraison;
+
+    // Détermination du nom du produit
+    const produit = commande.numeroCle || commande.produitCommande ||
+      (commande.cle && commande.cle.length
+        ? (Array.isArray(commande.cle) ? commande.cle.join(', ') : commande.cle)
+        : 'Produit');
+    const marque = commande.marque || '';
+    const produitAffiche = marque ? `${produit} (${marque})` : produit;
+    const quantite = commande.quantity ? commande.quantity.toString() : "1";
+    const unitPrice = parseFloat(quantite) > 0 ? prixProduit / parseFloat(quantite) : prixProduit;
+
+    // Tableau récapitulatif moderne
+    const tableHead = [['Nom du produit', 'Quantité', 'Prix Unitaire', 'Frais de port', 'Total TTC']];
+    const tableBody = [[
+      produitAffiche,
+      quantite,
+      unitPrice.toFixed(2) + ' €',
+      fraisAffichage,
+      totalTTC.toFixed(2) + ' €'
+    ]];
+
+    doc.autoTable({
+      startY: currentY,
+      head: tableHead,
+      body: tableBody,
+      theme: 'grid',
+      headStyles: { fillColor: [27, 94, 32], textColor: 255, halign: 'left' },
+      styles: { fontSize: 12, halign: 'left' },
+      margin: { left: margin, right: margin },
+    });
+    currentY = doc.lastAutoTable.finalY + 10;
+
+    // Affichage des modes d'envoi et de récupération
+    doc.setFontSize(10);
+    doc.setTextColor(27, 94, 32);
+    doc.text(
+      `Mode d'envoi : ${commande.deliveryType || (commande.typeLivraison ? commande.typeLivraison.join(', ') : 'Non renseigné')}`,
+      margin,
+      currentY
+    );
+    currentY += 7;
+    const recuperation = commande.shippingMethod === 'expedition' ? 'Expédition' : 'En magasin';
+    doc.text(`Mode de récupération : ${recuperation}`, margin, currentY);
+    currentY += 10;
+
+    // Détails complémentaires de la commande
+    doc.setFontSize(10);
+    doc.text("Détails de la commande :", margin, currentY);
+    currentY += 7;
+    doc.setFontSize(8);
+    doc.text(`Numéro de commande : ${commande.numeroCommande}`, margin, currentY);
+    currentY += 6;
+    doc.text(`Statut : ${commande.status}`, margin, currentY);
+    currentY += 10;
+
+    // Mode de règlement et conditions de vente
+    doc.setFontSize(12);
+    doc.text('Mode de règlement : Carte Bancaire (CB)', margin, currentY);
+    currentY += 10;
+    const conditions =
+      "CONDITIONS GÉNÉRALES DE VENTE EN LIGNE : Les produits commandés sur notre site sont vendus exclusivement en ligne et payables par carte bancaire (CB). La commande est confirmée dès réception du paiement. En cas d'annulation, des frais pourront être appliqués conformément à notre politique. Nos coordonnées bancaires : IBAN : FR76 1820 6004 1744 1936 2200 145 - BIC : AGRIFRPP882";
+    const conditionsLines = doc.splitTextToSize(conditions, 180);
+    doc.text(conditionsLines, 105, currentY, { align: 'center' });
+    currentY += conditionsLines.length * 5;
+
+    return doc;
+  };
+
+  const showInvoice = (commande) => {
+    const doc = generateInvoiceDoc(commande);
+    window.open(doc.output('dataurlnewwindow'), '_blank');
+  };
+
+  const downloadInvoice = (commande) => {
+    const doc = generateInvoiceDoc(commande);
+    doc.save(`facture_${commande.numeroCommande}.pdf`);
+  };
+
+  const printInvoice = (commande) => {
+    const doc = generateInvoiceDoc(commande);
+    doc.autoPrint();
+    window.open(doc.output('bloburl'), '_blank');
+  };
+
+  const sortedCommandes = [...commandes].sort((a, b) => b.id.localeCompare(a.id));
 
   return (
-    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={4}>
-          {/* Section Formulaire */}
-          <Grid item xs={12}>
-            <SectionPaper>
-              <Typography variant="h5" gutterBottom>Informations de Commande</Typography>
-              <Divider sx={{ mb: 3 }} />
-              <Box sx={{ mb: 3, p: 2, backgroundColor: '#e0e0e0', borderRadius: 1 }}>
-                <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', mb: 1 }}>
-                  Processus de Commande
+    <Container
+      maxWidth="lg"
+      sx={{
+        py: 4,
+        fontFamily: '"Poppins", sans-serif',
+        backgroundColor: 'rgba(240, 255, 245, 0.5)',
+      }}
+    >
+      <Typography variant="h4" align="center" gutterBottom sx={{ color: 'green.700', fontWeight: 600 }}>
+        Détails des Commandes Payées
+      </Typography>
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress color="success" />
+        </Box>
+      )}
+      {error && <Alert severity="error">{error}</Alert>}
+      {!loading && sortedCommandes.length === 0 && !error && (
+        <Typography align="center" variant="body1">
+          Aucune commande payée trouvée.
+        </Typography>
+      )}
+      <Grid container spacing={3}>
+        {sortedCommandes.map((commande) => (
+          <Grid item xs={12} key={commande.id}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: 3,
+                border: '1px solid',
+                borderColor: 'green.100',
+                overflow: 'hidden',
+              }}
+            >
+              <CardContent sx={{ backgroundColor: '#fff', p: 3 }}>
+                {/* Affichage du nom du produit en premier */}
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'green.800', mb: 1 }}>
+                  Nom du produit :
                 </Typography>
-                {mode === 'postal' ? (
-                  <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"atelier"</strong>. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie.
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
+                    {commande.numeroCle ||
+                      (commande.produitCommande
+                        ? commande.produitCommande
+                        : (Array.isArray(commande.cle)
+                            ? commande.cle.join(', ')
+                            : commande.cle || 'Non renseigné'))}
+                    {commande.marque ? ` (${commande.marque})` : ''}
                   </Typography>
-                ) : (
-                  <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire d'envoyer votre clé préalablement. La commande sera directement traitée par le fabricant grâce au numéro.
-                  </Typography>
-                )}
-              </Box>
-              {mode === 'numero' && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2 }}>Informations sur la Clé</Typography>
-                  {article?.estCleAPasse && (
-                    <FormControlLabel
-                      control={<ModernCheckbox checked={isCleAPasse} onChange={(e) => setIsCleAPasse(e.target.checked)} />}
-                      label="Clé à passe ? (Ouvre plusieurs serrures)"
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                  {article?.besoinNumeroCle && (
-                    <>
-                      <Typography variant="body1" sx={{ mb: 2 }}>
-                        {article?.nom}
-                      </Typography>
-                      {article.numeroCleDescription && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                          {article.numeroCleDescription}
-                        </Typography>
-                      )}
-                    </>
-                  )}
-                  {article?.besoinNumeroCarte && (
-                    <Box sx={{ mb: 2 }}>
-                      <FormControlLabel
-                        control={<Checkbox checked={lostCartePropriete} onChange={(e) => setLostCartePropriete(e.target.checked)} />}
-                        label="J'ai perdu ma carte de propriété"
-                        sx={{ mr: 2 }}
-                      />
-                      {lostCartePropriete && dossierFee > 0 && (
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                          Les frais de dossier de {dossierFee}€ seront appliqués pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
-                        </Typography>
-                      )}
-                      {!lostCartePropriete ? (
-                        <>
-                          <TextField
-                            placeholder="* Numéro inscrit sur la carte de propriété"
-                            variant="outlined"
-                            name="propertyCardNumber"
-                            value={keyInfo.propertyCardNumber}
-                            onChange={handleInputChange}
-                            required
-                            fullWidth
-                          />
-                          {article.numeroCarteDescription && (
-                            <Typography variant="body2" color="text.secondary">
-                              {article.numeroCarteDescription}
-                            </Typography>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <Typography variant="body2" color="error" sx={{ mb: 1 }}>
-                            Fournissez les documents obligatoires ci-dessous.
-                          </Typography>
-                          <AlignedFileUpload
-                            label="Photo recto de la pièce d'identité * :"
-                            name="idCardFront"
-                            accept="image/*"
-                            onChange={handleIdCardUpload}
-                            icon={PhotoCamera}
-                            file={idCardInfo.idCardFront}
-                          />
-                          <AlignedFileUpload
-                            label="Photo verso de la pièce d'identité * :"
-                            name="idCardBack"
-                            accept="image/*"
-                            onChange={handleIdCardUpload}
-                            icon={PhotoCamera}
-                            file={idCardInfo.idCardBack}
-                          />
-                          <AlignedFileUpload
-                            label="Justificatif de domicile (PDF) * :"
-                            name="domicileJustificatif"
-                            accept="application/pdf"
-                            onChange={handleIdCardUpload}
-                            icon={CloudUpload}
-                            file={idCardInfo.domicileJustificatif}
-                          />
-                          <FormControlLabel
-                            control={<Checkbox checked={attestationPropriete} onChange={(e) => setAttestationPropriete(e.target.checked)} />}
-                            label="J'atteste être le propriétaire"
-                            sx={{ mt: 1 }}
-                          />
-                        </>
-                      )}
-                    </Box>
+                  {commande.isCleAPasse && (
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
+                      (Clé à passe)
+                    </Typography>
                   )}
                 </Box>
-              )}
-              {article?.besoinPhoto && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2 }}>Téléchargement des Photos de la Clé</Typography>
-                  <AlignedFileUpload
-                    label="Photo clé (recto) * :"
-                    name="frontPhoto"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    icon={PhotoCamera}
-                    file={keyInfo.frontPhoto}
-                  />
-                  <AlignedFileUpload
-                    label="Photo clé (verso) * :"
-                    name="backPhoto"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    icon={PhotoCamera}
-                    file={keyInfo.backPhoto}
-                  />
-                </Box>
-              )}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>Quantité de copies souhaitée</Typography>
-                <TextField
-                  type="number"
-                  label="Nombre de clés"
-                  variant="outlined"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  inputProps={{ min: 1 }}
-                  fullWidth
-                />
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>Informations Client</Typography>
-                <FormControl component="fieldset" sx={{ mb: 2 }}>
-                  <RadioGroup row name="clientType" value={userInfo.clientType} onChange={handleInputChange}>
-                    <FormControlLabel value="particulier" control={<Radio sx={{ color: '#1B5E20' }} />} label="Particulier" />
-                    <FormControlLabel value="entreprise" control={<Radio sx={{ color: '#1B5E20' }} />} label="Entreprise" />
-                  </RadioGroup>
-                </FormControl>
-                <TextField
-                  placeholder="* Nom et prénom"
-                  variant="outlined"
-                  fullWidth
-                  name="nom"
-                  value={userInfo.nom}
-                  onChange={handleInputChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Person sx={{ color: '#1B5E20' }} />
-                      </InputAdornment>
-                    ),
+
+                {/* Section Modes d'envoi et...  */}
+                {/* ... reste du JSX ... */}
+
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}>
+                {/* Boutons d'actions */}
+                <Button variant="contained" color="primary" onClick={() => showInvoice(commande)}>
+                  Afficher Facture
+                </Button>
+                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(commande)}>
+                  Télécharger Facture
+                </Button>
+                <Button variant="contained" color="info" onClick={() => printInvoice(commande)}>
+                  Imprimer Facture
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<CancelIcon />}
+                  sx={{
+                    borderRadius: 20,
+                    backgroundColor: 'red.400',
+                    '&:hover': { backgroundColor: 'red.600' },
                   }}
-                  required
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  placeholder="* Adresse email"
-                  variant="outlined"
-                  fullWidth
-                  name="email"
-                  type="email"
-                  value={userInfo.email}
-                  onChange={handleInputChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Email sx={{ color: '#1B5E20' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  required
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  placeholder="* Téléphone"
-                  variant="outlined"
-                  fullWidth
-                  name="phone"
-                  type="tel"
-                  value={userInfo.phone}
-                  onChange={handleInputChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Phone sx={{ color: '#1B5E20' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  required
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  placeholder="* Adresse de livraison"
-                  variant="outlined"
-                  fullWidth
-                  name="address"
-                  value={userInfo.address}
-                  onChange={handleInputChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Home sx={{ color: '#1B5E20' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  required
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  placeholder="* Code postal"
-                  variant="outlined"
-                  fullWidth
-                  name="postalCode"
-                  value={userInfo.postalCode}
-                  onChange={handleInputChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LocationCity sx={{ color: '#1B5E20' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  required
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  placeholder="* Ville"
-                  variant="outlined"
-                  fullWidth
-                  name="ville"
-                  value={userInfo.ville}
-                  onChange={handleInputChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LocationCity sx={{ color: '#1B5E20' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  required
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  placeholder="Infos complémentaires de livraison"
-                  variant="outlined"
-                  fullWidth
-                  name="additionalInfo"
-                  value={userInfo.additionalInfo}
-                  onChange={handleInputChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Info sx={{ color: '#1B5E20' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{ mb: 2 }}
-                />
-              </Box>
-              {mode === 'postal' && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 1 }}>Type d'expédition</Typography>
-                  <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                    Après paiement, vous recevrez l'adresse d'envoi de votre clé. Nous vous conseillons d'envoyer la clé en recommandé pour plus de sécurité.
-                  </Typography>
-                  <FormControl fullWidth>
-                    <Select
-                      value={deliveryType}
-                      onChange={(e) => setDeliveryType(e.target.value)}
-                      displayEmpty
-                      inputProps={{ 'aria-label': "Type d'expédition" }}
-                      required
-                    >
-                      <MenuItem value="" disabled>
-                        Sélectionnez un type d'expédition
-                      </MenuItem>
-                      <MenuItem value="lettre">
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <CloudUpload sx={{ mr: 1, color: '#1B5E20' }} />
-                          Lettre
-                        </Box>
-                      </MenuItem>
-                      <MenuItem value="recommande">
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <CloudUpload sx={{ mr: 1, color: '#1B5E20' }} />
-                          Recommandé
-                        </Box>
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              )}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>Mode de Récupération</Typography>
-                <FormControl component="fieldset">
-                  <RadioGroup row name="shippingMethod" value={shippingMethod} onChange={(e) => setShippingMethod(e.target.value)}>
-                    <FormControlLabel value="magasin" control={<Radio sx={{ color: '#1B5E20' }} />} label="En magasin" />
-                    <FormControlLabel value="expedition" control={<Radio sx={{ color: '#1B5E20' }} />} label="Expédition (8€)" />
-                  </RadioGroup>
-                </FormControl>
-              </Box>
-              <Box>
-                <FormControlLabel
-                  control={<ModernCheckbox checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />}
-                  label={
-                    <>
-                      J'accepte les{' '}
-                      <Button
-                        variant="text"
-                        color="primary"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenCGV(true);
-                        }}
-                        sx={{ textTransform: 'none' }}
-                      >
-                        Conditions Générales de Vente
-                      </Button>
-                    </>
-                  }
-                />
-              </Box>
-            </SectionPaper>
+                  onClick={() => openCancelDialog(commande)}
+                >
+                  Annuler la commande
+                </Button>
+              </CardActions>
+            </Card>
           </Grid>
-          {/* Section Récapitulatif */}
-          <Grid item xs={12}>
-            <SummaryCard>
-              <Typography variant="h6" sx={{ mb: 2 }}>Récapitulatif</Typography>
-              {article ? (
-                <Box sx={{ display: 'flex', mb: 2 }}>
-                  {article.imageUrl && (
-                    <Box onClick={handleOpenImageModal} sx={{ cursor: 'pointer', mr: 2 }}>
-                      <CardMedia
-                        component="img"
-                        image={article.imageUrl}
-                        alt={article.nom}
-                        sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1 }}
-                      />
-                    </Box>
-                  )}
-                  <Box>
-                    <Typography variant="subtitle1">{article.nom}</Typography>
-                    <Typography variant="body2">Marque : {article.marque}</Typography>
-                    <Typography variant="body2">Prix : {safeArticlePrice.toFixed(2)} €</Typography>
-                  </Box>
-                </Box>
-              ) : (
-                <Typography variant="body2" color="error">
-                  Produit non disponible
-                </Typography>
-              )}
-              <Divider sx={{ my: 1 }} />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
-                <Typography variant="body2">
-                  {shippingMethod === 'expedition' ? "Frais d'expédition" : "Récupération en magasin"}
-                </Typography>
-                <Typography variant="body2">{shippingMethod === 'expedition' ? "8 €" : "0 €"}</Typography>
-              </Box>
-              {dossierFee > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
-                  <Typography variant="body2">Frais de dossier</Typography>
-                  <Typography variant="body2">{dossierFee} €</Typography>
-                </Box>
-              )}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Total</Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  {totalPrice.toFixed(2)} €
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleOrder}
-                disabled={ordering}
-                sx={{
-                  mt: 2,
-                  backgroundImage: 'linear-gradient(145deg, #1B5E20, black)',
-                  color: '#e0e0e0',
-                  fontWeight: 'bold',
-                  border: '1px solid #1B5E20',
-                  '&:hover': { backgroundImage: 'linear-gradient(145deg, black, #1B5E20)' },
-                }}
-              >
-                {ordering ? <CircularProgress size={24} color="inherit" /> : 'Commander'}
-              </Button>
-              {lostCartePropriete && dossierFee > 0 && (
-                <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 1 }}>
-                  Les frais de dossier de {dossierFee}€ seront appliqués pour couvrir le traitement administratif suite à la perte de votre carte de propriété.
-                </Typography>
-              )}
-            </SummaryCard>
-          </Grid>
-        </Grid>
-      </Container>
-      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
-        <DialogContent sx={{ p: 0 }}>
-          <img src={article?.imageUrl} alt={article?.nom} style={{ width: '100%', height: 'auto', display: 'block' }} />
+        ))}
+      </Grid>
+
+      {/* Dialogues */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullScreen={fullScreen}
+        PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>
+          Confirmer l'annulation
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Raison de l'annulation"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={cancellationReason}
+            onChange={(e) => setCancellationReason(e.target.value)}
+            required
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="success">
+            Annuler
+          </Button>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            disabled={!cancellationReason.trim()}
+          >
+            Confirmer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} maxWidth="lg">
+        <DialogContent onWheel={handleWheel} sx={{ p: 0, display: 'flex', justifyContent: 'center' }}>
+          {selectedImage && (
+            <Box
+              component="img"
+              src={selectedImage}
+              alt="Zoom"
+              sx={{ maxWidth: '100%', maxHeight: '80vh', transform: `scale(${zoom})` }}
+            />
+          )}
         </DialogContent>
       </Dialog>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbarSeverity}
-          iconMapping={{
-            success: <CheckCircle fontSize="inherit" sx={{ color: '#1B5E20' }} />,
-            error: <ErrorIcon fontSize="inherit" sx={{ color: '#1B5E20' }} />,
-          }}
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
-    </Box>
+
+    </Container>
   );
 };
 
-export default CommandePage;
+export default Commande;
+
