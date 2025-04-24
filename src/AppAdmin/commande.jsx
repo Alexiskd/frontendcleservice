@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
   Container,
@@ -73,6 +73,12 @@ const Commande = () => {
     return () => socket.off('commandeUpdate', fetchCommandes);
   }, []);
 
+  const openCancel = cmd => {
+    setCommandeToCancel(cmd);
+    setCancelReason('');
+    setOpenCancelDialog(true);
+  };
+
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Raison obligatoire.');
@@ -84,19 +90,14 @@ const Commande = () => {
         { method: 'DELETE' }
       );
       const { success } = await res.json();
-      alert(success ? 'Annulée' : 'Échec');
+      alert(success ? 'Commande annulée.' : 'Échec de l’annulation.');
       fetchCommandes();
-    } catch {
+    } catch (e) {
+      console.error(e);
       alert('Erreur réseau');
     } finally {
       setOpenCancelDialog(false);
     }
-  };
-
-  const openCancel = cmd => {
-    setCommandeToCancel(cmd);
-    setCancelReason('');
-    setOpenCancelDialog(true);
   };
 
   const openImage = img => {
@@ -113,6 +114,7 @@ const Commande = () => {
   const generatePdf = cmd => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
+    // Header
     doc.setFillColor(27,94,32);
     doc.rect(0,m,210,40,'F');
     doc.addImage(logo,'PNG',m,m,32,32);
@@ -120,27 +122,31 @@ const Commande = () => {
     doc.setFontSize(8);
     doc.text(
       ['MAISON BOUVET','20 rue de Lévis','75017 Paris','Tél : 01 42 67 47 28','contact@cleservice.com'],
-      m+37,m+12,{lineHeightFactor:1.5}
+      m+37, m+12, { lineHeightFactor:1.5 }
     );
-    const rightX = 210-m;
+    // Client info
     doc.setTextColor(0);
     doc.setFontSize(8);
-    ['Facturé à :',cmd.nom,cmd.adressePostale,cmd.telephone,cmd.adresseMail]
+    ['Facturé à :', cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
       .filter(Boolean)
-      .forEach((t,i) =>
-        doc.text(i===0?t:t, rightX, m+12 + i*5, {align:'right'})
-      );
-    let y = m+45;
+      .forEach((t,i)=> doc.text(t, 210-m, m+12 + i*5, { align:'right' }));
+    let y = m + 45;
     const prix = parseFloat(cmd.prix);
-    const frais = cmd.shippingMethod==='expedition'?8:0;
-    const total = prix - frais;
+    const port = cmd.shippingMethod==='expedition'?8:0;
+    // Table
     doc.autoTable({
-      startY:y,
-      head:[[ 'Produit','Qté','PU','Port','TTC' ]],
-      body:[[cmd.produitCommande||cmd.cle.join(', '),cmd.quantity,`${(prix/cmd.quantity).toFixed(2)} €`,`${frais.toFixed(2)} €`,`${total.toFixed(2)} €`]],
-      theme:'grid',
-      headStyles:{fillColor:[27,94,32],textColor:255},
-      margin:{left:m,right:m}
+      startY: y,
+      head: [['Produit','Qté','PU','Port','TTC']],
+      body: [[
+        cmd.produitCommande || cmd.cle.join(', '),
+        cmd.quantity,
+        `${(prix/cmd.quantity).toFixed(2)} €`,
+        `${port.toFixed(2)} €`,
+        `${(prix-port).toFixed(2)} €`
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor:[27,94,32], textColor:255 },
+      margin: { left:m, right:m }
     });
     return doc;
   };
@@ -153,36 +159,44 @@ const Commande = () => {
     window.open(doc.output('bloburl'));
   };
 
-  if (loading) return <CircularProgress />;
-  if (error) return <Alert severity="error">{error}</Alert>;
-
   return (
-    <Container sx={{py:4}}>
-      <Typography variant="h4" align="center" gutterBottom>Commandes Payées</Typography>
-      {commandes.length===0 && <Typography>Aucune commande.</Typography>}
+    <Container sx={{ py:4 }}>
+      <Typography variant="h4" align="center" gutterBottom>
+        Commandes Payées
+      </Typography>
+
+      {loading && <CircularProgress />}
+      {error && <Alert severity="error">{error}</Alert>}
+
+      {!loading && !error && commandes.length===0 && (
+        <Typography>Aucune commande trouvée.</Typography>
+      )}
+
       <Grid container spacing={3}>
         {commandes.map(cmd=>(
           <Grid item xs={12} key={cmd.id}>
             <Card>
               <CardContent>
                 <Typography variant="h6">{cmd.produitCommande}</Typography>
-                <Box sx={{display:'flex',gap:2,my:1}}>
-                  {cmd.urlPhotoRecto && 
+                <Box sx={{ display:'flex', gap:2, my:1 }}>
+                  {cmd.urlPhotoRecto && (
                     <Box
                       component="img"
                       src={decodeImage(cmd.urlPhotoRecto)}
-                      sx={{width:80,height:80,cursor:'pointer'}}
+                      sx={{ width:80, height:80, cursor:'pointer' }}
                       onClick={()=>openImage(cmd.urlPhotoRecto)}
-                    />}
-                  {cmd.urlPhotoVerso &&
+                    />
+                  )}
+                  {cmd.urlPhotoVerso && (
                     <Box
                       component="img"
                       src={decodeImage(cmd.urlPhotoVerso)}
-                      sx={{width:80,height:80,cursor:'pointer'}}
+                      sx={{ width:80, height:80, cursor:'pointer' }}
                       onClick={()=>openImage(cmd.urlPhotoVerso)}
-                    />}
+                    />
+                  )}
                 </Box>
-                <Typography>Prix: {parseFloat(cmd.prix).toFixed(2)} €</Typography>
+                <Typography>Prix : {parseFloat(cmd.prix).toFixed(2)} €</Typography>
               </CardContent>
               <CardActions>
                 <Button variant="contained" onClick={()=>viewPdf(cmd)}>Voir Facture</Button>
@@ -198,27 +212,36 @@ const Commande = () => {
       </Grid>
 
       <Dialog open={openCancelDialog} onClose={()=>setOpenCancelDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle>Annulation</DialogTitle>
+        <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
           <TextField
-            fullWidth
+            autoFocus
             label="Raison"
+            fullWidth
             value={cancelReason}
             onChange={e=>setCancelReason(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={()=>setOpenCancelDialog(false)}>Fermer</Button>
-          <Button onClick={handleCancel} variant="contained" color="error">Confirmer</Button>
+          <Button variant="contained" color="error" onClick={handleCancel}>
+            Confirmer
+          </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={openImageDialog} onClose={()=>setOpenImageDialog(false)} fullScreen={fullScreen}>
         <DialogActions>
-          <IconButton onClick={()=>setOpenImageDialog(false)}><CloseIcon/></IconButton>
+          <IconButton onClick={()=>setOpenImageDialog(false)}>
+            <CloseIcon/>
+          </IconButton>
         </DialogActions>
-        <DialogContent onWheel={onWheel} sx={{textAlign:'center'}}>
-          <Box component="img" src={selectedImage} sx={{transform:`scale(${zoom})`}} />
+        <DialogContent onWheel={onWheel} sx={{ textAlign:'center' }}>
+          <Box
+            component="img"
+            src={selectedImage}
+            sx={{ transform:`scale(${zoom})`, transition:'transform 0.2s' }}
+          />
         </DialogContent>
       </Dialog>
     </Container>
@@ -226,4 +249,3 @@ const Commande = () => {
 };
 
 export default Commande;
-
