@@ -354,7 +354,8 @@ const Commande = () => {
             fullWidth
             variant="outlined"
             value={cancellationReason}
-            onChange={(e) => setCancellationReason(e.target.value)}            required
+            onChange={(e) => setCancellationReason(e.target.value)}
+            required
           />
         </DialogContent>
         <DialogActions>
