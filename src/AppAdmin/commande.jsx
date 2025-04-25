@@ -28,12 +28,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import logo from './logo.png';
 
-// Socket.IO avec credentials et transports explicites
-const socket = io('https://cl-back.onrender.com', {
-  transports: ['websocket', 'polling'],
-  withCredentials: true,
-  path: '/socket.io',
-});
+const socket = io('https://cl-back.onrender.com');
 
 const Commande = () => {
   const [commandes, setCommandes] = useState([]);
@@ -49,41 +44,24 @@ const Commande = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Transforme une chaîne Base64 ou data URI en URL utilisable
   const decodeImage = (img) =>
-    img
-      ? img.startsWith('data:')
-        ? img
-        : `data:image/jpeg;base64,${img}`
-      : '';
+    img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
+  // Récupère les commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const res = await fetch('https://cl-back.onrender.com/commande/paid', {
+      const response = await fetch('https://cl-back.onrender.com/commande/paid', {
         headers: { Accept: 'application/json' },
-        credentials: 'include',
       });
-      const text = await res.text();
-
-      if (!res.ok) {
-        let msg = `Erreur serveur (status ${res.status})`;
-        try {
-          const errJson = JSON.parse(text);
-          msg = errJson.message || errJson.error || msg;
-        } catch {}
-        throw new Error(msg);
-      }
-
-      const json = JSON.parse(text);
-      if (!Array.isArray(json.data)) {
-        throw new Error('Format de réponse inattendu');
-      }
-      setCommandes(json.data);
+      if (!response.ok) throw new Error(`Erreur (status ${response.status})`);
+      const json = await response.json();
+      setCommandes(Array.isArray(json.data) ? json.data : []);
+      setError(null);
     } catch (err) {
-      console.error('fetchCommandes:', err);
-      setCommandes([]);
-      setError(err.message || 'Erreur lors de la récupération.');
+      console.error(err);
+      setError('Erreur lors du chargement des commandes.');
     } finally {
       setLoading(false);
     }
@@ -92,17 +70,17 @@ const Commande = () => {
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
-    return () => {
-      socket.off('commandeUpdate', fetchCommandes);
-    };
+    return () => socket.off('commandeUpdate');
   }, []);
 
+  // Ouvre le dialog d'annulation
   const openCancelDialog = (commande) => {
     setCommandeToCancel(commande);
     setCancellationReason('');
     setOpenDialog(true);
   };
 
+  // Confirme l'annulation
   const handleConfirmCancel = async () => {
     if (!commandeToCancel || !cancellationReason.trim()) {
       alert("Veuillez saisir une raison d'annulation.");
@@ -111,11 +89,7 @@ const Commande = () => {
     try {
       const resp = await fetch(
         `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
-        {
-          method: 'DELETE',
-          headers: { Accept: 'application/json' },
-          credentials: 'include',
-        }
+        { method: 'DELETE', headers: { Accept: 'application/json' } }
       );
       const data = await resp.json();
       alert(data.success ? 'Commande annulée avec succès.' : 'Erreur lors de l\'annulation.');
@@ -130,6 +104,7 @@ const Commande = () => {
     }
   };
 
+  // Affiche l'image en grand et permet le zoom
   const handleImageClick = (url) => {
     setSelectedImage(url);
     setZoom(1);
@@ -140,13 +115,17 @@ const Commande = () => {
     setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  const generateInvoiceDoc = (c) => {
+  // Génère la facture PDF
+  const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
+
+    // En-tête
     doc.setFillColor(27, 94, 32);
     doc.rect(0, m, 210, 40, 'F');
     doc.addImage(logo, 'PNG', m, m, 32, 32);
 
+    // Texte gauche
     doc.setFontSize(8).setTextColor(255, 255, 255);
     doc.text(
       [
@@ -161,49 +140,74 @@ const Commande = () => {
       { lineHeightFactor: 1.5 }
     );
 
+    // Texte droite
     const rightX = 210 - m;
-    doc.setFont('helvetica', 'bold').setFontSize(10);
-    doc.text('Facturé à :', rightX, m + 12, { align: 'right' });
+    doc
+      .setFont('helvetica', 'bold')
+      .setFontSize(10)
+      .text('Facturé à :', rightX, m + 12, { align: 'right' });
     doc.setFont('helvetica', 'normal').setFontSize(8);
     [
-      c.nom || '',
-      c.adressePostale || '',
-      `Tél : ${c.telephone || ''}`,
-      `Email : ${c.adresseMail || ''}`,
+      'CROHIN AMELIE',
+      '2 bis rue Folyette, 80170 BEAUFORT EN SANTERRE',
+      'Tél : 0613404007',
+      'Email : ameliecrohin@gmail.com',
     ].forEach((t, i) =>
       doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
     );
 
-    const dateCmd = c.createdAt
-      ? new Date(c.createdAt).toLocaleDateString('fr-FR')
+    // Date de commande (createdAt)
+    const dateEnregistrement = commande.createdAt
+      ? new Date(commande.createdAt).toLocaleDateString('fr-FR')
       : 'Non renseignée';
     doc.setFontSize(9).setTextColor(27, 94, 32);
-    doc.text(`Date de commande : ${dateCmd}`, m, m + 45);
+    doc.text(`Date de commande : ${dateEnregistrement}`, m, m + 45);
 
+    // Détails de la commande (exemple fixe)
     let y = m + 55;
     doc.autoTable({
       startY: y,
-      head: [['Article', 'Quantité', 'Prix unitaire', 'Sous-total']],
-      body: (c.cle || []).map((item) => [
-        item,
-        c.quantity || 1,
-        `${c.prix.toFixed(2)} €`,
-        `${(c.prix * (c.quantity || 1)).toFixed(2)} €`,
-      ]),
+      head: [['Article', 'Marque', 'Quantité', 'Sous-total']],
+      body: [['Article', 'Reproduction En Ligne', '1', '156.67 €']],
       theme: 'grid',
       headStyles: { fillColor: [27, 94, 32], textColor: 255 },
-      styles: { fontSize: 10, halign: 'left' },
+      styles: { fontSize: 12, halign: 'left' },
       margin: { left: m, right: m },
     });
     y = doc.lastAutoTable.finalY + 10;
+
+    // Totaux
     doc.setFontSize(12).setTextColor(27, 94, 32);
-    doc.text('Total TTC', rightX - 80, y);
-    doc.text(`${((c.prix * (c.quantity || 1)) * 1.2).toFixed(2)} €`, rightX, y, {
-      align: 'right',
-    });
+    doc.text('Sous-total', rightX - 80, y);
+    doc.text('156.67 €', rightX, y, { align: 'right' });
+    doc.text('Frais de livraison', rightX - 80, (y += 7));
+    doc.text('0.00 €', rightX, y, { align: 'right' });
+    doc
+      .setFont('helvetica', 'bold')
+      .text('Total TTC', rightX - 80, (y += 7));
+    doc.text('188.00 €', rightX, y, { align: 'right' });
+    doc
+      .setFont('helvetica', 'normal')
+      .text('TVA', rightX - 80, (y += 7));
+    doc.text('31.33 €', rightX, y, { align: 'right' });
+
+    // Conditions générales
+    y += 15;
+    const cond =
+      "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne. Vos documents seront reproduits avec soin. En cas de retard de paiement, des pénalités pourront être appliquées.";
+    doc.setFontSize(10).setTextColor(27, 94, 32);
+    doc.text(doc.splitTextToSize(cond, 180), 105, y, { align: 'center' });
+    doc.text(
+      'Bonne journée.',
+      105,
+      y + doc.splitTextToSize(cond, 180).length * 5,
+      { align: 'center' }
+    );
 
     return doc;
   };
+
+  // Actions facture
   const showInvoice = (c) =>
     window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
   const downloadInvoice = (c) =>
@@ -214,8 +218,9 @@ const Commande = () => {
     window.open(d.output('bloburl'), '_blank');
   };
 
+  // Trie par createdAt décroissant
   const sorted = [...commandes].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
 
   return (
@@ -242,16 +247,7 @@ const Commande = () => {
         </Box>
       )}
 
-      {error && (
-        <Box sx={{ my: 2 }}>
-          <Alert severity="error" sx={{ mb: 1 }}>
-            {error}
-          </Alert>
-          <Button variant="outlined" onClick={fetchCommandes}>
-            Réessayer
-          </Button>
-        </Box>
-      )}
+      {error && <Alert severity="error">{error}</Alert>}
 
       {!loading && !error && sorted.length === 0 && (
         <Typography align="center">Aucune commande payée trouvée.</Typography>
@@ -287,22 +283,32 @@ const Commande = () => {
                 >
                   Informations Client :
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: 'green.800' }}>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 600, color: 'green.800' }}
+                >
                   {c.nom}
                 </Typography>
                 <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
                   Numéro de commande : {c.numeroCommande || 'Non renseigné'}
                 </Typography>
                 <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
-                  Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : 'Non renseignée'}
+                  Date de commande :{' '}
+                  {c.createdAt
+                    ? new Date(c.createdAt).toLocaleDateString('fr-FR')
+                    : 'Non renseignée'}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
-                  <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
+                  <Typography>
+                    {c.adressePostale.split(',')[0].trim()}
+                  </Typography>
                 </Box>
               </CardContent>
 
-              <CardActions sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}>
+              <CardActions
+                sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}
+              >
                 <Button variant="contained" onClick={() => showInvoice(c)}>
                   Afficher Facture
                 </Button>
@@ -330,8 +336,16 @@ const Commande = () => {
         ))}
       </Grid>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen} PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}>
-        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>Confirmer l'annulation</DialogTitle>
+      {/* Dialog annulation */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullScreen={fullScreen}
+        PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>
+          Confirmer l'annulation
+        </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -345,20 +359,57 @@ const Commande = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="success">Annuler</Button>
-          <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancellationReason.trim()}>
+          <Button onClick={() => setOpenDialog(false)} color="success">
+            Annuler
+          </Button>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            disabled={!cancellationReason.trim()}
+          >
             Confirmer l'annulation
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} maxWidth="lg" onWheel={handleWheel} PaperProps={{ sx: { p: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' } }}>
+      {/* Dialog zoom image */}
+      <Dialog
+        open={openImageDialog}
+        onClose={() => setOpenImageDialog(false)}
+        fullScreen={fullScreen}
+        maxWidth="lg"
+        onWheel={handleWheel}
+        PaperProps={{
+          sx: {
+            p: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            overflow: 'hidden',
+          },
+        }}
+      >
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
-          <IconButton onClick={() => setOpenImageDialog(false)}><CloseIcon /></IconButton>
+          <IconButton onClick={() => setOpenImageDialog(false)}>
+            <CloseIcon />
+          </IconButton>
         </DialogActions>
         <DialogContent>
           {selectedImage && (
-            <Box component="img" src={decodeImage(selectedImage)} alt="Zoom" sx={{ maxWidth: '100%', maxHeight: '80vh', transform: `scale(${zoom})`, transition: 'transform 0.2s', transformOrigin: 'center', borderRadius: 2 }} />
+            <Box
+              component="img"
+              src={decodeImage(selectedImage)}
+              alt="Zoom"
+              sx={{
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                transform: `scale(${zoom})`,
+                transition: 'transform 0.2s',
+                transformOrigin: 'center',
+                borderRadius: 2,
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>
