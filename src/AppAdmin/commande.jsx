@@ -31,7 +31,6 @@ import logo from './logo.png';
 const socket = io('https://cl-back.onrender.com');
 
 const Commande = () => {
-  // plus de <any[]> ni <string|null>
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -52,7 +51,7 @@ const Commande = () => {
         : `data:image/jpeg;base64,${img}`
       : '';
 
-  // Récupère les commandes payées
+  // Récupération des commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     setError(null);
@@ -60,13 +59,11 @@ const Commande = () => {
       const res = await fetch('https://cl-back.onrender.com/commande/paid', {
         headers: { Accept: 'application/json' },
       });
-
       const text = await res.text();
       if (!res.ok) {
         const msg = text.trim() || `Erreur serveur (status ${res.status})`;
         throw new Error(msg);
       }
-
       const json = JSON.parse(text);
       if (!Array.isArray(json.data)) {
         throw new Error('Format de réponse inattendu');
@@ -89,7 +86,131 @@ const Commande = () => {
     };
   }, []);
 
-  // Handlers pour annulation, zoom, PDF (identiques)
+  // Ouverture du dialog d'annulation
+  const openCancelDialog = (commande) => {
+    setCommandeToCancel(commande);
+    setCancellationReason('');
+    setOpenDialog(true);
+  };
+
+  // Confirmation de l'annulation
+  const handleConfirmCancel = async () => {
+    if (!commandeToCancel || !cancellationReason.trim()) {
+      alert('Veuillez saisir une raison d\'annulation.');
+      return;
+    }
+    try {
+      const resp = await fetch(
+        `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
+        { method: 'DELETE', headers: { Accept: 'application/json' } }
+      );
+      const data = await resp.json();
+      alert(data.success ? 'Commande annulée avec succès.' : 'Erreur lors de l\'annulation.');
+      fetchCommandes();
+    } catch (e) {
+      console.error(e);
+      alert('Erreur lors de l\'annulation.');
+    } finally {
+      setOpenDialog(false);
+      setCommandeToCancel(null);
+      setCancellationReason('');
+    }
+  };
+
+  // Zoom et affichage d'image
+  const handleImageClick = (url) => {
+    setSelectedImage(url);
+    setZoom(1);
+    setOpenImageDialog(true);
+  };
+  const handleWheel = (e) => {
+    e.preventDefault();
+    setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
+  };
+
+  // Génération du PDF de la facture
+  const generateInvoiceDoc = (commande) => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const m = 15;
+    doc.setFillColor(27, 94, 32);
+    doc.rect(0, m, 210, 40, 'F');
+    doc.addImage(logo, 'PNG', m, m, 32, 32);
+
+    // En-têtes
+    doc.setFontSize(8).setTextColor(255, 255, 255);
+    doc.text(
+      [
+        'REPRODUCTION EN LIGNE',
+        'www.votresite-reproduction.com',
+        'Service en ligne de reproductions',
+        'Tél : 01 42 67 47 28',
+        'Email : contact@reproduction.com',
+      ],
+      m + 32 + 5,
+      m + 12,
+      { lineHeightFactor: 1.5 }
+    );
+
+    // Destinataire
+    const rightX = 210 - m;
+    doc.setFont('helvetica', 'bold').setFontSize(10);
+    doc.text('Facturé à :', rightX, m + 12, { align: 'right' });
+    doc.setFont('helvetica', 'normal').setFontSize(8);
+    [
+      commande.nom || '',
+      commande.adressePostale || '',
+      `Tél : ${commande.telephone || ''}`,
+      `Email : ${commande.adresseMail || ''}`,
+    ].forEach((t, i) =>
+      doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
+    );
+
+    // Date de commande
+    const dateEnregistrement = commande.createdAt
+      ? new Date(commande.createdAt).toLocaleDateString('fr-FR')
+      : 'Non renseignée';
+    doc.setFontSize(9).setTextColor(27, 94, 32);
+    doc.text(`Date de commande : ${dateEnregistrement}`, m, m + 45);
+
+    // Exemple de tableau (à adapter selon vos données)
+    let y = m + 55;
+    doc.autoTable({
+      startY: y,
+      head: [['Article', 'Quantité', 'Prix unitaire', 'Sous-total']],
+      body: (commande.cle || []).map((item, idx) => [
+        item,
+        commande.quantity || 1,
+        `${commande.prix.toFixed(2)} €`,
+        `${(commande.prix * (commande.quantity || 1)).toFixed(2)} €`,
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [27, 94, 32], textColor: 255 },
+      styles: { fontSize: 10, halign: 'left' },
+      margin: { left: m, right: m },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+
+    // Totaux (à adapter)
+    doc.setFontSize(12).setTextColor(27, 94, 32);
+    doc.text('Total TTC', rightX - 80, y);
+    doc.text(
+      `${((commande.prix * (commande.quantity || 1)) * 1.2).toFixed(2)} €`,
+      rightX,
+      y,
+      { align: 'right' }
+    );
+
+    return doc;
+  };
+  const showInvoice = (c) =>
+    window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
+  const downloadInvoice = (c) =>
+    generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
+  const printInvoice = (c) => {
+    const d = generateInvoiceDoc(c);
+    d.autoPrint();
+    window.open(d.output('bloburl'), '_blank');
+  };
 
   // Tri décroissant sur createdAt
   const sorted = [...commandes].sort(
@@ -173,7 +294,9 @@ const Commande = () => {
                 </Typography>
                 <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
                   Date de commande :{' '}
-                  {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : 'Non renseignée'}
+                  {c.createdAt
+                    ? new Date(c.createdAt).toLocaleDateString('fr-FR')
+                    : 'Non renseignée'}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
@@ -181,13 +304,113 @@ const Commande = () => {
                 </Box>
               </CardContent>
 
-              {/* Vos CardActions pour PDF et annulation */}
+              <CardActions
+                sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}
+              >
+                <Button variant="contained" onClick={() => showInvoice(c)}>
+                  Afficher Facture
+                </Button>
+                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
+                  Télécharger Facture
+                </Button>
+                <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
+                  Imprimer Facture
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<CancelIcon />}
+                  sx={{
+                    borderRadius: 20,
+                    backgroundColor: 'red.400',
+                    '&:hover': { backgroundColor: 'red.600' },
+                  }}
+                  onClick={() => openCancelDialog(c)}
+                >
+                  Annuler la commande
+                </Button>
+              </CardActions>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      {/* Dialogs Annulation & Zoom Image (inchangés) */}
+      {/* Dialog d'annulation */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullScreen={fullScreen}
+        PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>
+          Confirmer l'annulation
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Raison de l'annulation"
+            fullWidth
+            variant="outlined"
+            value={cancellationReason}
+            onChange={(e) => setCancellationReason(e.target.value)}
+            required
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="success">
+            Annuler
+          </Button>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            disabled={!cancellationReason.trim()}
+          >
+            Confirmer l'annulation
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog zoom image */}
+      <Dialog
+        open={openImageDialog}
+        onClose={() => setOpenImageDialog(false)}
+        fullScreen={fullScreen}
+        maxWidth="lg"
+        onWheel={handleWheel}
+        PaperProps={{
+          sx: {
+            p: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
+          <IconButton onClick={() => setOpenImageDialog(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogActions>
+        <DialogContent>
+          {selectedImage && (
+            <Box
+              component="img"
+              src={decodeImage(selectedImage)}
+              alt="Zoom"
+              sx={{
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                transform: `scale(${zoom})`,
+                transition: 'transform 0.2s',
+                transformOrigin: 'center',
+                borderRadius: 2,
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 };
