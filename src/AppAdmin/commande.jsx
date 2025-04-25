@@ -28,7 +28,12 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import logo from './logo.png';
 
-const socket = io('https://cl-back.onrender.com');
+// Socket.IO : transports et CORS explicites
+const socket = io('https://cl-back.onrender.com', {
+  transports: ['websocket', 'polling'],
+  withCredentials: true,
+  path: '/socket.io',
+});
 
 const Commande = () => {
   const [commandes, setCommandes] = useState([]);
@@ -51,18 +56,17 @@ const Commande = () => {
         : `data:image/jpeg;base64,${img}`
       : '';
 
-  // fetchCommandes améliorée : on parse JSON d’erreur pour n’en garder que .message
   const fetchCommandes = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch('https://cl-back.onrender.com/commande/paid', {
         headers: { Accept: 'application/json' },
+        credentials: 'include',
       });
       const text = await res.text();
 
       if (!res.ok) {
-        // tente de décoder un JSON d’erreur
         let msg = `Erreur serveur (status ${res.status})`;
         try {
           const errJson = JSON.parse(text);
@@ -107,7 +111,11 @@ const Commande = () => {
     try {
       const resp = await fetch(
         `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
-        { method: 'DELETE', headers: { Accept: 'application/json' } }
+        {
+          method: 'DELETE',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        }
       );
       const data = await resp.json();
       alert(data.success ? 'Commande annulée avec succès.' : 'Erreur lors de l\'annulation.');
@@ -196,6 +204,7 @@ const Commande = () => {
 
     return doc;
   };
+
   const showInvoice = (c) =>
     window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
   const downloadInvoice = (c) =>
@@ -303,7 +312,11 @@ const Commande = () => {
                 <Button variant="contained" onClick={() => showInvoice(c)}>
                   Afficher Facture
                 </Button>
-                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => downloadInvoice(c)}
+                >
                   Télécharger Facture
                 </Button>
                 <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
@@ -327,7 +340,6 @@ const Commande = () => {
         ))}
       </Grid>
 
-      {/* Dialog d'annulation */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
@@ -364,7 +376,6 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog zoom image */}
       <Dialog
         open={openImageDialog}
         onClose={() => setOpenImageDialog(false)}
