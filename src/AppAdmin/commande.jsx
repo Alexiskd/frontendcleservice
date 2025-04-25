@@ -51,7 +51,7 @@ const Commande = () => {
         : `data:image/jpeg;base64,${img}`
       : '';
 
-  // Récupération des commandes payées
+  // fetchCommandes améliorée : on parse JSON d’erreur pour n’en garder que .message
   const fetchCommandes = async () => {
     setLoading(true);
     setError(null);
@@ -60,10 +60,17 @@ const Commande = () => {
         headers: { Accept: 'application/json' },
       });
       const text = await res.text();
+
       if (!res.ok) {
-        const msg = text.trim() || `Erreur serveur (status ${res.status})`;
+        // tente de décoder un JSON d’erreur
+        let msg = `Erreur serveur (status ${res.status})`;
+        try {
+          const errJson = JSON.parse(text);
+          msg = errJson.message || errJson.error || msg;
+        } catch {}
         throw new Error(msg);
       }
+
       const json = JSON.parse(text);
       if (!Array.isArray(json.data)) {
         throw new Error('Format de réponse inattendu');
@@ -86,17 +93,15 @@ const Commande = () => {
     };
   }, []);
 
-  // Ouverture du dialog d'annulation
   const openCancelDialog = (commande) => {
     setCommandeToCancel(commande);
     setCancellationReason('');
     setOpenDialog(true);
   };
 
-  // Confirmation de l'annulation
   const handleConfirmCancel = async () => {
     if (!commandeToCancel || !cancellationReason.trim()) {
-      alert('Veuillez saisir une raison d\'annulation.');
+      alert("Veuillez saisir une raison d'annulation.");
       return;
     }
     try {
@@ -117,7 +122,6 @@ const Commande = () => {
     }
   };
 
-  // Zoom et affichage d'image
   const handleImageClick = (url) => {
     setSelectedImage(url);
     setZoom(1);
@@ -128,15 +132,13 @@ const Commande = () => {
     setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  // Génération du PDF de la facture
-  const generateInvoiceDoc = (commande) => {
+  const generateInvoiceDoc = (c) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
     doc.setFillColor(27, 94, 32);
     doc.rect(0, m, 210, 40, 'F');
     doc.addImage(logo, 'PNG', m, m, 32, 32);
 
-    // En-têtes
     doc.setFontSize(8).setTextColor(255, 255, 255);
     doc.text(
       [
@@ -151,37 +153,34 @@ const Commande = () => {
       { lineHeightFactor: 1.5 }
     );
 
-    // Destinataire
     const rightX = 210 - m;
     doc.setFont('helvetica', 'bold').setFontSize(10);
     doc.text('Facturé à :', rightX, m + 12, { align: 'right' });
     doc.setFont('helvetica', 'normal').setFontSize(8);
     [
-      commande.nom || '',
-      commande.adressePostale || '',
-      `Tél : ${commande.telephone || ''}`,
-      `Email : ${commande.adresseMail || ''}`,
+      c.nom || '',
+      c.adressePostale || '',
+      `Tél : ${c.telephone || ''}`,
+      `Email : ${c.adresseMail || ''}`,
     ].forEach((t, i) =>
       doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
     );
 
-    // Date de commande
-    const dateEnregistrement = commande.createdAt
-      ? new Date(commande.createdAt).toLocaleDateString('fr-FR')
+    const dateCmd = c.createdAt
+      ? new Date(c.createdAt).toLocaleDateString('fr-FR')
       : 'Non renseignée';
     doc.setFontSize(9).setTextColor(27, 94, 32);
-    doc.text(`Date de commande : ${dateEnregistrement}`, m, m + 45);
+    doc.text(`Date de commande : ${dateCmd}`, m, m + 45);
 
-    // Exemple de tableau (à adapter selon vos données)
     let y = m + 55;
     doc.autoTable({
       startY: y,
       head: [['Article', 'Quantité', 'Prix unitaire', 'Sous-total']],
-      body: (commande.cle || []).map((item, idx) => [
+      body: (c.cle || []).map((item) => [
         item,
-        commande.quantity || 1,
-        `${commande.prix.toFixed(2)} €`,
-        `${(commande.prix * (commande.quantity || 1)).toFixed(2)} €`,
+        c.quantity || 1,
+        `${c.prix.toFixed(2)} €`,
+        `${(c.prix * (c.quantity || 1)).toFixed(2)} €`,
       ]),
       theme: 'grid',
       headStyles: { fillColor: [27, 94, 32], textColor: 255 },
@@ -189,16 +188,11 @@ const Commande = () => {
       margin: { left: m, right: m },
     });
     y = doc.lastAutoTable.finalY + 10;
-
-    // Totaux (à adapter)
     doc.setFontSize(12).setTextColor(27, 94, 32);
     doc.text('Total TTC', rightX - 80, y);
-    doc.text(
-      `${((commande.prix * (commande.quantity || 1)) * 1.2).toFixed(2)} €`,
-      rightX,
-      y,
-      { align: 'right' }
-    );
+    doc.text(`${((c.prix * (c.quantity || 1)) * 1.2).toFixed(2)} €`, rightX, y, {
+      align: 'right',
+    });
 
     return doc;
   };
@@ -212,7 +206,6 @@ const Commande = () => {
     window.open(d.output('bloburl'), '_blank');
   };
 
-  // Tri décroissant sur createdAt
   const sorted = [...commandes].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
