@@ -44,7 +44,6 @@ const Commande = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Transforme une chaîne Base64 ou data URI en URL utilisable
   const decodeImage = (img) =>
     img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
@@ -110,10 +109,15 @@ const Commande = () => {
     setZoom(1);
     setOpenImageDialog(true);
   };
+
   const handleWheel = (e) => {
     e.preventDefault();
     setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
+
+  // Ouvre un PDF dans un nouvel onglet
+  const handlePdfDisplay = (path) =>
+    window.open(`https://cl-back.onrender.com/${path.replace(/\\/g, '/')}`, '_blank');
 
   // Génère la facture PDF
   const generateInvoiceDoc = (commande) => {
@@ -156,14 +160,14 @@ const Commande = () => {
       doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
     );
 
-    // Date de commande (createdAt)
+    // Date d'enregistrement
     const dateEnregistrement = commande.createdAt
-      ? new Date(commande.createdAt).toLocaleDateString('fr-FR')
+      ? new Date(commande.createdAt).toLocaleDateString()
       : 'Non renseignée';
     doc.setFontSize(9).setTextColor(27, 94, 32);
     doc.text(`Date de commande : ${dateEnregistrement}`, m, m + 45);
 
-    // Détails de la commande (exemple fixe)
+    // Détails de la commande
     let y = m + 55;
     doc.autoTable({
       startY: y,
@@ -218,10 +222,8 @@ const Commande = () => {
     window.open(d.output('bloburl'), '_blank');
   };
 
-  // Trie par createdAt décroissant
-  const sorted = [...commandes].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  );
+  // Tri décroissant
+  const sorted = [...commandes].sort((a, b) => b.id.localeCompare(a.id));
 
   return (
     <Container
@@ -249,8 +251,10 @@ const Commande = () => {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !error && sorted.length === 0 && (
-        <Typography align="center">Aucune commande payée trouvée.</Typography>
+      {!loading && sorted.length === 0 && !error && (  
+        <Typography align="center">
+          Aucune commande payée trouvée.
+        </Typography>
       )}
 
       <Grid container spacing={3}>
@@ -265,16 +269,21 @@ const Commande = () => {
                 overflow: 'hidden',
               }}
             >
-              <CardContent>
+              <CardContent sx={{ backgroundColor: 'white' }}>
                 <Typography
                   variant="subtitle1"
                   sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}
                 >
                   Produit Commandé :
                 </Typography>
-                <Typography mb={2}>
-                  {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
-                </Typography>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
+                >
+                  <Typography>
+                    {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
+                  </Typography>
+                </Box>
+
                 <Divider sx={{ mb: 2 }} />
 
                 <Typography
@@ -283,33 +292,41 @@ const Commande = () => {
                 >
                   Informations Client :
                 </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: 'green.800' }}
-                >
-                  {c.nom}
-                </Typography>
-                <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
-                  Numéro de commande : {c.numeroCommande || 'Non renseigné'}
-                </Typography>
-                <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
-                  Date de commande :{' '}
-                  {c.createdAt
-                    ? new Date(c.createdAt).toLocaleDateString('fr-FR')
-                    : 'Non renseignée'}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
-                  <Typography>
-                    {c.adressePostale.split(',')[0].trim()}
+                <Box sx={{ mb: 2 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 600, color: 'green.800' }}
+                  >
+                    {c.nom}
                   </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}
+                  >
+                    Numéro de commande : {c.numeroCommande || 'Non renseigné'}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}
+                  >
+                    Date de commande :{' '}
+                    {c.createdAt
+                      ? new Date(c.createdAt).toLocaleDateString()
+                      : 'Non renseignée'}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
+                    <Typography>
+                      {c.adressePostale.split(',')[0].trim()}
+                    </Typography>
+                  </Box>
                 </Box>
               </CardContent>
 
               <CardActions
                 sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}
               >
-                <Button variant="contained" onClick={() => showInvoice(c)}>
+                <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
                   Afficher Facture
                 </Button>
                 <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
@@ -321,11 +338,7 @@ const Commande = () => {
                 <Button
                   variant="contained"
                   startIcon={<CancelIcon />}
-                  sx={{
-                    borderRadius: 20,
-                    backgroundColor: 'red.400',
-                    '&:hover': { backgroundColor: 'red.600' },
-                  }}
+                  sx={{ borderRadius: 20, backgroundColor: 'red.400', '&:hover': { backgroundColor: 'red.600' } }}
                   onClick={() => openCancelDialog(c)}
                 >
                   Annuler la commande
@@ -336,7 +349,6 @@ const Commande = () => {
         ))}
       </Grid>
 
-      {/* Dialog annulation */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
@@ -354,7 +366,8 @@ const Commande = () => {
             fullWidth
             variant="outlined"
             value={cancellationReason}
-            onChange={(e) => setCancellationReason(e.target.value)}            required
+            onChange={(e) => setCancellationReason(e.target.value)}
+            required
           />
         </DialogContent>
         <DialogActions>
@@ -372,25 +385,30 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog zoom image */}
       <Dialog
         open={openImageDialog}
-        onClose={() => setOpenImageDialog(false)}
+        onClose={() => {
+          setOpenImageDialog(false);
+          setZoom(1);
+        }}
         fullScreen={fullScreen}
         maxWidth="lg"
+        fullWidth
         onWheel={handleWheel}
-        PaperProps={{
-          sx: {
-            p: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
-          },
+        sx={{
+          p: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          maxHeight: '90vh',
+          overflow: 'hidden',
         }}
       >
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
-          <IconButton onClick={() => setOpenImageDialog(false)}>
+          <IconButton onClick={() => {
+            setOpenImageDialog(false);
+            setZoom(1);
+          }}>
             <CloseIcon />
           </IconButton>
         </DialogActions>
@@ -398,8 +416,8 @@ const Commande = () => {
           {selectedImage && (
             <Box
               component="img"
-              src={decodeImage(selectedImage)}
-              alt="Zoom"
+              src={selectedImage}
+              alt="Enlargi"
               sx={{
                 maxWidth: '100%',
                 maxHeight: '80vh',
