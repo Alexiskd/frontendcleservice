@@ -31,27 +31,28 @@ import logo from './logo.png';
 const socket = io('https://cl-back.onrender.com');
 
 const Commande = () => {
-  const [commandes, setCommandes] = useState<any[]>([]);
+  // plus de <any[]> ni <string|null>
+  const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [commandeToCancel, setCommandeToCancel] = useState<any>(null);
+  const [commandeToCancel, setCommandeToCancel] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [zoom, setZoom] = useState(1);
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const decodeImage = (img: string | undefined) =>
+  const decodeImage = (img) =>
     img
       ? img.startsWith('data:')
         ? img
         : `data:image/jpeg;base64,${img}`
       : '';
 
-  // Nouvelle version de fetchCommandes
+  // Récupère les commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     setError(null);
@@ -60,23 +61,18 @@ const Commande = () => {
         headers: { Accept: 'application/json' },
       });
 
-      // On lit toujours le texte du body
       const text = await res.text();
-
       if (!res.ok) {
-        // Si le serveur a renvoyé un message, on l'affiche, sinon on affiche le code
         const msg = text.trim() || `Erreur serveur (status ${res.status})`;
         throw new Error(msg);
       }
 
-      // Parse JSON
       const json = JSON.parse(text);
       if (!Array.isArray(json.data)) {
         throw new Error('Format de réponse inattendu');
       }
-
       setCommandes(json.data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('fetchCommandes:', err);
       setCommandes([]);
       setError(err.message || 'Erreur réseau');
@@ -93,9 +89,9 @@ const Commande = () => {
     };
   }, []);
 
-  // (Le reste de vos handlers pour annulation, zoom, PDF reste inchangé…)
+  // Handlers pour annulation, zoom, PDF (identiques)
 
-  // On trie par createdAt décroissant
+  // Tri décroissant sur createdAt
   const sorted = [...commandes].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -159,9 +155,7 @@ const Commande = () => {
                   Produit Commandé :
                 </Typography>
                 <Typography mb={2}>
-                  {Array.isArray(c.cle)
-                    ? c.cle.join(', ')
-                    : c.cle || 'Non renseigné'}
+                  {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
@@ -171,10 +165,7 @@ const Commande = () => {
                 >
                   Informations Client :
                 </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: 'green.800' }}
-                >
+                <Typography variant="h5" sx={{ fontWeight: 600, color: 'green.800' }}>
                   {c.nom}
                 </Typography>
                 <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
@@ -182,27 +173,24 @@ const Commande = () => {
                 </Typography>
                 <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
                   Date de commande :{' '}
-                  {c.createdAt
-                    ? new Date(c.createdAt).toLocaleDateString('fr-FR')
-                    : 'Non renseignée'}
+                  {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : 'Non renseignée'}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
-                  <Typography>
-                    {c.adressePostale.split(',')[0].trim()}
-                  </Typography>
+                  <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
                 </Box>
               </CardContent>
 
-              {/* ... vos CardActions pour PDF et Annulation ... */}
+              {/* Vos CardActions pour PDF et annulation */}
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      {/* Dialogs Annulation & Zoom Image inchangés */}
+      {/* Dialogs Annulation & Zoom Image (inchangés) */}
     </Container>
   );
 };
 
 export default Commande;
+
