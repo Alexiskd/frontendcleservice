@@ -33,7 +33,7 @@ const socket = io('https://cl-back.onrender.com');
 const Commande = () => {
   const [commandes, setCommandes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string| null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [commandeToCancel, setCommandeToCancel] = useState<any>(null);
   const [cancellationReason, setCancellationReason] = useState('');
@@ -51,34 +51,35 @@ const Commande = () => {
         : `data:image/jpeg;base64,${img}`
       : '';
 
-  // Récupère les commandes payées
+  // Nouvelle version de fetchCommandes
   const fetchCommandes = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        'https://cl-back.onrender.com/commande/paid',
-        { headers: { Accept: 'application/json' } }
-      );
+      const res = await fetch('https://cl-back.onrender.com/commande/paid', {
+        headers: { Accept: 'application/json' },
+      });
 
-      // si erreur HTTP, on essaie de lire le texte d’erreur du body
+      // On lit toujours le texte du body
+      const text = await res.text();
+
       if (!res.ok) {
-        let errMsg: string;
-        try {
-          errMsg = await res.text();
-          if (!errMsg) throw new Error();
-        } catch {
-          errMsg = `Erreur serveur (status ${res.status})`;
-        }
-        throw new Error(errMsg);
+        // Si le serveur a renvoyé un message, on l'affiche, sinon on affiche le code
+        const msg = text.trim() || `Erreur serveur (status ${res.status})`;
+        throw new Error(msg);
       }
 
-      const json = await res.json();
-      setCommandes(Array.isArray(json.data) ? json.data : []);
+      // Parse JSON
+      const json = JSON.parse(text);
+      if (!Array.isArray(json.data)) {
+        throw new Error('Format de réponse inattendu');
+      }
+
+      setCommandes(json.data);
     } catch (err: any) {
       console.error('fetchCommandes:', err);
       setCommandes([]);
-      setError(err.message || 'Erreur inconnue');
+      setError(err.message || 'Erreur réseau');
     } finally {
       setLoading(false);
     }
@@ -92,9 +93,9 @@ const Commande = () => {
     };
   }, []);
 
-  // ... le reste du composant reste inchangé
+  // (Le reste de vos handlers pour annulation, zoom, PDF reste inchangé…)
 
-  // Trie par createdAt décroissant
+  // On trie par createdAt décroissant
   const sorted = [...commandes].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -123,7 +124,16 @@ const Commande = () => {
         </Box>
       )}
 
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && (
+        <Box sx={{ my: 2 }}>
+          <Alert severity="error" sx={{ mb: 1 }}>
+            {error}
+          </Alert>
+          <Button variant="outlined" onClick={fetchCommandes}>
+            Réessayer
+          </Button>
+        </Box>
+      )}
 
       {!loading && !error && sorted.length === 0 && (
         <Typography align="center">Aucune commande payée trouvée.</Typography>
@@ -132,16 +142,67 @@ const Commande = () => {
       <Grid container spacing={3}>
         {sorted.map((c) => (
           <Grid item xs={12} key={c.id}>
-            {/* ... affichage de chaque commande ... */}
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: 3,
+                border: '1px solid',
+                borderColor: 'green.100',
+                overflow: 'hidden',
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}
+                >
+                  Produit Commandé :
+                </Typography>
+                <Typography mb={2}>
+                  {Array.isArray(c.cle)
+                    ? c.cle.join(', ')
+                    : c.cle || 'Non renseigné'}
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}
+                >
+                  Informations Client :
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 600, color: 'green.800' }}
+                >
+                  {c.nom}
+                </Typography>
+                <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
+                  Numéro de commande : {c.numeroCommande || 'Non renseigné'}
+                </Typography>
+                <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
+                  Date de commande :{' '}
+                  {c.createdAt
+                    ? new Date(c.createdAt).toLocaleDateString('fr-FR')
+                    : 'Non renseignée'}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                  <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
+                  <Typography>
+                    {c.adressePostale.split(',')[0].trim()}
+                  </Typography>
+                </Box>
+              </CardContent>
+
+              {/* ... vos CardActions pour PDF et Annulation ... */}
+            </Card>
           </Grid>
         ))}
       </Grid>
 
-      {/* Dialogs annulation & image (inchangés) */}
+      {/* Dialogs Annulation & Zoom Image inchangés */}
     </Container>
   );
 };
 
 export default Commande;
-
-
