@@ -28,7 +28,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import logo from './logo.png';
 
-// Socket.IO : transports et CORS explicites
+// Socket.IO avec credentials et transports explicites
 const socket = io('https://cl-back.onrender.com', {
   transports: ['websocket', 'polling'],
   withCredentials: true,
@@ -83,7 +83,7 @@ const Commande = () => {
     } catch (err) {
       console.error('fetchCommandes:', err);
       setCommandes([]);
-      setError(err.message || 'Erreur réseau');
+      setError(err.message || 'Erreur lors de la récupération.');
     } finally {
       setLoading(false);
     }
@@ -204,7 +204,6 @@ const Commande = () => {
 
     return doc;
   };
-
   const showInvoice = (c) =>
     window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
   const downloadInvoice = (c) =>
@@ -295,10 +294,7 @@ const Commande = () => {
                   Numéro de commande : {c.numeroCommande || 'Non renseigné'}
                 </Typography>
                 <Typography sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
-                  Date de commande :{' '}
-                  {c.createdAt
-                    ? new Date(c.createdAt).toLocaleDateString('fr-FR')
-                    : 'Non renseignée'}
+                  Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : 'Non renseignée'}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <LocationOnIcon sx={{ color: 'green.500', mr: 1 }} />
@@ -306,17 +302,11 @@ const Commande = () => {
                 </Box>
               </CardContent>
 
-              <CardActions
-                sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}
-              >
+              <CardActions sx={{ justifyContent: 'space-between', backgroundColor: 'green.50', p: 2 }}>
                 <Button variant="contained" onClick={() => showInvoice(c)}>
                   Afficher Facture
                 </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => downloadInvoice(c)}
-                >
+                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
                   Télécharger Facture
                 </Button>
                 <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
@@ -340,15 +330,8 @@ const Commande = () => {
         ))}
       </Grid>
 
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        fullScreen={fullScreen}
-        PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}
-      >
-        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>
-          Confirmer l'annulation
-        </DialogTitle>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen} PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: 'green.50' } }}>
+        <DialogTitle sx={{ fontWeight: 600, color: 'green.800' }}>Confirmer l'annulation</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -362,56 +345,20 @@ const Commande = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="success">
-            Annuler
-          </Button>
-          <Button
-            onClick={handleConfirmCancel}
-            variant="contained"
-            color="error"
-            disabled={!cancellationReason.trim()}
-          >
+          <Button onClick={() => setOpenDialog(false)} color="success">Annuler</Button>
+          <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancellationReason.trim()}>
             Confirmer l'annulation
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={openImageDialog}
-        onClose={() => setOpenImageDialog(false)}
-        fullScreen={fullScreen}
-        maxWidth="lg"
-        onWheel={handleWheel}
-        PaperProps={{
-          sx: {
-            p: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
-          },
-        }}
-      >
+      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} maxWidth="lg" onWheel={handleWheel} PaperProps={{ sx: { p: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' } }}>
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
-          <IconButton onClick={() => setOpenImageDialog(false)}>
-            <CloseIcon />
-          </IconButton>
+          <IconButton onClick={() => setOpenImageDialog(false)}><CloseIcon /></IconButton>
         </DialogActions>
         <DialogContent>
           {selectedImage && (
-            <Box
-              component="img"
-              src={decodeImage(selectedImage)}
-              alt="Zoom"
-              sx={{
-                maxWidth: '100%',
-                maxHeight: '80vh',
-                transform: `scale(${zoom})`,
-                transition: 'transform 0.2s',
-                transformOrigin: 'center',
-                borderRadius: 2,
-              }}
-            />
+            <Box component="img" src={decodeImage(selectedImage)} alt="Zoom" sx={{ maxWidth: '100%', maxHeight: '80vh', transform: `scale(${zoom})`, transition: 'transform 0.2s', transformOrigin: 'center', borderRadius: 2 }} />
           )}
         </DialogContent>
       </Dialog>
