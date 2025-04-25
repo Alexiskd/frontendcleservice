@@ -313,5 +313,3 @@ const Commande = () => {
 };
 
 export default Commande;
-
-export default Commande;
