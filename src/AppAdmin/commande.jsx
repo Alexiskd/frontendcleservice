@@ -35,9 +35,11 @@ export default function Commande() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [toCancel, setToCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
+
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
   const [zoom, setZoom] = useState(1);
@@ -45,11 +47,11 @@ export default function Commande() {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Convertit une chaîne Base64 ou data-uri en URL image
+  // Convertit Base64 ou data URI en URL image
   const decodeImage = img =>
     img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
-  // Récupère les commandes payées depuis le back
+  // Récupère les commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     try {
@@ -72,7 +74,7 @@ export default function Commande() {
     return () => socket.off('commandeUpdate', fetchCommandes);
   }, []);
 
-  // Lance le dialog d'annulation
+  // Ouvre le dialog d'annulation
   const openCancel = cmd => {
     setToCancel(cmd);
     setCancelReason('');
@@ -101,7 +103,7 @@ export default function Commande() {
     }
   };
 
-  // Affiche l'image en grand + zoom
+  // Affiche l'image en grand et permet le zoom
   const openImage = img => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
@@ -119,6 +121,7 @@ export default function Commande() {
     doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
     doc.addImage(logoUrl, 'PNG', m, m, 32, 32);
 
+    // En-tête texte blanc
     doc.setTextColor(255, 255, 255).setFontSize(8);
     doc.text(
       ['MAISON BOUVET', '20 rue de Lévis, 75017 Paris', 'Tél : 01 42 67 47 28', 'contact@cleservice.com'],
@@ -127,12 +130,14 @@ export default function Commande() {
       { lineHeightFactor: 1.5 }
     );
 
+    // Coordonnées client
     doc.setTextColor(0).setFontSize(8);
     const rightX = 210 - m;
     [cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
 
+    // Tableau des produits
     const yStart = m + 45;
     const prix = parseFloat(cmd.prix);
     const port = cmd.shippingMethod === 'expedition' ? 8 : 0;
@@ -263,7 +268,11 @@ export default function Commande() {
           </IconButton>
         </DialogActions>
         <DialogContent sx={{ textAlign: 'center' }}>
-          <Box component="img" src={selectedImage} sx={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }} />
+          <Box
+            component="img"
+            src={selectedImage}
+            sx={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }}
+          />
         </DialogContent>
       </Dialog>
     </Container>
