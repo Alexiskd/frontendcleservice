@@ -368,7 +368,7 @@ const Commande = () => {
             color="error"
             disabled={!cancellationReason.trim()}
           >
-            Confirmer l'annulation
+            Confirmer
           </Button>
         </DialogActions>
       </Dialog>
