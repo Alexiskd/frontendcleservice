@@ -1,4 +1,4 @@
-// src/components/Commande.jsx
+/// src/components/Commande.jsx
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
@@ -286,4 +286,3 @@ const Commande = () => {
 };
 
 export default Commande;
-
