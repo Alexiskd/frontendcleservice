@@ -26,7 +26,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// Placez logo.png dans /public
+// Placez logo.png dans /public pour qu'il soit servi à la racine
 const logoUrl = '/logo.png';
 
 const socket = io('https://cl-back.onrender.com');
@@ -45,16 +45,16 @@ export default function Commande() {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Convertit Base64 ou data URI en URL image
   const decodeImage = img =>
     img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
-  // Récupération des commandes avec affichage du corps de réponse en cas d'erreur
+  // Récupère les commandes payées, loggue le body brut en cas de 500
   const fetchCommandes = async () => {
     setLoading(true);
     try {
       const res = await fetch('https://cl-back.onrender.com/commande/paid');
       if (!res.ok) {
-        // lit le corps brut pour afficher le message d'erreur exact
         const text = await res.text();
         console.error('RAW BACKEND RESPONSE:', text);
         throw new Error(`Status ${res.status}`);
@@ -73,15 +73,19 @@ export default function Commande() {
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
-    return () => void socket.off('commandeUpdate', fetchCommandes);
+    return () => {
+      socket.off('commandeUpdate', fetchCommandes);
+    };
   }, []);
 
+  // Ouvre le dialog d'annulation
   const openCancel = cmd => {
     setToCancel(cmd);
     setCancelReason('');
     setOpenCancelDialog(true);
   };
 
+  // Confirme l'annulation
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Veuillez saisir une raison.');
@@ -95,13 +99,15 @@ export default function Commande() {
       const { success } = await res.json();
       alert(success ? 'Commande annulée.' : 'Échec de l’annulation.');
       fetchCommandes();
-    } catch {
+    } catch (e) {
+      console.error(e);
       alert('Erreur réseau');
     } finally {
       setOpenCancelDialog(false);
     }
   };
 
+  // Ouvre le dialog image pour zoom
   const openImage = img => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
@@ -112,26 +118,40 @@ export default function Commande() {
     setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
+  // Génère le PDF de la facture
   const generatePdf = cmd => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
     doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
     doc.addImage(logoUrl, 'PNG', m, m, 32, 32);
 
+    // En-tête texte blanc
     doc.setTextColor(255, 255, 255).setFontSize(8);
     doc.text(
-      ['MAISON BOUVET', '20 rue de Lévis, 75017 Paris', 'Tél : 01 42 67 47 28', 'contact@cleservice.com'],
+      [
+        'MAISON BOUVET',
+        '20 rue de Lévis, 75017 Paris',
+        'Tél : 01 42 67 47 28',
+        'contact@cleservice.com',
+      ],
       m + 37,
       m + 12,
       { lineHeightFactor: 1.5 }
     );
 
+    // Coordonnées client
     doc.setTextColor(0).setFontSize(8);
     const rightX = 210 - m;
-    [cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
+    [
+      cmd.nom,
+      cmd.adressePostale,
+      `Tél : ${cmd.telephone}`,
+      `Email : ${cmd.adresseMail}`,
+    ]
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
 
+    // Tableau des produits
     const yStart = m + 45;
     const prix = parseFloat(cmd.prix);
     const port = cmd.shippingMethod === 'expedition' ? 8 : 0;
@@ -144,12 +164,12 @@ export default function Commande() {
           cmd.quantity,
           `${(prix / cmd.quantity).toFixed(2)} €`,
           `${port.toFixed(2)} €`,
-          `${prix.toFixed(2)} €`
-        ]
+          `${prix.toFixed(2)} €`,
+        ],
       ],
       theme: 'grid',
       headStyles: { fillColor: [27, 94, 32], textColor: 255 },
-      margin: { left: m, right: m }
+      margin: { left: m, right: m },
     });
 
     return doc;
@@ -196,13 +216,26 @@ export default function Commande() {
                 <Typography>Prix : {parseFloat(cmd.prix).toFixed(2)} €</Typography>
               </CardContent>
               <CardActions>
-                <Button variant="contained" onClick={() => window.open(generatePdf(cmd).output('dataurlnewwindow'))}>
+                <Button
+                  variant="contained"
+                  onClick={() => window.open(generatePdf(cmd).output('dataurlnewwindow'))}
+                >
                   Voir Facture
                 </Button>
-                <Button variant="outlined" onClick={() => generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)}>
+                <Button
+                  variant="outlined"
+                  onClick={() => generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)}
+                >
                   Télécharger
                 </Button>
-                <Button variant="outlined" onClick={() => { const d = generatePdf(cmd); d.autoPrint(); window.open(d.output('bloburl')); }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    const d = generatePdf(cmd);
+                    d.autoPrint();
+                    window.open(d.output('bloburl'));
+                  }}
+                >
                   Imprimer
                 </Button>
                 <Button color="error" startIcon={<CancelIcon />} onClick={() => openCancel(cmd)}>
@@ -214,23 +247,46 @@ export default function Commande() {
         ))}
       </Grid>
 
-      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)} fullScreen={fullScreen}>
+      <Dialog
+        open={openCancelDialog}
+        onClose={() => setOpenCancelDialog(false)}
+        fullScreen={fullScreen}
+      >
         <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
-          <TextField autoFocus label="Raison" fullWidth value={cancelReason} onChange={e => setCancelReason(e.target.value)} />
+          <TextField
+            autoFocus
+            label="Raison"
+            fullWidth
+            value={cancelReason}
+            onChange={e => setCancelReason(e.target.value)}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCancelDialog(false)}>Annuler</Button>
-          <Button variant="contained" color="error" onClick={handleCancel}>Confirmer</Button>
+          <Button variant="contained" color="error" onClick={handleCancel}>
+            Confirmer
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={onWheel}>
+      <Dialog
+        open={openImageDialog}
+        onClose={() => setOpenImageDialog(false)}
+        fullScreen={fullScreen}
+        onWheel={onWheel}
+      >
         <DialogActions>
-          <IconButton onClick={() => setOpenImageDialog(false)}><CloseIcon /></IconButton>
+          <IconButton onClick={() => setOpenImageDialog(false)}>
+            <CloseIcon />
+          </IconButton>
         </DialogActions>
         <DialogContent sx={{ textAlign: 'center' }}>
-          <Box component="img" src={selectedImage} sx={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }} />
+          <Box
+            component="img"
+            src={selectedImage}
+            sx={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }}
+          />
         </DialogContent>
       </Dialog>
     </Container>
