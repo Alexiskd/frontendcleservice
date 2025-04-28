@@ -25,7 +25,9 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import logo from '../assets/logo.png';
+// **IMPORTANT** : placez logo.png à la racine du dossier public/
+// et importez-le par son URL racine
+import logoUrl from '/logo.png';
 
 const socket = io('https://cl-back.onrender.com');
 
@@ -119,7 +121,7 @@ const Commande = () => {
 
     // En-tête
     doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
-    doc.addImage(logo, 'PNG', m, m, 32, 32);
+    doc.addImage(logoUrl, 'PNG', m, m, 32, 32);
 
     // Coordonnées
     doc.setTextColor(255, 255, 255).setFontSize(8);
@@ -286,4 +288,5 @@ const Commande = () => {
 };
 
 export default Commande;
+
 
