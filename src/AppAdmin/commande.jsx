@@ -1,4 +1,4 @@
-// src/components/Commande.jsx
+// src/AppAdmin/commande.jsx
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
@@ -26,20 +26,18 @@ import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// Ne pas importer le logo via `import` — placez logo.png dans /public
+// Placez logo.png dans /public et référencez-le ainsi :
 const logoUrl = '/logo.png';
 
 const socket = io('https://cl-back.onrender.com');
 
-const Commande = () => {
+export default function Commande() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [toCancel, setToCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
-
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
   const [zoom, setZoom] = useState(1);
@@ -47,9 +45,11 @@ const Commande = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Convertit une chaîne Base64 ou data-uri en URL image
   const decodeImage = img =>
     img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
+  // Récupère les commandes payées depuis le back
   const fetchCommandes = async () => {
     setLoading(true);
     try {
@@ -72,12 +72,14 @@ const Commande = () => {
     return () => socket.off('commandeUpdate', fetchCommandes);
   }, []);
 
+  // Lance le dialog d'annulation
   const openCancel = cmd => {
     setToCancel(cmd);
     setCancelReason('');
     setOpenCancelDialog(true);
   };
 
+  // Confirme l'annulation
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Veuillez saisir une raison.');
@@ -99,6 +101,7 @@ const Commande = () => {
     }
   };
 
+  // Affiche l'image en grand + zoom
   const openImage = img => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
@@ -109,11 +112,13 @@ const Commande = () => {
     setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
+  // Génère le PDF de la facture
   const generatePdf = cmd => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
     doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
     doc.addImage(logoUrl, 'PNG', m, m, 32, 32);
+
     doc.setTextColor(255, 255, 255).setFontSize(8);
     doc.text(
       ['MAISON BOUVET', '20 rue de Lévis, 75017 Paris', 'Tél : 01 42 67 47 28', 'contact@cleservice.com'],
@@ -121,14 +126,10 @@ const Commande = () => {
       m + 12,
       { lineHeightFactor: 1.5 }
     );
+
     doc.setTextColor(0).setFontSize(8);
     const rightX = 210 - m;
-    [
-      cmd.nom,
-      cmd.adressePostale,
-      `Tél : ${cmd.telephone}`,
-      `Email : ${cmd.adresseMail}`
-    ]
+    [cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
 
@@ -144,12 +145,12 @@ const Commande = () => {
           cmd.quantity,
           `${(prix / cmd.quantity).toFixed(2)} €`,
           `${port.toFixed(2)} €`,
-          `${prix.toFixed(2)} €`
-        ]
+          `${prix.toFixed(2)} €`,
+        ],
       ],
       theme: 'grid',
       headStyles: { fillColor: [27, 94, 32], textColor: 255 },
-      margin: { left: m, right: m }
+      margin: { left: m, right: m },
     });
 
     return doc;
@@ -198,9 +199,7 @@ const Commande = () => {
               <CardActions>
                 <Button
                   variant="contained"
-                  onClick={() =>
-                    window.open(generatePdf(cmd).output('dataurlnewwindow'))
-                  }
+                  onClick={() => window.open(generatePdf(cmd).output('dataurlnewwindow'))}
                 >
                   Voir Facture
                 </Button>
@@ -229,7 +228,11 @@ const Commande = () => {
         ))}
       </Grid>
 
-      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)} fullScreen={fullScreen}>
+      <Dialog
+        open={openCancelDialog}
+        onClose={() => setOpenCancelDialog(false)}
+        fullScreen={fullScreen}
+      >
         <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
           <TextField
@@ -248,7 +251,12 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={onWheel}>
+      <Dialog
+        open={openImageDialog}
+        onClose={() => setOpenImageDialog(false)}
+        fullScreen={fullScreen}
+        onWheel={onWheel}
+      >
         <DialogActions>
           <IconButton onClick={() => setOpenImageDialog(false)}>
             <CloseIcon />
@@ -260,8 +268,4 @@ const Commande = () => {
       </Dialog>
     </Container>
   );
-};
-
-export default Commande;
-
-
+}
