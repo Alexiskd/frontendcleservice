@@ -71,18 +71,11 @@ export default function Commande() {
         throw new Error(msg);
       }
       const { data } = JSON.parse(text);
-      // Ajout de "produitCommande" et "createdAt" pour le front
-      const mapped = data.map((cmd) => ({
-        ...cmd,
-        produitCommande: Array.isArray(cmd.cle)
-          ? cmd.cle.join(', ')
-          : cmd.cle || '',
-        createdAt: cmd.createdAt,
-      }));
-      setCommandes(mapped);
+      setCommandes(data);
     } catch (e) {
       console.error('RAW BACKEND ERROR:', e);
       setError(`Erreur lors du chargement des commandes : ${e.message}`);
+      setCommandes([]);
     } finally {
       setLoading(false);
     }
@@ -353,5 +346,3 @@ export default function Commande() {
     </Container>
   );
 }
-
-
