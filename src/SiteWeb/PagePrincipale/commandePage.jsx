@@ -28,11 +28,21 @@ const CommandePage = () => {
       const res = await fetch(
         `https://cl-back.onrender.com/commande/paid?page=${pageParam}&limit=${limitParam}`
       );
+      const text = await res.text();
+
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Erreur ${res.status} : ${text}`);
+        // Essaie d'extraire un message JSON si possible
+        let msg = text;
+        try {
+          const json = JSON.parse(text);
+          msg = json.detail || json.message || JSON.stringify(json);
+        } catch {
+          // reste sur le texte brut
+        }
+        throw new Error(msg);
       }
-      const { data, count } = await res.json();
+
+      const { data, count } = JSON.parse(text);
       setCommandes(data);
       setCount(count);
     } catch (err) {
@@ -51,25 +61,9 @@ const CommandePage = () => {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
+    setRowsPerPage(Number(event.target.value));
     setPage(0);
   };
-
-  if (loading) {
-    return (
-      <Container sx={{ textAlign: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
-    );
-  }
 
   return (
     <Container sx={{ mt: 4 }}>
@@ -77,57 +71,73 @@ const CommandePage = () => {
         Commandes payées
       </Typography>
 
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Numéro de commande</TableCell>
-            <TableCell>Nom du client</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Téléphone</TableCell>
-            <TableCell>Adresse postale</TableCell>
-            <TableCell>Produit(s)</TableCell>
-            <TableCell>Quantité</TableCell>
-            <TableCell>Prix total (€)</TableCell>
-            <TableCell>Date de commande</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {commandes.map((cmd) => (
-            <TableRow key={cmd.id}>
-              <TableCell>{cmd.numeroCommande}</TableCell>
-              <TableCell>{cmd.nom}</TableCell>
-              <TableCell>{cmd.adresseMail}</TableCell>
-              <TableCell>{cmd.telephone}</TableCell>
-              <TableCell>{cmd.adressePostale}</TableCell>
-              <TableCell>{cmd.cle.join(', ')}</TableCell>
-              <TableCell>{cmd.quantity}</TableCell>
-              <TableCell>{parseFloat(cmd.prix).toFixed(2)}</TableCell>
-              <TableCell>
-                {new Date(cmd.createdAt).toLocaleString('fr-FR')}
-              </TableCell>
-            </TableRow>
-          ))}
-          {commandes.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={9} align="center">
-                Aucune commande payée trouvée.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      {loading && (
+        <Container sx={{ textAlign: 'center', mt: 4 }}>
+          <CircularProgress />
+        </Container>
+      )}
 
-      <TablePagination
-        component="div"
-        count={count}
-        page={page}
-        onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        rowsPerPageOptions={[10, 20, 50]}
-        labelRowsPerPage="Lignes par page"
-        sx={{ mt: 2 }}
-      />
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Erreur lors du chargement des commandes : {error}
+        </Alert>
+      )}
+
+      {!loading && !error && (
+        <>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Numéro de commande</TableCell>
+                <TableCell>Nom du client</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Téléphone</TableCell>
+                <TableCell>Adresse postale</TableCell>
+                <TableCell>Produit(s)</TableCell>
+                <TableCell>Quantité</TableCell>
+                <TableCell>Prix total (€)</TableCell>
+                <TableCell>Date de commande</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {commandes.map((cmd) => (
+                <TableRow key={cmd.id}>
+                  <TableCell>{cmd.numeroCommande}</TableCell>
+                  <TableCell>{cmd.nom}</TableCell>
+                  <TableCell>{cmd.adresseMail}</TableCell>
+                  <TableCell>{cmd.telephone}</TableCell>
+                  <TableCell>{cmd.adressePostale}</TableCell>
+                  <TableCell>{cmd.cle.join(', ')}</TableCell>
+                  <TableCell>{cmd.quantity}</TableCell>
+                  <TableCell>{parseFloat(cmd.prix).toFixed(2)}</TableCell>
+                  <TableCell>
+                    {new Date(cmd.createdAt).toLocaleString('fr-FR')}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {commandes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} align="center">
+                    Aucune commande payée trouvée.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          <TablePagination
+            component="div"
+            count={count}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[10, 20, 50]}
+            labelRowsPerPage="Lignes par page"
+            sx={{ mt: 2 }}
+          />
+        </>
+      )}
     </Container>
   );
 };
