@@ -38,7 +38,7 @@ export default function CommandePage() {
 
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [commandeToCancel, setCommandeToCancel] = useState(null);
-  const [cancellationReason, setCancellationReason] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [openImageDialog, setOpenImageDialog] = useState(false);
@@ -87,13 +87,14 @@ export default function CommandePage() {
 
   const openCancel = cmd => {
     setCommandeToCancel(cmd);
-    setCancellationReason('');
+    setCancelReason('');
     setOpenCancelDialog(true);
   };
 
   const handleConfirmCancel = async () => {
-    if (!cancellationReason.trim()) {
-      return alert('Veuillez saisir une raison.');
+    if (!cancelReason.trim()) {
+      alert('Veuillez saisir une raison.');
+      return;
     }
     try {
       const res = await fetch(
@@ -122,10 +123,10 @@ export default function CommandePage() {
     setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  // Tri décroissant par id (ou crééAt)
-  const sortedCommandes = Array.isArray(commandes)
-    ? [...commandes].sort((a, b) => b.id.localeCompare(a.id))
-    : [];
+  // Tri le plus récent en premier
+  const sortedCommandes = [...commandes].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
   return (
     <Container sx={{ py: 4 }}>
@@ -150,17 +151,21 @@ export default function CommandePage() {
           <Grid item xs={12} md={6} key={cmd.id}>
             <Card>
               <CardContent>
-                <Typography variant="h6">
+                <Typography variant="h6" gutterBottom>
                   {Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle || '—'}
                 </Typography>
                 <Typography>Client : {cmd.nom}</Typography>
-                <Typography>Prix TTC : {parseFloat(cmd.prix).toFixed(2)} €</Typography>
+                <Typography>
+                  Prix TTC : {parseFloat(cmd.prix).toFixed(2)} €
+                </Typography>
               </CardContent>
               <Divider />
               <CardActions>
-                <Button onClick={() => handleImageClick(cmd.urlPhotoRecto)}>
-                  Voir Photo
-                </Button>
+                {cmd.urlPhotoRecto && (
+                  <Button onClick={() => handleImageClick(cmd.urlPhotoRecto)}>
+                    Voir Photo
+                  </Button>
+                )}
                 <Button
                   startIcon={<CancelIcon />}
                   color="error"
@@ -186,8 +191,8 @@ export default function CommandePage() {
             autoFocus
             label="Raison de l'annulation"
             fullWidth
-            value={cancellationReason}
-            onChange={e => setCancellationReason(e.target.value)}
+            value={cancelReason}
+            onChange={e => setCancelReason(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
@@ -196,7 +201,7 @@ export default function CommandePage() {
             variant="contained"
             color="error"
             onClick={handleConfirmCancel}
-            disabled={!cancellationReason.trim()}
+            disabled={!cancelReason.trim()}
           >
             Confirmer
           </Button>
@@ -242,4 +247,3 @@ export default function CommandePage() {
     </Container>
   );
 }
-
