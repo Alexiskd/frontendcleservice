@@ -1,4 +1,5 @@
-// src/AppAdmin/commande.jsx
+// src/AppAdmin/Commande.jsx
+
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
@@ -29,15 +30,18 @@ import 'jspdf-autotable';
 // Placez logo.png dans /public pour qu'il soit servi à la racine
 const logoUrl = '/logo.png';
 
+// Configurez le socket vers votre backend
 const socket = io('https://cl-back.onrender.com');
 
 export default function Commande() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [toCancel, setToCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
+
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
   const [zoom, setZoom] = useState(1);
@@ -45,11 +49,11 @@ export default function Commande() {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Convertit Base64 ou data URI en URL image
-  const decodeImage = img =>
-    img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
+  // Helper pour décoder Base64 ou data URI
+  const decodeImage = (img) =>
+    img?.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
-  // Récupère les commandes payées, loggue le body brut en cas de 500
+  // Récupération des commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     try {
@@ -60,7 +64,15 @@ export default function Commande() {
         throw new Error(`Status ${res.status}`);
       }
       const { data } = await res.json();
-      setCommandes(data);
+      // On ajoute "produitCommande" et "createdAt" pour le front
+      const mapped = data.map((cmd) => ({
+        ...cmd,
+        produitCommande: Array.isArray(cmd.cle)
+          ? cmd.cle.join(', ')
+          : cmd.cle || '',
+        createdAt: cmd.dateCommande ?? cmd.createdAt,
+      }));
+      setCommandes(mapped);
       setError(null);
     } catch (e) {
       console.error(e);
@@ -70,6 +82,7 @@ export default function Commande() {
     }
   };
 
+  // Effet de chargement + WebSocket
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
@@ -79,13 +92,13 @@ export default function Commande() {
   }, []);
 
   // Ouvre le dialog d'annulation
-  const openCancel = cmd => {
+  const openCancel = (cmd) => {
     setToCancel(cmd);
     setCancelReason('');
     setOpenCancelDialog(true);
   };
 
-  // Confirme l'annulation
+  // Gère l'annulation
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Veuillez saisir une raison.');
@@ -107,19 +120,19 @@ export default function Commande() {
     }
   };
 
-  // Ouvre le dialog image pour zoom
-  const openImage = img => {
+  // Ouvre le dialog image pour zoomer
+  const openImage = (img) => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
     setOpenImageDialog(true);
   };
-  const onWheel = e => {
+  const onWheel = (e) => {
     e.preventDefault();
-    setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
+    setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  // Génère le PDF de la facture
-  const generatePdf = cmd => {
+  // Génère un PDF de facture via jsPDF
+  const generatePdf = (cmd) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
     doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
@@ -151,7 +164,7 @@ export default function Commande() {
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
 
-    // Tableau des produits
+    // Tableau produits
     const yStart = m + 45;
     const prix = parseFloat(cmd.prix);
     const port = cmd.shippingMethod === 'expedition' ? 8 : 0;
@@ -160,7 +173,7 @@ export default function Commande() {
       head: [['Produit', 'Qté', 'PU', 'Port', 'TTC']],
       body: [
         [
-          cmd.produitCommande || cmd.cle.join(', '),
+          cmd.produitCommande,
           cmd.quantity,
           `${(prix / cmd.quantity).toFixed(2)} €`,
           `${port.toFixed(2)} €`,
@@ -181,20 +194,22 @@ export default function Commande() {
         Commandes Payées
       </Typography>
 
-      {loading && <CircularProgress />}
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
       {error && <Alert severity="error">{error}</Alert>}
       {!loading && !error && commandes.length === 0 && (
-        <Typography>Aucune commande trouvée.</Typography>
+        <Typography align="center">Aucune commande trouvée.</Typography>
       )}
 
       <Grid container spacing={3}>
-        {commandes.map(cmd => (
-          <Grid item xs={12} key={cmd.id}>
+        {commandes.map((cmd) => (
+          <Grid item xs={12} md={6} key={cmd.id}>
             <Card>
               <CardContent>
-                <Typography variant="h6">
-                  {cmd.produitCommande || cmd.cle.join(', ')}
-                </Typography>
+                <Typography variant="h6">{cmd.produitCommande}</Typography>
                 <Box sx={{ display: 'flex', gap: 2, my: 1 }}>
                   {cmd.urlPhotoRecto && (
                     <Box
@@ -218,13 +233,17 @@ export default function Commande() {
               <CardActions>
                 <Button
                   variant="contained"
-                  onClick={() => window.open(generatePdf(cmd).output('dataurlnewwindow'))}
+                  onClick={() =>
+                    window.open(generatePdf(cmd).output('dataurlnewwindow'))
+                  }
                 >
                   Voir Facture
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)}
+                  onClick={() =>
+                    generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)
+                  }
                 >
                   Télécharger
                 </Button>
@@ -238,7 +257,11 @@ export default function Commande() {
                 >
                   Imprimer
                 </Button>
-                <Button color="error" startIcon={<CancelIcon />} onClick={() => openCancel(cmd)}>
+                <Button
+                  color="error"
+                  startIcon={<CancelIcon />}
+                  onClick={() => openCancel(cmd)}
+                >
                   Annuler
                 </Button>
               </CardActions>
@@ -247,6 +270,7 @@ export default function Commande() {
         ))}
       </Grid>
 
+      {/* Dialog annulation */}
       <Dialog
         open={openCancelDialog}
         onClose={() => setOpenCancelDialog(false)}
@@ -256,27 +280,36 @@ export default function Commande() {
         <DialogContent>
           <TextField
             autoFocus
-            label="Raison"
+            margin="dense"
+            label="Raison de l'annulation"
             fullWidth
+            variant="outlined"
             value={cancelReason}
-            onChange={e => setCancelReason(e.target.value)}
+            onChange={(e) => setCancelReason(e.target.value)}
+            required
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCancelDialog(false)}>Annuler</Button>
-          <Button variant="contained" color="error" onClick={handleCancel}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleCancel}
+            disabled={!cancelReason.trim()}
+          >
             Confirmer
           </Button>
         </DialogActions>
       </Dialog>
 
+      {/* Dialog zoom image */}
       <Dialog
         open={openImageDialog}
         onClose={() => setOpenImageDialog(false)}
         fullScreen={fullScreen}
         onWheel={onWheel}
       >
-        <DialogActions>
+        <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
           <IconButton onClick={() => setOpenImageDialog(false)}>
             <CloseIcon />
           </IconButton>
@@ -285,10 +318,16 @@ export default function Commande() {
           <Box
             component="img"
             src={selectedImage}
-            sx={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }}
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '80vh',
+              transform: `scale(${zoom})`,
+              transition: 'transform 0.2s',
+            }}
           />
         </DialogContent>
       </Dialog>
     </Container>
   );
 }
+
