@@ -64,7 +64,7 @@ export default function Commande() {
         throw new Error(`Status ${res.status}`);
       }
       const { data } = await res.json();
-      // On ajoute "produitCommande" et "createdAt" pour le front
+      // Ajout de "produitCommande" et "createdAt" pour le front
       const mapped = data.map((cmd) => ({
         ...cmd,
         produitCommande: Array.isArray(cmd.cle)
@@ -120,7 +120,7 @@ export default function Commande() {
     }
   };
 
-  // Ouvre le dialog image pour zoomer
+  // Ouvre le dialog image + zoom
   const openImage = (img) => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
@@ -270,7 +270,7 @@ export default function Commande() {
         ))}
       </Grid>
 
-      {/* Dialog annulation */}
+      {/* Dialog d'annulation */}
       <Dialog
         open={openCancelDialog}
         onClose={() => setOpenCancelDialog(false)}
