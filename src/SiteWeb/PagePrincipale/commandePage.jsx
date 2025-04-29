@@ -1,145 +1,152 @@
-// src/pages/CommandePage.jsx
-import React, { useState, useEffect } from 'react';
+/import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+import axios from "axios";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import {
+  Box,
+  CircularProgress,
   Container,
   Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TablePagination,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
+  Card,
+  CardContent,
+  Button,
+  Grid,
+} from "@mui/material";
 
-const CommandePage = () => {
+const socket = io(import.meta.env.VITE_SERVER_URL);
+
+function CommandePage() {
   const [commandes, setCommandes] = useState([]);
-  const [count, setCount] = useState(0);
-  const [page, setPage] = useState(0);           // zéro-based pour TablePagination
-  const [rowsPerPage, setRowsPerPage] = useState(20);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchCommandes = async (pageParam = 1, limitParam = rowsPerPage) => {
-    setLoading(true);
-    setError(null);
+  const fetchCommandes = async () => {
     try {
-      const res = await fetch(
-        `https://cl-back.onrender.com/commande/paid?page=${pageParam}&limit=${limitParam}`
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
-      const text = await res.text();
 
-      if (!res.ok) {
-        // Essaie d'extraire un message JSON si possible
-        let msg = text;
-        try {
-          const json = JSON.parse(text);
-          msg = json.detail || json.message || JSON.stringify(json);
-        } catch {
-          // reste sur le texte brut
-        }
-        throw new Error(msg);
+      console.log("Données reçues :", response.data);
+
+      if (Array.isArray(response.data)) {
+        setCommandes(response.data);
+      } else {
+        console.error("La réponse attendue n'est pas un tableau :", response.data);
+        setCommandes([]);
       }
 
-      const { data, count } = JSON.parse(text);
-      setCommandes(data);
-      setCount(count);
-    } catch (err) {
-      setError(err.message);
-    } finally {
+      setLoading(false);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des commandes :", error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCommandes(page + 1, rowsPerPage);
-  }, [page, rowsPerPage]);
+    fetchCommandes();
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+    socket.on("commandeUpdated", () => {
+      fetchCommandes();
+    });
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(Number(event.target.value));
-    setPage(0);
+    return () => {
+      socket.off("commandeUpdated");
+    };
+  }, []);
+
+  const generatePDF = (commande) => {
+    const doc = new jsPDF();
+    const logoImg = new Image();
+    logoImg.src = "/logo.png";
+
+    logoImg.onload = () => {
+      doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
+      doc.setFontSize(18);
+      doc.text("Facture", 105, 20, null, null, "center");
+
+      doc.setFontSize(12);
+      doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
+      doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
+
+      const body = Array.isArray(commande.produits) && commande.produits.length > 0
+        ? commande.produits.map((produit) => [
+            produit.nom,
+            produit.prix.toFixed(2) + " €",
+          ])
+        : [];
+
+      doc.autoTable({
+        startY: 60,
+        head: [["Produit", "Prix"]],
+        body: body,
+      });
+
+      doc.text(
+        `Total : ${commande.total.toFixed(2)} €`,
+        14,
+        doc.lastAutoTable.finalY + 10
+      );
+
+      doc.save(`facture-${commande._id}.pdf`);
+    };
   };
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Commandes payées
+    <Container>
+      <Typography variant="h4" align="center" gutterBottom>
+        Commandes Payées
       </Typography>
-
-      {loading && (
-        <Container sx={{ textAlign: 'center', mt: 4 }}>
+      {loading ? (
+        <Box display="flex" justifyContent="center" my={4}>
           <CircularProgress />
-        </Container>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Erreur lors du chargement des commandes : {error}
-        </Alert>
-      )}
-
-      {!loading && !error && (
-        <>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Numéro de commande</TableCell>
-                <TableCell>Nom du client</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Téléphone</TableCell>
-                <TableCell>Adresse postale</TableCell>
-                <TableCell>Produit(s)</TableCell>
-                <TableCell>Quantité</TableCell>
-                <TableCell>Prix total (€)</TableCell>
-                <TableCell>Date de commande</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {commandes.map((cmd) => (
-                <TableRow key={cmd.id}>
-                  <TableCell>{cmd.numeroCommande}</TableCell>
-                  <TableCell>{cmd.nom}</TableCell>
-                  <TableCell>{cmd.adresseMail}</TableCell>
-                  <TableCell>{cmd.telephone}</TableCell>
-                  <TableCell>{cmd.adressePostale}</TableCell>
-                  <TableCell>{cmd.cle.join(', ')}</TableCell>
-                  <TableCell>{cmd.quantity}</TableCell>
-                  <TableCell>{parseFloat(cmd.prix).toFixed(2)}</TableCell>
-                  <TableCell>
-                    {new Date(cmd.createdAt).toLocaleString('fr-FR')}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {commandes.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center">
-                    Aucune commande payée trouvée.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          <TablePagination
-            component="div"
-            count={count}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[10, 20, 50]}
-            labelRowsPerPage="Lignes par page"
-            sx={{ mt: 2 }}
-          />
-        </>
+        </Box>
+      ) : (
+        <Grid container spacing={2}>
+          {Array.isArray(commandes) && commandes.length > 0 ? (
+            commandes.map((commande) => (
+              <Grid item xs={12} sm={6} md={4} key={commande._id}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6">
+                      Commande #{commande._id.slice(-6)}
+                    </Typography>
+                    <Typography variant="body2">
+                      Total : {commande.total.toFixed(2)} €
+                    </Typography>
+                    <Typography variant="body2">
+                      Produits :
+                      {Array.isArray(commande.produits) && commande.produits.length > 0 ? (
+                        <ul>
+                          {commande.produits.map((produit, idx) => (
+                            <li key={idx}>{produit.nom}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>Pas de produits pour cette commande</p>
+                      )}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => generatePDF(commande)}
+                    >
+                      Télécharger la facture
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          ) : (
+            <Grid item xs={12}>
+              <Typography variant="h6" align="center">
+                Aucune commande à afficher
+              </Typography>
+            </Grid>
+          )}
+        </Grid>
       )}
     </Container>
   );
-};
+}
 
 export default CommandePage;
