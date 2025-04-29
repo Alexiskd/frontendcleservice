@@ -56,27 +56,33 @@ export default function Commande() {
   // Récupération des commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('https://cl-back.onrender.com/commande/paid');
+      const text = await res.text();
       if (!res.ok) {
-        const text = await res.text();
-        console.error('RAW BACKEND RESPONSE:', text);
-        throw new Error(`Status ${res.status}`);
+        let msg = `Status ${res.status}`;
+        try {
+          const json = JSON.parse(text);
+          msg = json.detail || json.message || msg;
+        } catch {
+          // on garde le status simple
+        }
+        throw new Error(msg);
       }
-      const { data } = await res.json();
+      const { data } = JSON.parse(text);
       // Ajout de "produitCommande" et "createdAt" pour le front
       const mapped = data.map((cmd) => ({
         ...cmd,
         produitCommande: Array.isArray(cmd.cle)
           ? cmd.cle.join(', ')
           : cmd.cle || '',
-        createdAt: cmd.dateCommande ?? cmd.createdAt,
+        createdAt: cmd.createdAt,
       }));
       setCommandes(mapped);
-      setError(null);
     } catch (e) {
-      console.error(e);
-      setError('Erreur lors du chargement des commandes.');
+      console.error('RAW BACKEND ERROR:', e);
+      setError(`Erreur lors du chargement des commandes : ${e.message}`);
     } finally {
       setLoading(false);
     }
@@ -109,12 +115,18 @@ export default function Commande() {
         `https://cl-back.onrender.com/commande/cancel/${toCancel.numeroCommande}`,
         { method: 'DELETE' }
       );
-      const { success } = await res.json();
+      const text = await res.text();
+      let success = false;
+      try {
+        success = JSON.parse(text).success;
+      } catch {
+        throw new Error(text);
+      }
       alert(success ? 'Commande annulée.' : 'Échec de l’annulation.');
       fetchCommandes();
     } catch (e) {
       console.error(e);
-      alert('Erreur réseau');
+      alert(`Erreur réseau : ${e.message}`);
     } finally {
       setOpenCancelDialog(false);
     }
@@ -128,7 +140,9 @@ export default function Commande() {
   };
   const onWheel = (e) => {
     e.preventDefault();
-    setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
+    setZoom((z) =>
+      Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3)
+    );
   };
 
   // Génère un PDF de facture via jsPDF
@@ -162,7 +176,9 @@ export default function Commande() {
       `Email : ${cmd.adresseMail}`,
     ]
       .filter(Boolean)
-      .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
+      .forEach((t, i) =>
+        doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
+      );
 
     // Tableau produits
     const yStart = m + 45;
@@ -199,7 +215,9 @@ export default function Commande() {
           <CircularProgress />
         </Box>
       )}
+
       {error && <Alert severity="error">{error}</Alert>}
+
       {!loading && !error && commandes.length === 0 && (
         <Typography align="center">Aucune commande trouvée.</Typography>
       )}
@@ -228,7 +246,9 @@ export default function Commande() {
                     />
                   )}
                 </Box>
-                <Typography>Prix : {parseFloat(cmd.prix).toFixed(2)} €</Typography>
+                <Typography>
+                  Prix : {parseFloat(cmd.prix).toFixed(2)} €
+                </Typography>
               </CardContent>
               <CardActions>
                 <Button
@@ -242,18 +262,21 @@ export default function Commande() {
                 <Button
                   variant="outlined"
                   onClick={() =>
-                    generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)
+                    generatePdf(cmd).save(
+                      `facture_${cmd.numeroCommande}.pdf`
+                    )
                   }
                 >
                   Télécharger
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => {
-                    const d = generatePdf(cmd);
-                    d.autoPrint();
-                    window.open(d.output('bloburl'));
-                  }}
+                  onClick={() =>
+                    (function (d) {
+                      d.autoPrint();
+                      window.open(d.output('bloburl'));
+                    })(generatePdf(cmd))
+                  }
                 >
                   Imprimer
                 </Button>
