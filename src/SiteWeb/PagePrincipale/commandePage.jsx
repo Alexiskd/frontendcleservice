@@ -32,12 +32,12 @@ const CommandePage = () => {
 
       if (!res.ok) {
         // Essaie d'extraire un message JSON si possible
-        let msg = text;
+        let msg = `Status ${res.status}`;
         try {
           const json = JSON.parse(text);
-          msg = json.detail || json.message || JSON.stringify(json);
+          msg = json.detail || json.message || msg;
         } catch {
-          // reste sur le texte brut
+          // on garde le texte brut ou le status
         }
         throw new Error(msg);
       }
