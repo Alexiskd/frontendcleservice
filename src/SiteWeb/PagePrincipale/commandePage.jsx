@@ -1,223 +1,275 @@
-/// src/AppAdmin/CommandePage.jsx
-
 import React, { useState, useEffect, useCallback } from 'react';
-import io from 'socket.io-client';
 import {
-  Container,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  Button,
-  CircularProgress,
-  Alert,
   Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Typography,
+  Container,
   TextField,
+  Button,
+  Snackbar,
+  Alert,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Select,
+  MenuItem,
   IconButton,
-  useMediaQuery
+  Card,
+  Grid,
+  Divider,
+  CircularProgress,
+  Checkbox,
+  Paper,
+  Dialog,
+  DialogContent,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import CancelIcon from '@mui/icons-material/Cancel';
-import CloseIcon from '@mui/icons-material/Close';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import {
+  PhotoCamera,
+  CloudUpload,
+  Person,
+  Email,
+  Phone,
+  Home,
+  LocationCity,
+  VpnKey,
+  CheckCircle,
+  Error as ErrorIcon,
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Import corrigé : brandsApi se trouve dans src/SiteWeb/brandsApi.js
+import { preloadKeysData } from '../brandsApi';
 
-const socket = io('https://cl-back.onrender.com');
+const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
+  <Box sx={{ mb: 2 }}>
+    <Button variant="outlined" component="label" startIcon={<IconComponent />}>
+      {label}
+      <input type="file" hidden name={name} accept={accept} onChange={onChange} />
+    </Button>
+    {file && <Typography variant="body2" sx={{ mt: 1 }}>{file.name || file}</Typography>}
+  </Box>
+);
 
-export default function CommandePage() {
-  const [commandes, setCommandes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
+  color: theme.palette.grey[500],
+  '&.Mui-checked': { color: theme.palette.primary.main },
+}));
 
-  const [openCancelDialog, setOpenCancelDialog] = useState(false);
-  const [toCancel, setToCancel] = useState(null);
-  const [cancelReason, setCancelReason] = useState('');
+const SectionPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: theme.spacing(1),
+  boxShadow: theme.shadows[1],
+  marginBottom: theme.spacing(3),
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+}));
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+const SummaryCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(2),
+  boxShadow: theme.shadows[1],
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+}));
 
-  /** transforme Base64 en data-URI si besoin */
-  const decodeImage = img =>
-    img?.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
+const CommandePage = () => {
+  useEffect(() => window.scrollTo(0, 0), []);
 
-  /** Fetch commandes payées */
-  const fetchCommandes = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const { brandName, articleName } = useParams();
+  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  const navigate = useNavigate();
+
+  const [article, setArticle] = useState(null);
+  const [loadingArticle, setLoadingArticle] = useState(true);
+  const [errorArticle, setErrorArticle] = useState(null);
+  const [preloadedKey, setPreloadedKey] = useState(null);
+
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const handleOpenImageModal = () => setOpenImageModal(true);
+  const handleCloseImageModal = () => setOpenImageModal(false);
+
+  const [userInfo, setUserInfo] = useState({
+    nom: '',
+    email: '',
+    phone: '',
+    address: '',
+    postalCode: '',
+    ville: '',
+    additionalInfo: '',
+  });
+  const [keyInfo, setKeyInfo] = useState({
+    keyNumber: '',
+    propertyCardNumber: '',
+    frontPhoto: null,
+    backPhoto: null,
+  });
+  const [isCleAPasse, setIsCleAPasse] = useState(false);
+  const [lostCartePropriete, setLostCartePropriete] = useState(false);
+  const [idCardInfo, setIdCardInfo] = useState({
+    idCardFront: null,
+    idCardBack: null,
+    domicileJustificatif: '',
+  });
+  const [attestationPropriete, setAttestationPropriete] = useState(false);
+  const [deliveryType, setDeliveryType] = useState('');
+  const [shippingMethod, setShippingMethod] = useState('magasin');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [ordering, setOrdering] = useState(false);
+  const [openCGV, setOpenCGV] = useState(false);
+
+  const loadArticle = useCallback(async () => {
+    setLoadingArticle(true);
+    setErrorArticle(null);
     try {
-      const res = await fetch('https://cl-back.onrender.com/commande/paid');
-      const text = await res.text();
-
+      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
+        decodedArticleName
+      )}`;
+      const res = await fetch(endpoint);
       if (!res.ok) {
-        // essaye d’extraire un message d’erreur JSON
-        let msg = `Status ${res.status}`;
-        try {
-          const json = JSON.parse(text);
-          msg = json.detail || json.message || msg;
-        } catch {}
-        throw new Error(msg);
+        if (res.status === 404) throw new Error('Article non trouvé.');
+        throw new Error("Erreur lors du chargement de l'article.");
       }
-
-      const { data } = JSON.parse(text);
-      // si data n’est pas un tableau, on le vide pour éviter le crash
-      setCommandes(Array.isArray(data) ? data : []);
+      const text = await res.text();
+      if (!text) throw new Error('Réponse vide du serveur.');
+      const data = JSON.parse(text);
+      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase())
+        throw new Error("La marque ne correspond pas.");
+      setArticle(data);
     } catch (e) {
-      console.error('RAW BACKEND ERROR:', e);
-      setError(`Erreur lors du chargement des commandes : ${e.message}`);
-      setCommandes([]);
+      setErrorArticle(e.message);
     } finally {
-      setLoading(false);
+      setLoadingArticle(false);
     }
-  }, []);
+  }, [brandName, decodedArticleName]);
 
   useEffect(() => {
-    fetchCommandes();
-    socket.on('commandeUpdate', fetchCommandes);
-    return () => {
-      socket.off('commandeUpdate', fetchCommandes);
-    };
-  }, [fetchCommandes]);
+    loadArticle();
+  }, [loadArticle]);
 
-  /** Ouvre le dialog d’annulation */
-  const openCancel = cmd => {
-    setToCancel(cmd);
-    setCancelReason('');
-    setOpenCancelDialog(true);
+  useEffect(() => {
+    if (brandName && article) {
+      preloadKeysData(brandName)
+        .then((keys) => {
+          const found = keys.find(
+            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+          );
+          if (found) setPreloadedKey(found);
+        })
+        .catch(console.error);
+    }
+  }, [brandName, article]);
+
+  const productDetails = preloadedKey || article;
+  const basePrice = productDetails
+    ? isCleAPasse && productDetails.prixCleAPasse
+      ? parseFloat(productDetails.prixCleAPasse)
+      : mode === 'postal'
+      ? parseFloat(productDetails.prixSansCartePropriete)
+      : parseFloat(productDetails.prix)
+    : 0;
+  const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
+  const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
+
+  const validateForm = () => {
+    // logique de validation...
+    return true;
   };
 
-  /** Envoie la requête d’annulation */
-  const handleCancel = async () => {
-    if (!cancelReason.trim()) {
-      alert('Veuillez saisir une raison.');
+  const handleOrder = async () => {
+    if (!termsAccepted) {
+      setSnackbarMessage('Veuillez accepter les CGV.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
       return;
     }
+    if (!validateForm()) {
+      setSnackbarMessage('Champs obligatoires manquants.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    setOrdering(true);
     try {
-      const res = await fetch(
-        `https://cl-back.onrender.com/commande/cancel/${toCancel.numeroCommande}`,
-        { method: 'DELETE' }
-      );
-      const text = await res.text();
-      const json = JSON.parse(text);
-      alert(json.success ? 'Commande annulée.' : 'Échec de l’annulation.');
-      fetchCommandes();
+      const fd = new FormData();
+      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
+        method: 'POST',
+        body: fd,
+      });
+      if (!cmdRes.ok) {
+        throw new Error(`Création commande : ${await cmdRes.text()}`);
+      }
+      const { numeroCommande } = await cmdRes.json();
+      const payload = {
+        amount: Math.round(totalPrice * 100),
+        currency: 'eur',
+        description: `Paiement ${userInfo.nom}`,
+        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
+      };
+      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!payRes.ok) {
+        throw new Error(`Paiement : ${await payRes.text()}`);
+      }
+      const { paymentUrl } = await payRes.json();
+      window.location.href = paymentUrl;
     } catch (e) {
-      console.error(e);
-      alert(`Erreur réseau : ${e.message}`);
-    } finally {
-      setOpenCancelDialog(false);
+      setSnackbarMessage(e.message);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setOrdering(false);
     }
   };
 
-  /** Génère un PDF simple via jsPDF */
-  const generatePdf = cmd => {
-    const doc = new jsPDF();
-    doc.setFontSize(14).text('Facture de commande', 20, 20);
-    doc.setFontSize(10).text(`Numéro : ${cmd.numeroCommande}`, 20, 30);
-    doc.text(`Client : ${cmd.nom}`, 20, 35);
-    doc.text(`Adresse : ${cmd.adressePostale}`, 20, 40);
-    doc.autoTable({
-      startY: 50,
-      head: [['Produit', 'Qté', 'Prix TTC']],
-      body: [
-        [
-          Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle || '—',
-          cmd.quantity || 1,
-          `${parseFloat(cmd.prix).toFixed(2)} €`
-        ]
-      ]
-    });
-    return doc;
-  };
+  if (loadingArticle) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (errorArticle) {
+    return (
+      <Box sx={{ minHeight: '100vh', p: 4, textAlign: 'center' }}>
+        <ErrorIcon color="error" sx={{ fontSize: 48 }} />
+        <Typography variant="h6" color="error">{errorArticle}</Typography>
+        <Button onClick={loadArticle}>Réessayer</Button>
+      </Box>
+    );
+  }
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Typography variant="h4" align="center" gutterBottom>
-        Commandes Payées
-      </Typography>
+    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
+      <Container maxWidth="lg">
+        {/* … votre formulaire et récapitulatif ici … */}
+      </Container>
 
-      {loading && (
-        <Box sx={{ textAlign: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {error && <Alert severity="error">{error}</Alert>}
-
-      {!loading && !error && commandes.length === 0 && (
-        <Typography align="center">Aucune commande trouvée.</Typography>
-      )}
-
-      <Grid container spacing={3}>
-        {commandes.map(cmd => (
-          <Grid item xs={12} md={6} key={cmd.id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">
-                  {Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle}
-                </Typography>
-                <Typography>Client : {cmd.nom}</Typography>
-                <Typography>
-                  Prix TTC : {parseFloat(cmd.prix).toFixed(2)} €
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  onClick={() =>
-                    window.open(generatePdf(cmd).output('dataurlnewwindow'))
-                  }
-                >
-                  Voir Facture
-                </Button>
-                <Button onClick={() => generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)}>
-                  Télécharger
-                </Button>
-                <Button
-                  startIcon={<CancelIcon />}
-                  color="error"
-                  onClick={() => openCancel(cmd)}
-                >
-                  Annuler
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Dialog d’annulation */}
-      <Dialog
-        open={openCancelDialog}
-        onClose={() => setOpenCancelDialog(false)}
-        fullScreen={fullScreen}
-      >
-        <DialogTitle>Annuler la commande</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            label="Raison de l'annulation"
-            fullWidth
-            variant="outlined"
-            value={cancelReason}
-            onChange={e => setCancelReason(e.target.value)}
-          />
+      {/* Modal d’image */}
+      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
+        <DialogContent sx={{ p: 0 }}>
+          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCancelDialog(false)}>Fermer</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleCancel}
-            disabled={!cancelReason.trim()}
-          >
-            Confirmer
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Container>
+
+      {/* Notification */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
+      </Snackbar>
+
+      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
+    </Box>
   );
-}
+};
+
+export default CommandePage;
