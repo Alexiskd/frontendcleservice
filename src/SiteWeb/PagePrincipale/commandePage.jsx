@@ -56,9 +56,11 @@ export default function CommandePage() {
     try {
       const res = await fetch('https://cl-back.onrender.com/commande/paid');
       if (!res.ok) {
-        throw new Error(res.status === 500
-          ? 'Erreur interne du serveur, réessayez plus tard.'
-          : `Erreur ${res.status}`);
+        throw new Error(
+          res.status === 500
+            ? 'Erreur interne du serveur, réessayez plus tard.'
+            : `Erreur ${res.status}`
+        );
       }
       const json = await res.json();
       if (!Array.isArray(json.data)) {
@@ -90,7 +92,7 @@ export default function CommandePage() {
   };
 
   const handleConfirmCancel = async () => {
-    if (!commandeToCancel || !cancellationReason.trim()) {
+    if (!cancellationReason.trim()) {
       return alert('Veuillez saisir une raison.');
     }
     try {
@@ -99,12 +101,13 @@ export default function CommandePage() {
         { method: 'DELETE' }
       );
       const json = await res.json();
-      alert(json.success ? 'Annulée.' : 'Échec.');
+      alert(json.success ? 'Commande annulée.' : 'Échec de l’annulation.');
       await fetchCommandes();
     } catch {
       alert('Erreur réseau.');
     } finally {
       setOpenCancelDialog(false);
+      setCommandeToCancel(null);
     }
   };
 
@@ -119,103 +122,76 @@ export default function CommandePage() {
     setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  const generateInvoice = cmd => {
-    const doc = new jsPDF('p','mm','a4');
-    const m = 15;
-    doc.setFillColor(27,94,32).rect(0,m,210,40,'F');
-    doc.addImage(logo,'PNG',m,m,32,32);
-    doc.setFontSize(8).setTextColor(255)
-      .text(['REPRO LIGNE','www.repro-ligne.com','Tél:01 42 67 47 28','contact@repro.com'],m+37,m+12,{lineHeightFactor:1.5});
-
-    doc.setTextColor(0).setFontSize(10).text(`Facturé à : ${cmd.nom}`,210-m,m+12,{align:'right'});
-    doc.setFontSize(8);
-    [cmd.adressePostale, cmd.telephone && `Tél: ${cmd.telephone}`, cmd.adresseMail && `Email: ${cmd.adresseMail}`]
-      .filter(Boolean)
-      .forEach((t,i)=>doc.text(t,210-m,m+17+i*5,{align:'right'}));
-
-    const date = cmd.createdAt ? new Date(cmd.createdAt).toLocaleDateString() : '';
-    doc.setTextColor(27,94,32).setFontSize(9).text(`Date: ${date}`,m,m+45);
-
-    const qt = cmd.quantity||1;
-    const ttc = parseFloat(cmd.prix)||0;
-    const ht = (ttc/1.2).toFixed(2);
-    let y = m+55;
-    const desc = Array.isArray(cmd.cle)?cmd.cle.join(', '):cmd.cle||'—';
-    doc.autoTable({
-      startY:y,
-      head:[['Desc','Qté','HT']],
-      body:[[desc,qt,`${ht} €`]],
-      theme:'grid',
-      headStyles:{fillColor:[27,94,32],textColor:255},
-      margin:{left:m,right:m}
-    });
-    y = doc.lastAutoTable.finalY+10;
-    const tva=(ttc-ht).toFixed(2);
-    doc.setFontSize(12).text('Sous-total HT',210-m-60,y).text(`${ht} €`,210-m,y,{align:'right'});
-    doc.text('TVA',210-m-60,y+7).text(`${tva} €`,210-m,y+7,{align:'right'});
-    doc.setFont('helvetica','bold').text('Total TTC',210-m-60,y+14).text(`${ttc.toFixed(2)} €`,210-m,y+14,{align:'right'});
-
-    return doc;
-  };
-
-  const showInv = c=>window.open(generateInvoice(c).output('dataurlnewwindow'));
-  const dlInv   = c=>generateInvoice(c).save(`facture_${c.numeroCommande}.pdf`);
-  const prInv   = c=>{const d=generateInvoice(c);d.autoPrint();window.open(d.output('bloburl'));};
+  // Tri décroissant par id (ou crééAt)
+  const sortedCommandes = Array.isArray(commandes)
+    ? [...commandes].sort((a, b) => b.id.localeCompare(a.id))
+    : [];
 
   return (
-    <Container sx={{py:4}}>
+    <Container sx={{ py: 4 }}>
       <Typography variant="h4" align="center" gutterBottom>
         Commandes Payées
       </Typography>
 
-      {loading && <Box sx={{textAlign:'center',my:4}}><CircularProgress/></Box>}
-      {error   && <Alert severity="error">{error}</Alert>}
-      {!loading && !error && commandes.length===0 && (
-        <Typography align="center">Aucune commande.</Typography>
+      {loading && (
+        <Box sx={{ textAlign: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && <Alert severity="error">{error}</Alert>}
+
+      {!loading && !error && sortedCommandes.length === 0 && (
+        <Typography align="center">Aucune commande payée trouvée.</Typography>
       )}
 
       <Grid container spacing={3}>
-        {commandes.map(cmd=>(
+        {sortedCommandes.map(cmd => (
           <Grid item xs={12} md={6} key={cmd.id}>
             <Card>
               <CardContent>
-                <Typography variant="h6">{Array.isArray(cmd.cle)?cmd.cle.join(', '):cmd.cle||'—'}</Typography>
-                <Typography>Client: {cmd.nom}</Typography>
-                <Typography>Prix: {parseFloat(cmd.prix).toFixed(2)} €</Typography>
+                <Typography variant="h6">
+                  {Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle || '—'}
+                </Typography>
+                <Typography>Client : {cmd.nom}</Typography>
+                <Typography>Prix TTC : {parseFloat(cmd.prix).toFixed(2)} €</Typography>
               </CardContent>
-              <Divider/>
+              <Divider />
               <CardActions>
-                <Button onClick={()=>showInv(cmd)}>Voir</Button>
-                <Button onClick={()=>dlInv(cmd)}>Télécharger</Button>
-                <Button onClick={()=>prInv(cmd)}>Imprimer</Button>
+                <Button onClick={() => handleImageClick(cmd.urlPhotoRecto)}>
+                  Voir Photo
+                </Button>
                 <Button
-                  startIcon={<CancelIcon/>}
+                  startIcon={<CancelIcon />}
                   color="error"
-                  onClick={()=>openCancel(cmd)}
-                >Annuler</Button>
+                  onClick={() => openCancel(cmd)}
+                >
+                  Annuler
+                </Button>
               </CardActions>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      {/* Annulation */}
+      {/* Dialog d'annulation */}
       <Dialog
         open={openCancelDialog}
-        onClose={()=>setOpenCancelDialog(false)}
+        onClose={() => setOpenCancelDialog(false)}
         fullScreen={fullScreen}
       >
         <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
           <TextField
-            label="Raison"
+            autoFocus
+            label="Raison de l'annulation"
             fullWidth
             value={cancellationReason}
-            onChange={e=>setCancellationReason(e.target.value)}
+            onChange={e => setCancellationReason(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={()=>setOpenCancelDialog(false)}>Fermer</Button>
+          <Button onClick={() => setOpenCancelDialog(false)}>Fermer</Button>
           <Button
             variant="contained"
             color="error"
@@ -227,29 +203,37 @@ export default function CommandePage() {
         </DialogActions>
       </Dialog>
 
-      {/* Zoom image */}
+      {/* Dialog zoom image */}
       <Dialog
         open={openImageDialog}
-        onClose={()=>{setOpenImageDialog(false);setZoom(1);}}
+        onClose={() => {
+          setOpenImageDialog(false);
+          setZoom(1);
+        }}
         fullScreen={fullScreen}
         onWheel={handleWheel}
       >
         <DialogActions>
-          <IconButton onClick={()=>{setOpenImageDialog(false);setZoom(1);}}>
-            <CloseIcon/>
+          <IconButton
+            onClick={() => {
+              setOpenImageDialog(false);
+              setZoom(1);
+            }}
+          >
+            <CloseIcon />
           </IconButton>
         </DialogActions>
-        <DialogContent sx={{textAlign:'center'}}>
+        <DialogContent sx={{ textAlign: 'center' }}>
           {selectedImage && (
             <Box
               component="img"
               src={selectedImage}
-              alt=""
+              alt="Zoom"
               sx={{
-                maxWidth:'100%',
-                maxHeight:'80vh',
-                transform:`scale(${zoom})`,
-                transition:'transform 0.2s'
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                transform: `scale(${zoom})`,
+                transition: 'transform 0.2s',
               }}
             />
           )}
@@ -258,4 +242,3 @@ export default function CommandePage() {
     </Container>
   );
 }
-
