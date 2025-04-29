@@ -54,16 +54,21 @@ const CommandePage = () => {
     setPage(0);
   };
 
-  if (loading) return (
-    <Container sx={{ textAlign: 'center', mt: 4 }}>
-      <CircularProgress />
-    </Container>
-  );
-  if (error) return (
-    <Container sx={{ mt: 4 }}>
-      <Alert severity="error">{error}</Alert>
-    </Container>
-  );
+  if (loading) {
+    return (
+      <Container sx={{ textAlign: 'center', mt: 4 }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container sx={{ mt: 4 }}>
