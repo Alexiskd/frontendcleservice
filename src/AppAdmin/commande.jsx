@@ -1,3 +1,5 @@
+// src/AppAdmin/Commande.jsx
+
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
@@ -56,20 +58,16 @@ export default function Commande() {
         try {
           const json = JSON.parse(text);
           msg = json.detail || json.message || msg;
-        } catch {
-          // JSON invalide
-        }
+        } catch {}
         throw new Error(msg);
       }
-
       let json;
       try {
         json = JSON.parse(text);
       } catch {
-        throw new Error('Réponse non valide du serveur.');
+        throw new Error('Réponse non valide du backend');
       }
-
-      if (!json.data) throw new Error('Données manquantes.');
+      if (!json.data) throw new Error('Données manquantes');
       setCommandes(json.data);
     } catch (e) {
       console.error('RAW BACKEND ERROR:', e);
@@ -100,10 +98,9 @@ export default function Commande() {
       return;
     }
     try {
-      const res = await fetch(
-        `https://cl-back.onrender.com/commande/cancel/${toCancel.numeroCommande}`,
-        { method: 'DELETE' }
-      );
+      const res = await fetch(`https://cl-back.onrender.com/commande/cancel/${toCancel.numeroCommande}`, {
+        method: 'DELETE',
+      });
       const text = await res.text();
       let success = false;
       try {
@@ -111,7 +108,7 @@ export default function Commande() {
       } catch {
         throw new Error(text);
       }
-      alert(success ? 'Commande annulée.' : 'Échec de l’annulation.');
+      alert(success ? 'Commande annulée.' : 'Echec de l’annulation.');
       fetchCommandes();
     } catch (e) {
       console.error(e);
@@ -278,12 +275,7 @@ export default function Commande() {
         ))}
       </Grid>
 
-      {/* Dialog d'annulation */}
-      <Dialog
-        open={openCancelDialog}
-        onClose={() => setOpenCancelDialog(false)}
-        fullScreen={fullScreen}
-      >
+      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)} fullScreen={fullScreen}>
         <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
           <TextField
@@ -310,13 +302,7 @@ export default function Commande() {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog zoom image */}
-      <Dialog
-        open={openImageDialog}
-        onClose={() => setOpenImageDialog(false)}
-        fullScreen={fullScreen}
-        onWheel={onWheel}
-      >
+      <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={onWheel}>
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
           <IconButton onClick={() => setOpenImageDialog(false)}>
             <CloseIcon />
