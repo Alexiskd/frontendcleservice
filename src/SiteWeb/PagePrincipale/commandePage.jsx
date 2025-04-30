@@ -11,6 +11,8 @@ const CommandePage = () => {
     const fetchCommandes = async () => {
       try {
         const response = await axios.get('https://cl-back.onrender.com/produit/cles?marque=FONTAINE');
+        
+        // Vérification que la réponse est un tableau
         if (Array.isArray(response.data)) {
           setCommandes(response.data);
         } else {
