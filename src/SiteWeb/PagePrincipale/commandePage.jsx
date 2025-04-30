@@ -14,6 +14,7 @@ import {
   Grid,
 } from "@mui/material";
 
+// Connexion au serveur backend via WebSocket
 const socket = io(import.meta.env.VITE_SERVER_URL);
 
 function CommandePage() {
@@ -26,15 +27,15 @@ function CommandePage() {
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
 
-      // Sécuriser la donnée reçue
-      const commandesSecurisees = Array.isArray(response.data)
+      // Protection contre données incorrectes
+      const commandesValides = Array.isArray(response.data)
         ? response.data.map((cmd) => ({
             ...cmd,
             produits: Array.isArray(cmd.produits) ? cmd.produits : [],
           }))
         : [];
 
-      setCommandes(commandesSecurisees);
+      setCommandes(commandesValides);
     } catch (error) {
       console.error("Erreur lors de la récupération des commandes :", error);
     } finally {
@@ -44,29 +45,26 @@ function CommandePage() {
 
   useEffect(() => {
     fetchCommandes();
+
     socket.on("commandeUpdated", fetchCommandes);
     return () => socket.off("commandeUpdated");
   }, []);
 
   const generatePDF = (commande) => {
     const doc = new jsPDF();
-    const logoImg = new Image();
-    logoImg.src = "/logo.png"; // le logo doit être dans /public/logo.png
+    const logo = new Image();
+    logo.src = "/logo.png"; // le logo doit exister dans /public/logo.png
 
-    logoImg.onload = () => {
-      doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
+    logo.onload = () => {
+      doc.addImage(logo, "PNG", 10, 10, 30, 30);
       doc.setFontSize(18);
       doc.text("Facture", 105, 20, null, null, "center");
 
       doc.setFontSize(12);
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
-      doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
+      doc.text(`Commande : ${commande._id}`, 14, 50);
 
-      const produits = Array.isArray(commande.produits)
-        ? commande.produits
-        : [];
-
-      const body = produits.map((produit) => [
+      const body = commande.produits.map((produit) => [
         produit.nom || "Produit",
         (produit.prix ?? 0).toFixed(2) + " €",
       ]);
@@ -86,8 +84,8 @@ function CommandePage() {
       doc.save(`facture-${commande._id}.pdf`);
     };
 
-    logoImg.onerror = () => {
-      alert("Erreur : logo introuvable.");
+    logo.onerror = () => {
+      alert("Erreur de chargement du logo.");
     };
   };
 
@@ -115,10 +113,9 @@ function CommandePage() {
                   </Typography>
                   <Typography variant="body2">Produits :</Typography>
                   <ul>
-                    {Array.isArray(commande.produits) &&
-                    commande.produits.length > 0 ? (
-                      commande.produits.map((produit, idx) => (
-                        <li key={idx}>{produit.nom}</li>
+                    {commande.produits.length > 0 ? (
+                      commande.produits.map((produit, index) => (
+                        <li key={index}>{produit.nom}</li>
                       ))
                     ) : (
                       <li>Aucun produit</li>
