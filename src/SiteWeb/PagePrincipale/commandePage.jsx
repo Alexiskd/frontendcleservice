@@ -1,4 +1,4 @@
-Nom d'article manquant dans l'URL recopie la composante Nom d'article manquant dans l'URL. pour .import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react'; 
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
