@@ -25,10 +25,19 @@ function CommandePage() {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
-      setCommandes(response.data);
-      setLoading(false);
+
+      // 🔐 sécurisation des produits dès la réception
+      const commandesAvecProduits = Array.isArray(response.data)
+        ? response.data.map((cmd) => ({
+            ...cmd,
+            produits: Array.isArray(cmd.produits) ? cmd.produits : [],
+          }))
+        : [];
+
+      setCommandes(commandesAvecProduits);
     } catch (error) {
       console.error("Erreur lors de la récupération des commandes :", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -36,19 +45,14 @@ function CommandePage() {
   useEffect(() => {
     fetchCommandes();
 
-    socket.on("commandeUpdated", () => {
-      fetchCommandes();
-    });
-
-    return () => {
-      socket.off("commandeUpdated");
-    };
+    socket.on("commandeUpdated", fetchCommandes);
+    return () => socket.off("commandeUpdated");
   }, []);
 
   const generatePDF = (commande) => {
     const doc = new jsPDF();
     const logoImg = new Image();
-    logoImg.src = "/logo.png"; // Le fichier logo.png doit être dans le dossier public
+    logoImg.src = "/logo.png"; // Doit être dans /public/logo.png
 
     logoImg.onload = () => {
       doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
@@ -59,9 +63,13 @@ function CommandePage() {
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 150, 10);
       doc.text(`Numéro de commande : ${commande._id}`, 14, 50);
 
-      const body = commande.produits.map((produit) => [
-        produit.nom,
-        produit.prix.toFixed(2) + " €",
+      const produits = Array.isArray(commande.produits)
+        ? commande.produits
+        : [];
+
+      const body = produits.map((produit) => [
+        produit.nom || "Produit",
+        (produit.prix ?? 0).toFixed(2) + " €",
       ]);
 
       doc.autoTable({
@@ -71,7 +79,7 @@ function CommandePage() {
       });
 
       doc.text(
-        `Total : ${commande.total.toFixed(2)} €`,
+        `Total : ${(commande.total ?? 0).toFixed(2)} €`,
         14,
         doc.lastAutoTable.finalY + 10
       );
@@ -85,6 +93,7 @@ function CommandePage() {
       <Typography variant="h4" align="center" gutterBottom>
         Commandes Payées
       </Typography>
+
       {loading ? (
         <Box display="flex" justifyContent="center" my={4}>
           <CircularProgress />
@@ -96,19 +105,21 @@ function CommandePage() {
               <Card>
                 <CardContent>
                   <Typography variant="h6">
-                    Commande #{commande._id.slice(-6)}
+                    Commande #{commande._id?.slice(-6)}
                   </Typography>
                   <Typography variant="body2">
-                    Total : {commande.total.toFixed(2)} €
+                    Total : {(commande.total ?? 0).toFixed(2)} €
                   </Typography>
-                  <Typography variant="body2">
-                    Produits :
-                    <ul>
-                      {commande.produits.map((produit, idx) => (
+                  <Typography variant="body2">Produits :</Typography>
+                  <ul>
+                    {Array.isArray(commande.produits) && commande.produits.length > 0 ? (
+                      commande.produits.map((produit, idx) => (
                         <li key={idx}>{produit.nom}</li>
-                      ))}
-                    </ul>
-                  </Typography>
+                      ))
+                    ) : (
+                      <li>Aucun produit</li>
+                    )}
+                  </ul>
                   <Button
                     variant="contained"
                     color="primary"
@@ -127,3 +138,4 @@ function CommandePage() {
 }
 
 export default CommandePage;
+
