@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
-  Container, Card, CardContent, CardActions, Typography,
-  Button, CircularProgress, Alert, Grid, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, FormControlLabel, Checkbox,
+  Container,
+  Card,
+  CardContent,
+  CardActions,
+  Typography,
+  Button,
+  CircularProgress,
+  Alert,
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControlLabel,
+  Checkbox,
   useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -21,8 +34,12 @@ const Commande = () => {
   const [cancellationReason, setCancellationReason] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    id: '', nom: '', ville: '', isCleAPasse: false,
-    hasCartePropriete: true, attestationPropriete: false,
+    id: '',
+    nom: '',
+    ville: '',
+    isCleAPasse: false,
+    hasCartePropriete: true,
+    attestationPropriete: false,
   });
 
   const theme = useTheme();
@@ -111,9 +128,8 @@ const Commande = () => {
 
   const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF();
-
     const logo = new Image();
-    logo.src = '/logo.png'; // doit être dans le dossier `public`
+    logo.src = '/logo.png'; // le fichier doit être dans /public/logo.png
 
     doc.addImage(logo, 'PNG', 15, 15, 32, 32);
     doc.text(`Facture pour ${commande.nom}`, 15, 60);
