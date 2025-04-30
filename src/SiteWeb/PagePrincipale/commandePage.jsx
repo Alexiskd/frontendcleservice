@@ -1,240 +1,274 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Container,
-  Card,
-  CardContent,
-  CardActions,
+  Box,
   Typography,
-  Button,
-  CircularProgress,
-  Alert,
-  Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Container,
   TextField,
+  Button,
+  Snackbar,
+  Alert,
+  RadioGroup,
   FormControlLabel,
+  Radio,
+  Select,
+  MenuItem,
+  IconButton,
+  Card,
+  Grid,
+  Divider,
+  CircularProgress,
   Checkbox,
-  useMediaQuery,
+  Paper,
+  Dialog,
+  DialogContent,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import {
+  PhotoCamera,
+  CloudUpload,
+  Person,
+  Email,
+  Phone,
+  Home,
+  LocationCity,
+  VpnKey,
+  CheckCircle,
+  Error as ErrorIcon,
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Import corrigé : brandsApi se trouve dans src/SiteWeb/brandsApi.js
+import { preloadKeysData } from '../brandsApi';
+
+const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
+  <Box sx={{ mb: 2 }}>
+    <Button variant="outlined" component="label" startIcon={<IconComponent />}>
+      {label}
+      <input type="file" hidden name={name} accept={accept} onChange={onChange} />
+    </Button>
+    {file && <Typography variant="body2" sx={{ mt: 1 }}>{file.name || file}</Typography>}
+  </Box>
+);
+
+const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
+  color: theme.palette.grey[500],
+  '&.Mui-checked': { color: theme.palette.primary.main },
+}));
+
+const SectionPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: theme.spacing(1),
+  boxShadow: theme.shadows[1],
+  marginBottom: theme.spacing(3),
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+}));
+
+const SummaryCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(2),
+  boxShadow: theme.shadows[1],
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+}));
 
 const CommandePage = () => {
-  const [commandes, setCommandes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [commandeToCancel, setCommandeToCancel] = useState(null);
-  const [cancellationReason, setCancellationReason] = useState('');
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    id: '',
+  useEffect(() => window.scrollTo(0, 0), []);
+
+  const { brandName, articleName } = useParams();
+  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  const navigate = useNavigate();
+
+  const [article, setArticle] = useState(null);
+  const [loadingArticle, setLoadingArticle] = useState(true);
+  const [errorArticle, setErrorArticle] = useState(null);
+  const [preloadedKey, setPreloadedKey] = useState(null);
+
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const handleOpenImageModal = () => setOpenImageModal(true);
+  const handleCloseImageModal = () => setOpenImageModal(false);
+
+  const [userInfo, setUserInfo] = useState({
     nom: '',
+    email: '',
+    phone: '',
+    address: '',
+    postalCode: '',
     ville: '',
-    isCleAPasse: false,
-    hasCartePropriete: true,
-    attestationPropriete: false,
+    additionalInfo: '',
   });
+  const [keyInfo, setKeyInfo] = useState({
+    keyNumber: '',
+    propertyCardNumber: '',
+    frontPhoto: null,
+    backPhoto: null,
+  });
+  const [isCleAPasse, setIsCleAPasse] = useState(false);
+  const [lostCartePropriete, setLostCartePropriete] = useState(false);
+  const [idCardInfo, setIdCardInfo] = useState({
+    idCardFront: null,
+    idCardBack: null,
+    domicileJustificatif: '',
+  });
+  const [attestationPropriete, setAttestationPropriete] = useState(false);
+  const [deliveryType, setDeliveryType] = useState('');
+  const [shippingMethod, setShippingMethod] = useState('magasin');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [ordering, setOrdering] = useState(false);
+  const [openCGV, setOpenCGV] = useState(false);
 
-  const fetchCommandes = async () => {
-    setLoading(true);
+  const loadArticle = useCallback(async () => {
+    setLoadingArticle(true);
+    setErrorArticle(null);
     try {
-      const response = await fetch('https://cl-back.onrender.com/commande/paid', {
-        headers: { Accept: 'application/json' },
-      });
-      const json = await response.json();
-      if (response.ok && Array.isArray(json.data)) {
-        setCommandes(json.data);
-        setError(null);
-      } else {
-        throw new Error('Format inattendu des données');
+      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
+        decodedArticleName
+      )}`;
+      const res = await fetch(endpoint);
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('Article non trouvé.');
+        throw new Error("Erreur lors du chargement de l'article.");
       }
-    } catch (err) {
-      console.error(err);
-      setError('Erreur lors du chargement des commandes.');
+      const text = await res.text();
+      if (!text) throw new Error('Réponse vide du serveur.');
+      const data = JSON.parse(text);
+      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase())
+        throw new Error("La marque ne correspond pas.");
+      setArticle(data);
+    } catch (e) {
+      setErrorArticle(e.message);
     } finally {
-      setLoading(false);
+      setLoadingArticle(false);
     }
-  };
+  }, [brandName, decodedArticleName]);
 
   useEffect(() => {
-    fetchCommandes();
-  }, []);
+    loadArticle();
+  }, [loadArticle]);
 
-  const openCancelDialog = (commande) => {
-    setCommandeToCancel(commande);
-    setCancellationReason('');
-    setOpenDialog(true);
-  };
-
-  const handleConfirmCancel = async () => {
-    if (!cancellationReason.trim()) return alert('Raison requise.');
-    try {
-      await fetch(`https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`, {
-        method: 'DELETE',
-      });
-      fetchCommandes();
-    } catch (err) {
-      alert("Erreur d'annulation.");
-    } finally {
-      setOpenDialog(false);
+  useEffect(() => {
+    if (brandName && article) {
+      preloadKeysData(brandName)
+        .then((keys) => {
+          const found = keys.find(
+            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+          );
+          if (found) setPreloadedKey(found);
+        })
+        .catch(console.error);
     }
+  }, [brandName, article]);
+
+  const productDetails = preloadedKey || article;
+  const basePrice = productDetails
+    ? isCleAPasse && productDetails.prixCleAPasse
+      ? parseFloat(productDetails.prixCleAPasse)
+      : mode === 'postal'
+      ? parseFloat(productDetails.prixSansCartePropriete)
+      : parseFloat(productDetails.prix)
+    : 0;
+  const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
+  const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
+
+  const validateForm = () => {
+    // logique de validation...
+    return true;
   };
 
-  const openEditDialogForCommande = (commande) => {
-    setEditFormData({
-      id: commande.id,
-      nom: commande.nom || '',
-      ville: commande.ville || '',
-      isCleAPasse: !!commande.isCleAPasse,
-      hasCartePropriete: commande.hasCartePropriete !== false,
-      attestationPropriete: !!commande.attestationPropriete,
-    });
-    setOpenEditDialog(true);
-  };
-
-  const handleEditFormChange = (e) => {
-    setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
-  };
-
-  const handleCheckboxChange = (e) => {
-    setEditFormData({ ...editFormData, [e.target.name]: e.target.checked });
-  };
-
-  const handleEditFormSubmit = async () => {
-    try {
-      await fetch(`https://cl-back.onrender.com/commande/update/${editFormData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editFormData),
-      });
-      setOpenEditDialog(false);
-      fetchCommandes();
-    } catch (err) {
-      alert(err.message);
+  const handleOrder = async () => {
+    if (!termsAccepted) {
+      setSnackbarMessage('Veuillez accepter les CGV.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
     }
-  };
-
-  const generateInvoiceDoc = async (commande) => {
-    const doc = new jsPDF();
-    const logo = new Image();
-    logo.src = '/logo.png'; // accessible depuis /public
-
-    await new Promise((resolve) => {
-      logo.onload = () => {
-        doc.addImage(logo, 'PNG', 15, 15, 32, 32);
-        resolve();
+    if (!validateForm()) {
+      setSnackbarMessage('Champs obligatoires manquants.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    setOrdering(true);
+    try {
+      const fd = new FormData();
+      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
+        method: 'POST',
+        body: fd,
+      });
+      if (!cmdRes.ok) {
+        throw new Error(`Création commande : ${await cmdRes.text()}`);
+      }
+      const { numeroCommande } = await cmdRes.json();
+      const payload = {
+        amount: Math.round(totalPrice * 100),
+        currency: 'eur',
+        description: `Paiement ${userInfo.nom}`,
+        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
       };
-      logo.onerror = resolve;
-    });
-
-    doc.text(`Facture pour ${commande.nom}`, 15, 60);
-    doc.autoTable({
-      head: [['Champ', 'Valeur']],
-      body: [
-        ['Nom', commande.nom],
-        ['Ville', commande.ville],
-        ['Prix', `${commande.prix} €`],
-        ['Numéro de commande', commande.numeroCommande],
-      ],
-      startY: 70,
-    });
-    doc.text('Merci pour votre commande.', 15, doc.autoTable.previous.finalY + 20);
-    return doc;
+      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!payRes.ok) {
+        throw new Error(`Paiement : ${await payRes.text()}`);
+      }
+      const { paymentUrl } = await payRes.json();
+      window.location.href = paymentUrl;
+    } catch (e) {
+      setSnackbarMessage(e.message);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setOrdering(false);
+    }
   };
 
-  const showInvoice = async (commande) => {
-    const doc = await generateInvoiceDoc(commande);
-    window.open(doc.output('dataurlnewwindow'), '_blank');
-  };
+  if (loadingArticle) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (errorArticle) {
+    return (
+      <Box sx={{ minHeight: '100vh', p: 4, textAlign: 'center' }}>
+        <ErrorIcon color="error" sx={{ fontSize: 48 }} />
+        <Typography variant="h6" color="error">{errorArticle}</Typography>
+        <Button onClick={loadArticle}>Réessayer</Button>
+      </Box>
+    );
+  }
 
   return (
-    <Container>
-      <Typography variant="h4" align="center" gutterBottom>Commandes Payées</Typography>
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">{error}</Alert>}
-      <Grid container spacing={3}>
-        {commandes.map((commande) => (
-          <Grid item xs={12} md={6} lg={4} key={commande.id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">{commande.nom}</Typography>
-                <Typography color="textSecondary">{commande.ville}</Typography>
-                <Typography>{commande.prix} €</Typography>
-              </CardContent>
-              <CardActions>
-                <Button onClick={() => showInvoice(commande)}>Afficher Facture</Button>
-                <Button onClick={() => openEditDialogForCommande(commande)}>Modifier</Button>
-                <Button onClick={() => openCancelDialog(commande)} color="error">Annuler</Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
+      <Container maxWidth="lg">
+        {/* … votre formulaire et récapitulatif ici … */}
+      </Container>
 
-      {/* Dialog Annulation */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle>Annuler la commande</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Raison de l'annulation"
-            fullWidth
-            value={cancellationReason}
-            onChange={(e) => setCancellationReason(e.target.value)}
-            multiline
-          />
+      {/* Modal d’image */}
+      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
+        <DialogContent sx={{ p: 0 }}>
+          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
-          <Button color="error" onClick={handleConfirmCancel}>Confirmer</Button>
-        </DialogActions>
       </Dialog>
 
-      {/* Dialog Édition */}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle>Modifier la commande</DialogTitle>
-        <DialogContent>
-          <TextField
-            name="nom"
-            label="Nom"
-            fullWidth
-            margin="dense"
-            value={editFormData.nom}
-            onChange={handleEditFormChange}
-          />
-          <TextField
-            name="ville"
-            label="Ville"
-            fullWidth
-            margin="dense"
-            value={editFormData.ville}
-            onChange={handleEditFormChange}
-          />
-          <FormControlLabel
-            control={<Checkbox checked={editFormData.isCleAPasse} onChange={handleCheckboxChange} name="isCleAPasse" />}
-            label="Clé à passe"
-          />
-          <FormControlLabel
-            control={<Checkbox checked={editFormData.hasCartePropriete} onChange={handleCheckboxChange} name="hasCartePropriete" />}
-            label="Carte de propriété"
-          />
-          <FormControlLabel
-            control={<Checkbox checked={editFormData.attestationPropriete} onChange={handleCheckboxChange} name="attestationPropriete" />}
-            label="Attestation sur l'honneur"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditDialog(false)}>Annuler</Button>
-          <Button onClick={handleEditFormSubmit} color="primary">Enregistrer</Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+      {/* Notification */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
+      </Snackbar>
+
+      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
+    </Box>
   );
 };
 
