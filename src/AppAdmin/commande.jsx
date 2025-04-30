@@ -128,7 +128,13 @@ const Commande = () => {
 
   const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF();
-    doc.addImage('/logo.png', 'PNG', 15, 15, 32, 32); // Assure-toi que logo.png est dans /public
+    // Utiliser une URL publique, supposant que le fichier est dans /public/logo.png
+    const logoUrl = '/logo.png';
+
+    const img = new Image();
+    img.src = logoUrl;
+
+    doc.addImage(img, 'PNG', 15, 15, 32, 32);
     doc.text(`Facture pour ${commande.nom}`, 15, 60);
     doc.autoTable({
       head: [['Champ', 'Valeur']],
