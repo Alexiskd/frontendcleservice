@@ -126,12 +126,19 @@ const Commande = () => {
     }
   };
 
-  const generateInvoiceDoc = (commande) => {
+  const generateInvoiceDoc = async (commande) => {
     const doc = new jsPDF();
     const logo = new Image();
-    logo.src = '/logo.png'; // le fichier doit être dans /public/logo.png
+    logo.src = '/logo.png'; // Doit être placé dans le dossier public/
 
-    doc.addImage(logo, 'PNG', 15, 15, 32, 32);
+    await new Promise((resolve) => {
+      logo.onload = () => {
+        doc.addImage(logo, 'PNG', 15, 15, 32, 32);
+        resolve();
+      };
+      logo.onerror = resolve; // continue même si le logo échoue à se charger
+    });
+
     doc.text(`Facture pour ${commande.nom}`, 15, 60);
     doc.autoTable({
       head: [['Champ', 'Valeur']],
@@ -147,8 +154,8 @@ const Commande = () => {
     return doc;
   };
 
-  const showInvoice = (commande) => {
-    const doc = generateInvoiceDoc(commande);
+  const showInvoice = async (commande) => {
+    const doc = await generateInvoiceDoc(commande);
     window.open(doc.output('dataurlnewwindow'), '_blank');
   };
 
