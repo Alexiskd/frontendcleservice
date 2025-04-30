@@ -46,7 +46,7 @@ export default function Commande() {
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const decodeImage = (img) =>
-    img?.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
+    img?.startsWith('data:') ? img : data:image/jpeg;base64,${img};
 
   const fetchCommandes = async () => {
     setLoading(true);
@@ -56,7 +56,7 @@ export default function Commande() {
       const text = await res.text();
 
       if (!res.ok) {
-        let msg = `Status ${res.status}`;
+        let msg = Status ${res.status};
         try {
           const json = JSON.parse(text);
           msg = json.detail || json.message || msg;
@@ -70,7 +70,7 @@ export default function Commande() {
       setCommandes(data);
     } catch (e) {
       console.error('RAW BACKEND ERROR:', e);
-      setError(`Erreur lors du chargement des commandes : ${e.message}`);
+      setError(Erreur lors du chargement des commandes : ${e.message});
       setCommandes([]);
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export default function Commande() {
     }
     try {
       const res = await fetch(
-        `https://cl-back.onrender.com/commande/cancel/${toCancel.numeroCommande}`,
+        https://cl-back.onrender.com/commande/cancel/${toCancel.numeroCommande},
         { method: 'DELETE' }
       );
       const text = await res.text();
@@ -112,7 +112,7 @@ export default function Commande() {
       fetchCommandes();
     } catch (e) {
       console.error(e);
-      alert(`Erreur réseau : ${e.message}`);
+      alert(Erreur réseau : ${e.message});
     } finally {
       setOpenCancelDialog(false);
     }
@@ -153,8 +153,8 @@ export default function Commande() {
     [
       cmd.nom,
       cmd.adressePostale,
-      `Tél : ${cmd.telephone}`,
-      `Email : ${cmd.adresseMail}`,
+      Tél : ${cmd.telephone},
+      Email : ${cmd.adresseMail},
     ]
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
@@ -170,9 +170,9 @@ export default function Commande() {
         [
           cmd.produitCommande,
           cmd.quantity,
-          `${(prix / cmd.quantity).toFixed(2)} €`,
-          `${port.toFixed(2)} €`,
-          `${prix.toFixed(2)} €`,
+          ${(prix / cmd.quantity).toFixed(2)} €,
+          ${port.toFixed(2)} €,
+          ${prix.toFixed(2)} €,
         ],
       ],
       theme: 'grid',
@@ -241,7 +241,7 @@ export default function Commande() {
                 <Button
                   variant="outlined"
                   onClick={() =>
-                    generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)
+                    generatePdf(cmd).save(facture_${cmd.numeroCommande}.pdf)
                   }
                 >
                   Télécharger
@@ -319,7 +319,7 @@ export default function Commande() {
             sx={{
               maxWidth: '100%',
               maxHeight: '80vh',
-              transform: `scale(${zoom})`,
+              transform: scale(${zoom}),
               transition: 'transform 0.2s',
             }}
           />
