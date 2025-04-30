@@ -10,24 +10,16 @@ import {
   CircularProgress,
   Alert,
   Grid,
-  Box,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
   TextField,
   FormControlLabel,
   Checkbox,
-  Divider,
   useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import CancelIcon from '@mui/icons-material/Cancel';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
-import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -40,9 +32,6 @@ const Commande = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [commandeToCancel, setCommandeToCancel] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [openImageDialog, setOpenImageDialog] = useState(false);
-  const [zoom, setZoom] = useState(1);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState({
     id: '',
@@ -55,9 +44,6 @@ const Commande = () => {
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const decodeImage = (img) =>
-    img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
   const fetchCommandes = async () => {
     setLoading(true);
@@ -106,17 +92,6 @@ const Commande = () => {
     }
   };
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
-    setZoom(1);
-    setOpenImageDialog(true);
-  };
-
-  const handleWheel = (e) => {
-    e.preventDefault();
-    setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
-  };
-
   const openEditDialogForCommande = (commande) => {
     setEditFormData({
       id: commande.id,
@@ -153,7 +128,7 @@ const Commande = () => {
 
   const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF();
-    doc.addImage('/logo.png', 'PNG', 15, 15, 32, 32);
+    doc.addImage('/logo.png', 'PNG', 15, 15, 32, 32); // Assure-toi que logo.png est dans /public
     doc.text(`Facture pour ${commande.nom}`, 15, 60);
     doc.autoTable({
       head: [['Champ', 'Valeur']],
@@ -197,8 +172,84 @@ const Commande = () => {
           </Grid>
         ))}
       </Grid>
+
+      {/* Dialog Annulation */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen={fullScreen}>
+        <DialogTitle>Annuler la commande</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Raison de l'annulation"
+            fullWidth
+            value={cancellationReason}
+            onChange={(e) => setCancellationReason(e.target.value)}
+            multiline
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
+          <Button color="error" onClick={handleConfirmCancel}>Confirmer</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog Modification */}
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullScreen={fullScreen}>
+        <DialogTitle>Modifier la commande</DialogTitle>
+        <DialogContent>
+          <TextField
+            name="nom"
+            label="Nom"
+            fullWidth
+            margin="dense"
+            value={editFormData.nom}
+            onChange={handleEditFormChange}
+          />
+          <TextField
+            name="ville"
+            label="Ville"
+            fullWidth
+            margin="dense"
+            value={editFormData.ville}
+            onChange={handleEditFormChange}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={editFormData.isCleAPasse}
+                onChange={handleCheckboxChange}
+                name="isCleAPasse"
+              />
+            }
+            label="Clé à passe"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={editFormData.hasCartePropriete}
+                onChange={handleCheckboxChange}
+                name="hasCartePropriete"
+              />
+            }
+            label="Carte de propriété"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={editFormData.attestationPropriete}
+                onChange={handleCheckboxChange}
+                name="attestationPropriete"
+              />
+            }
+            label="Attestation sur l'honneur"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)}>Annuler</Button>
+          <Button onClick={handleEditFormSubmit} color="primary">Enregistrer</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
 
 export default Commande;
+
