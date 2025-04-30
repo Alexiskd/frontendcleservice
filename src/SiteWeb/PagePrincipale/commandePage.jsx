@@ -14,6 +14,7 @@ import {
   Grid,
 } from "@mui/material";
 
+// Initialise la connexion WebSocket
 const socket = io(import.meta.env.VITE_SERVER_URL);
 
 function CommandePage() {
@@ -26,15 +27,15 @@ function CommandePage() {
         `${import.meta.env.VITE_SERVER_URL}/commandes/payees`
       );
 
-      // 🔐 sécurisation des produits dès la réception
-      const commandesAvecProduits = Array.isArray(response.data)
+      // Sécurisation des données reçues
+      const safeCommandes = Array.isArray(response.data)
         ? response.data.map((cmd) => ({
             ...cmd,
             produits: Array.isArray(cmd.produits) ? cmd.produits : [],
           }))
         : [];
 
-      setCommandes(commandesAvecProduits);
+      setCommandes(safeCommandes);
     } catch (error) {
       console.error("Erreur lors de la récupération des commandes :", error);
     } finally {
@@ -44,18 +45,17 @@ function CommandePage() {
 
   useEffect(() => {
     fetchCommandes();
-
     socket.on("commandeUpdated", fetchCommandes);
     return () => socket.off("commandeUpdated");
   }, []);
 
   const generatePDF = (commande) => {
     const doc = new jsPDF();
-    const logoImg = new Image();
-    logoImg.src = "/logo.png"; // Doit être dans /public/logo.png
+    const logo = new Image();
+    logo.src = "/logo.png"; // doit être dans le dossier public/
 
-    logoImg.onload = () => {
-      doc.addImage(logoImg, "PNG", 10, 10, 30, 30);
+    logo.onload = () => {
+      doc.addImage(logo, "PNG", 10, 10, 30, 30);
       doc.setFontSize(18);
       doc.text("Facture", 105, 20, null, null, "center");
 
@@ -75,7 +75,7 @@ function CommandePage() {
       doc.autoTable({
         startY: 60,
         head: [["Produit", "Prix"]],
-        body: body,
+        body,
       });
 
       doc.text(
@@ -85,6 +85,10 @@ function CommandePage() {
       );
 
       doc.save(`facture-${commande._id}.pdf`);
+    };
+
+    logo.onerror = () => {
+      alert("Le logo n'a pas pu être chargé.");
     };
   };
 
@@ -112,7 +116,8 @@ function CommandePage() {
                   </Typography>
                   <Typography variant="body2">Produits :</Typography>
                   <ul>
-                    {Array.isArray(commande.produits) && commande.produits.length > 0 ? (
+                    {Array.isArray(commande.produits) &&
+                    commande.produits.length > 0 ? (
                       commande.produits.map((produit, idx) => (
                         <li key={idx}>{produit.nom}</li>
                       ))
@@ -138,4 +143,3 @@ function CommandePage() {
 }
 
 export default CommandePage;
-
