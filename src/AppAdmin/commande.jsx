@@ -129,27 +129,26 @@ const Commande = () => {
   const generateInvoiceDoc = async (commande) => {
     const doc = new jsPDF();
     const logo = new Image();
-    logo.src = '/logo.png'; // Doit être placé dans le dossier public/
+    logo.src = '/logo.png';
 
     await new Promise((resolve) => {
       logo.onload = () => {
         doc.addImage(logo, 'PNG', 15, 15, 32, 32);
         resolve();
       };
-      logo.onerror = resolve; // continue même si le logo échoue à se charger
+      logo.onerror = resolve;
     });
 
     doc.text(`Facture pour ${commande.nom}`, 15, 60);
+
+    const produits = commande.produits || [];
+
     doc.autoTable({
-      head: [['Champ', 'Valeur']],
-      body: [
-        ['Nom', commande.nom],
-        ['Ville', commande.ville],
-        ['Prix', `${commande.prix} €`],
-        ['Numéro de commande', commande.numeroCommande],
-      ],
+      head: [['Produit', 'Référence', 'Prix']],
+      body: produits.map((p) => [p.nom || '-', p.reference || '-', `${p.prix ?? 0} €`]),
       startY: 70,
     });
+
     doc.text('Merci pour votre commande.', 15, doc.autoTable.previous.finalY + 20);
     return doc;
   };
@@ -171,7 +170,19 @@ const Commande = () => {
               <CardContent>
                 <Typography variant="h6">{commande.nom}</Typography>
                 <Typography color="textSecondary">{commande.ville}</Typography>
-                <Typography>{commande.prix} €</Typography>
+                <Typography>Prix total : {commande.prix} €</Typography>
+                {commande.produits?.length > 0 && (
+                  <>
+                    <Typography variant="subtitle1" sx={{ mt: 2 }}>Produits :</Typography>
+                    <ul>
+                      {commande.produits.map((produit, index) => (
+                        <li key={index}>
+                          {produit.nom} — {produit.reference} — {produit.prix} €
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </CardContent>
               <CardActions>
                 <Button onClick={() => showInvoice(commande)}>Afficher Facture</Button>
