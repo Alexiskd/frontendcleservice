@@ -13,7 +13,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 const socket = io('https://cl-back.onrender.com');
-const logoUrl = '/logo.png';
+const logoUrl = '/logo.png'; // Image placée dans /public/logo.png
 
 export default function Commande() {
   const [commandes, setCommandes] = useState([]);
@@ -29,7 +29,8 @@ export default function Commande() {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const decodeImage = (img) => img?.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
+  const decodeImage = (img) =>
+    img?.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
   const fetchCommandes = async () => {
     setLoading(true);
@@ -42,7 +43,7 @@ export default function Commande() {
         try {
           const json = JSON.parse(text);
           msg = json.detail || json.message || msg;
-        } catch { /* ignore */ }
+        } catch {}
         throw new Error(msg);
       }
       const { data } = JSON.parse(text);
@@ -117,14 +118,17 @@ export default function Commande() {
       'Tél : 01 42 67 47 28',
       'contact@cleservice.com'
     ], m + 37, m + 12, { lineHeightFactor: 1.5 });
+
     doc.setTextColor(0).setFontSize(8);
     const rightX = 210 - m;
     [cmd.nom, cmd.adressePostale, `Tél : ${cmd.telephone}`, `Email : ${cmd.adresseMail}`]
       .filter(Boolean)
       .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
+
     const yStart = m + 45;
     const prix = parseFloat(cmd.prix);
     const port = cmd.shippingMethod === 'expedition' ? 8 : 0;
+
     doc.autoTable({
       startY: yStart,
       head: [['Produit', 'Qté', 'PU', 'Port', 'TTC']],
@@ -139,6 +143,7 @@ export default function Commande() {
       headStyles: { fillColor: [27, 94, 32], textColor: 255 },
       margin: { left: m, right: m }
     });
+
     return doc;
   };
 
@@ -162,38 +167,26 @@ export default function Commande() {
                 <Typography variant="h6">{cmd.produitCommande}</Typography>
                 <Box sx={{ display: 'flex', gap: 2, my: 1 }}>
                   {cmd.urlPhotoRecto && (
-                    <Box
-                      component="img"
-                      src={decodeImage(cmd.urlPhotoRecto)}
-                      sx={{ width: 80, height: 80, cursor: 'pointer' }}
-                      onClick={() => openImage(cmd.urlPhotoRecto)}
-                    />
+                    <Box component="img" src={decodeImage(cmd.urlPhotoRecto)} sx={{ width: 80, height: 80, cursor: 'pointer' }} onClick={() => openImage(cmd.urlPhotoRecto)} />
                   )}
                   {cmd.urlPhotoVerso && (
-                    <Box
-                      component="img"
-                      src={decodeImage(cmd.urlPhotoVerso)}
-                      sx={{ width: 80, height: 80, cursor: 'pointer' }}
-                      onClick={() => openImage(cmd.urlPhotoVerso)}
-                    />
+                    <Box component="img" src={decodeImage(cmd.urlPhotoVerso)} sx={{ width: 80, height: 80, cursor: 'pointer' }} onClick={() => openImage(cmd.urlPhotoVerso)} />
                   )}
                 </Box>
                 <Typography>Prix : {parseFloat(cmd.prix).toFixed(2)} €</Typography>
               </CardContent>
               <CardActions>
-                <Button variant="contained" onClick={() =>
-                  window.open(generatePdf(cmd).output('dataurlnewwindow'))}>
+                <Button variant="contained" onClick={() => window.open(generatePdf(cmd).output('dataurlnewwindow'))}>
                   Voir Facture
                 </Button>
-                <Button variant="outlined" onClick={() =>
-                  generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)}>
+                <Button variant="outlined" onClick={() => generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)}>
                   Télécharger
                 </Button>
-                <Button variant="outlined" onClick={() =>
-                  (function (d) {
-                    d.autoPrint();
-                    window.open(d.output('bloburl'));
-                  })(generatePdf(cmd))}>
+                <Button variant="outlined" onClick={() => {
+                  const d = generatePdf(cmd);
+                  d.autoPrint();
+                  window.open(d.output('bloburl'));
+                }}>
                   Imprimer
                 </Button>
                 <Button color="error" startIcon={<CancelIcon />} onClick={() => openCancel(cmd)}>
@@ -205,7 +198,7 @@ export default function Commande() {
         ))}
       </Grid>
 
-      {/* Dialogs */}
+      {/* Cancel Dialog */}
       <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)} fullScreen={fullScreen}>
         <DialogTitle>Annuler la commande</DialogTitle>
         <DialogContent>
@@ -228,6 +221,7 @@ export default function Commande() {
         </DialogActions>
       </Dialog>
 
+      {/* Image Dialog */}
       <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={onWheel}>
         <DialogActions sx={{ justifyContent: 'flex-end', p: 1 }}>
           <IconButton onClick={() => setOpenImageDialog(false)}>
