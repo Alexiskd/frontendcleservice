@@ -38,7 +38,7 @@ const CommandePage = () => {
     }
 
     // Construction de l'URL de l'API pour récupérer les informations du produit
-    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-brand-ref?brand=${encodeURIComponent(brand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode || '')}`;
+    const apiUrl = https://cl-back.onrender.com/produit/cles/by-brand-ref?brand=${encodeURIComponent(brand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode || '')};
     console.log("URL API construite :", apiUrl);
 
     fetch(apiUrl)
