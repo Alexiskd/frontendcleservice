@@ -166,9 +166,9 @@ const CommandePage = () => {
       try {
         setLoadingArticle(true);
         setErrorArticle(null);
-        const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
+        const endpoint = https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
           decodedArticleName
-        )}`;
+        )};
         const response = await fetch(endpoint);
         if (!response.ok) {
           if (response.status === 404) throw new Error('Article non trouvé.');
@@ -331,7 +331,7 @@ const CommandePage = () => {
       });
       if (!commandeResponse.ok) {
         const errorText = await commandeResponse.text();
-        throw new Error(`Erreur lors de la création de la commande : ${errorText}`);
+        throw new Error(Erreur lors de la création de la commande : ${errorText});
       }
       const commandeResult = await commandeResponse.json();
       const { numeroCommande } = commandeResult;
@@ -340,10 +340,10 @@ const CommandePage = () => {
         amount: totalPrice * 100,
         currency: 'eur',
         description: article
-          ? `Veuillez procéder au paiement pour ${userInfo.nom}`
+          ? Veuillez procéder au paiement pour ${userInfo.nom}
           : 'Veuillez procéder au paiement',
-        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
+        success_url: https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande},
+        cancel_url: https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande},
       };
 
       const paymentResponse = await fetch('https://cl-back.onrender.com/stripe/create', {
@@ -353,12 +353,12 @@ const CommandePage = () => {
       });
       if (!paymentResponse.ok) {
         const errorText = await paymentResponse.text();
-        throw new Error(`Erreur lors de la création de la page de paiement : ${errorText}`);
+        throw new Error(Erreur lors de la création de la page de paiement : ${errorText});
       }
       const paymentResult = await paymentResponse.json();
       window.location.href = paymentResult.paymentUrl;
     } catch (error) {
-      setSnackbarMessage(`Erreur : ${error.message}`);
+      setSnackbarMessage(Erreur : ${error.message});
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       setOrdering(false);
@@ -850,7 +850,7 @@ const CommandePage = () => {
                     ? "Frais d'expédition"
                     : "Récupération en magasin"}
                 </Typography>
-                <Typography variant="body2">{`${shippingMethod === 'expedition' ? 8 : 0} €`}</Typography>
+                <Typography variant="body2">{${shippingMethod === 'expedition' ? 8 : 0} €}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', my: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
