@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 const CommandePage = () => {
-  // Extraction du paramètre "nom" dans l'URL (par exemple : /commande/:nom)
-  const { nom } = useParams();
+  // Extraction des paramètres depuis l'URL
+  const { brand, reference, name: rawName } = useParams();
+  // Nettoyage de la valeur du paramètre "name"
+  const name = rawName ? rawName.trim() : '';
+  
+  // Extraction du paramètre "mode" depuis la query string, ex: ?mode=numero
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+
   const [produit, setProduit] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fonction pour valider une Data URI correspondant à un format d'image autorisé (png, jpeg/jpg ou gif)
+  // Fonction pour valider qu'une Data URI correspond à une image autorisée (png, jpeg/jpg ou gif)
   const isValidDataUri = (url) => {
     const regex = /^data:image\/(png|jpe?g|gif);base64,/;
     return regex.test(url);
   };
 
-  // Vérifie que l'URL d'image n'est pas vide et commence par "http" ou correspond à un Data URI valide
+  // Vérifie que l'URL d'image n'est pas vide et qu'elle commence par "http" ou correspond à une Data URI valide
   const isValidImageUrl = (url) => {
     return (
       typeof url === 'string' &&
@@ -23,43 +30,42 @@ const CommandePage = () => {
   };
 
   useEffect(() => {
-    const fetchProduit = async () => {
-      console.log('Paramètre "nom" reçu :', nom);
-      // Si le paramètre "nom" est manquant ou vide, on affiche une erreur et on stoppe l'exécution
-      if (!nom || nom.trim() === '') {
-        setError("Le nom du produit n'est pas fourni.");
-        return;
-      }
+    console.log('Paramètres reçus :', { brand, reference, name, mode });
+    // Vérifier que tous les paramètres requis sont présents
+    if (!brand || !reference || !name) {
+      setError("Les paramètres requis ne sont pas fournis.");
+      return;
+    }
 
-      // Construction de l'URL de l'API pour récupérer les infos de la clé, en encodant le paramètre "nom"
-      const apiUrl = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(nom)}`;
+    // Construction de l'URL de l'API pour récupérer les informations du produit
+    const apiUrl = `https://cl-back.onrender.com/produit/cles/by-brand-ref?brand=${encodeURIComponent(brand)}&reference=${encodeURIComponent(reference)}&name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode || '')}`;
+    console.log("URL API construite :", apiUrl);
 
-      try {
-        const res = await fetch(apiUrl);
+    fetch(apiUrl)
+      .then((res) => {
         if (!res.ok) {
           throw new Error("Erreur lors de la récupération des informations de la clé.");
         }
-        const data = await res.json();
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Données récupérées :", data);
         setProduit(data);
-      } catch (err) {
+      })
+      .catch((err) => {
+        console.error("Erreur lors du fetch :", err);
         setError(err.message);
-      }
-    };
+      });
+  }, [brand, reference, name, mode]);
 
-    fetchProduit();
-  }, [nom]);
-
-  // Affichage d'un message d'erreur le cas échéant
   if (error) {
     return <div>Erreur : {error}</div>;
   }
 
-  // Affichage d'un indicateur de chargement en attendant la réponse de l'API
   if (!produit) {
     return <div>Chargement...</div>;
   }
 
-  // Rendu final des informations du produit
   return (
     <div>
       <h1>Détails de la clé</h1>
