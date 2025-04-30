@@ -1,22 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
-  Container,
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  Button,
-  CircularProgress,
-  Alert,
-  Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControlLabel,
-  Checkbox,
+  Container, Card, CardContent, CardActions, Typography,
+  Button, CircularProgress, Alert, Grid, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField, FormControlLabel, Checkbox,
   useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -34,12 +21,8 @@ const Commande = () => {
   const [cancellationReason, setCancellationReason] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    id: '',
-    nom: '',
-    ville: '',
-    isCleAPasse: false,
-    hasCartePropriete: true,
-    attestationPropriete: false,
+    id: '', nom: '', ville: '', isCleAPasse: false,
+    hasCartePropriete: true, attestationPropriete: false,
   });
 
   const theme = useTheme();
@@ -128,13 +111,11 @@ const Commande = () => {
 
   const generateInvoiceDoc = (commande) => {
     const doc = new jsPDF();
-    // Utiliser une URL publique, supposant que le fichier est dans /public/logo.png
-    const logoUrl = '/logo.png';
 
-    const img = new Image();
-    img.src = logoUrl;
+    const logo = new Image();
+    logo.src = '/logo.png'; // doit être dans le dossier `public`
 
-    doc.addImage(img, 'PNG', 15, 15, 32, 32);
+    doc.addImage(logo, 'PNG', 15, 15, 32, 32);
     doc.text(`Facture pour ${commande.nom}`, 15, 60);
     doc.autoTable({
       head: [['Champ', 'Valeur']],
@@ -197,7 +178,7 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog Modification */}
+      {/* Dialog Édition */}
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullScreen={fullScreen}>
         <DialogTitle>Modifier la commande</DialogTitle>
         <DialogContent>
@@ -218,33 +199,15 @@ const Commande = () => {
             onChange={handleEditFormChange}
           />
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={editFormData.isCleAPasse}
-                onChange={handleCheckboxChange}
-                name="isCleAPasse"
-              />
-            }
+            control={<Checkbox checked={editFormData.isCleAPasse} onChange={handleCheckboxChange} name="isCleAPasse" />}
             label="Clé à passe"
           />
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={editFormData.hasCartePropriete}
-                onChange={handleCheckboxChange}
-                name="hasCartePropriete"
-              />
-            }
+            control={<Checkbox checked={editFormData.hasCartePropriete} onChange={handleCheckboxChange} name="hasCartePropriete" />}
             label="Carte de propriété"
           />
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={editFormData.attestationPropriete}
-                onChange={handleCheckboxChange}
-                name="attestationPropriete"
-              />
-            }
+            control={<Checkbox checked={editFormData.attestationPropriete} onChange={handleCheckboxChange} name="attestationPropriete" />}
             label="Attestation sur l'honneur"
           />
         </DialogContent>
