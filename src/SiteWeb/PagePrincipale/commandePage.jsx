@@ -1,274 +1,350 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import io from 'socket.io-client';
 import {
-  Box,
-  Typography,
   Container,
-  TextField,
-  Button,
-  Snackbar,
-  Alert,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Select,
-  MenuItem,
-  IconButton,
   Card,
-  Grid,
-  Divider,
+  CardContent,
+  CardActions,
+  Typography,
+  Button,
   CircularProgress,
-  Checkbox,
-  Paper,
+  Alert,
+  Grid,
+  Box,
   Dialog,
+  DialogTitle,
   DialogContent,
+  DialogActions,
+  IconButton,
+  TextField,
+  Divider,
+  useMediaQuery,
 } from '@mui/material';
-import {
-  PhotoCamera,
-  CloudUpload,
-  Person,
-  Email,
-  Phone,
-  Home,
-  LocationCity,
-  VpnKey,
-  CheckCircle,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
-// Import corrigé : brandsApi se trouve dans src/SiteWeb/brandsApi.js
-import { preloadKeysData } from '../brandsApi';
+import { useTheme } from '@mui/material/styles';
+import CancelIcon from '@mui/icons-material/Cancel';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CloseIcon from '@mui/icons-material/Close';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import logo from './logo.png';
 
-const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
-  <Box sx={{ mb: 2 }}>
-    <Button variant="outlined" component="label" startIcon={<IconComponent />}>
-      {label}
-      <input type="file" hidden name={name} accept={accept} onChange={onChange} />
-    </Button>
-    {file && <Typography variant="body2" sx={{ mt: 1 }}>{file.name || file}</Typography>}
-  </Box>
-);
-
-const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
-  color: theme.palette.grey[500],
-  '&.Mui-checked': { color: theme.palette.primary.main },
-}));
-
-const SectionPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: theme.spacing(1),
-  boxShadow: theme.shadows[1],
-  marginBottom: theme.spacing(3),
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-}));
-
-const SummaryCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(2),
-  boxShadow: theme.shadows[1],
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-}));
+const socket = io('https://cl-back.onrender.com');
 
 const CommandePage = () => {
-  useEffect(() => window.scrollTo(0, 0), []);
+  const [commandes, setCommandes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [commandeToCancel, setCommandeToCancel] = useState(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
-  const { brandName, articleName } = useParams();
-  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
-  const [searchParams] = useSearchParams();
-  const mode = searchParams.get('mode');
-  const navigate = useNavigate();
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [article, setArticle] = useState(null);
-  const [loadingArticle, setLoadingArticle] = useState(true);
-  const [errorArticle, setErrorArticle] = useState(null);
-  const [preloadedKey, setPreloadedKey] = useState(null);
+  const decodeImage = img =>
+    img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
 
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const handleOpenImageModal = () => setOpenImageModal(true);
-  const handleCloseImageModal = () => setOpenImageModal(false);
-
-  const [userInfo, setUserInfo] = useState({
-    nom: '',
-    email: '',
-    phone: '',
-    address: '',
-    postalCode: '',
-    ville: '',
-    additionalInfo: '',
-  });
-  const [keyInfo, setKeyInfo] = useState({
-    keyNumber: '',
-    propertyCardNumber: '',
-    frontPhoto: null,
-    backPhoto: null,
-  });
-  const [isCleAPasse, setIsCleAPasse] = useState(false);
-  const [lostCartePropriete, setLostCartePropriete] = useState(false);
-  const [idCardInfo, setIdCardInfo] = useState({
-    idCardFront: null,
-    idCardBack: null,
-    domicileJustificatif: '',
-  });
-  const [attestationPropriete, setAttestationPropriete] = useState(false);
-  const [deliveryType, setDeliveryType] = useState('');
-  const [shippingMethod, setShippingMethod] = useState('magasin');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [ordering, setOrdering] = useState(false);
-  const [openCGV, setOpenCGV] = useState(false);
-
-  const loadArticle = useCallback(async () => {
-    setLoadingArticle(true);
-    setErrorArticle(null);
+  const fetchCommandes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
-        decodedArticleName
-      )}`;
-      const res = await fetch(endpoint);
-      if (!res.ok) {
-        if (res.status === 404) throw new Error('Article non trouvé.');
-        throw new Error("Erreur lors du chargement de l'article.");
+      const response = await fetch('https://cl-back.onrender.com/commande/paid', {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        if (response.status === 500) {
+          throw new Error('Erreur interne du serveur. Veuillez réessayer plus tard.');
+        }
+        throw new Error(`Erreur (status ${response.status})`);
       }
-      const text = await res.text();
-      if (!text) throw new Error('Réponse vide du serveur.');
-      const data = JSON.parse(text);
-      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase())
-        throw new Error("La marque ne correspond pas.");
-      setArticle(data);
-    } catch (e) {
-      setErrorArticle(e.message);
+      const json = await response.json();
+      setCommandes(Array.isArray(json.data) ? json.data : []);
+    } catch (err) {
+      setError(err.message);
     } finally {
-      setLoadingArticle(false);
+      setLoading(false);
     }
-  }, [brandName, decodedArticleName]);
+  }, []);
 
   useEffect(() => {
-    loadArticle();
-  }, [loadArticle]);
+    fetchCommandes();
+    socket.on('commandeUpdate', fetchCommandes);
+    return () => socket.off('commandeUpdate');
+  }, [fetchCommandes]);
 
-  useEffect(() => {
-    if (brandName && article) {
-      preloadKeysData(brandName)
-        .then((keys) => {
-          const found = keys.find(
-            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
-          );
-          if (found) setPreloadedKey(found);
-        })
-        .catch(console.error);
-    }
-  }, [brandName, article]);
-
-  const productDetails = preloadedKey || article;
-  const basePrice = productDetails
-    ? isCleAPasse && productDetails.prixCleAPasse
-      ? parseFloat(productDetails.prixCleAPasse)
-      : mode === 'postal'
-      ? parseFloat(productDetails.prixSansCartePropriete)
-      : parseFloat(productDetails.prix)
-    : 0;
-  const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
-  const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
-
-  const validateForm = () => {
-    // logique de validation...
-    return true;
+  const openCancelDialog = commande => {
+    setCommandeToCancel(commande);
+    setCancellationReason('');
+    setOpenDialog(true);
   };
 
-  const handleOrder = async () => {
-    if (!termsAccepted) {
-      setSnackbarMessage('Veuillez accepter les CGV.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
+  const handleConfirmCancel = async () => {
+    if (!commandeToCancel || !cancellationReason.trim()) {
+      return alert("Veuillez saisir une raison d'annulation.");
     }
-    if (!validateForm()) {
-      setSnackbarMessage('Champs obligatoires manquants.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
-    }
-    setOrdering(true);
     try {
-      const fd = new FormData();
-      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
-        method: 'POST',
-        body: fd,
-      });
-      if (!cmdRes.ok) {
-        throw new Error(`Création commande : ${await cmdRes.text()}`);
-      }
-      const { numeroCommande } = await cmdRes.json();
-      const payload = {
-        amount: Math.round(totalPrice * 100),
-        currency: 'eur',
-        description: `Paiement ${userInfo.nom}`,
-        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
-        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
-      };
-      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!payRes.ok) {
-        throw new Error(`Paiement : ${await payRes.text()}`);
-      }
-      const { paymentUrl } = await payRes.json();
-      window.location.href = paymentUrl;
-    } catch (e) {
-      setSnackbarMessage(e.message);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      setOrdering(false);
+      const resp = await fetch(
+        `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
+        { method: 'DELETE', headers: { Accept: 'application/json' } }
+      );
+      const data = await resp.json();
+      alert(data.success ? 'Commande annulée.' : 'Erreur lors de l\'annulation.');
+      fetchCommandes();
+    } catch {
+      alert('Erreur lors de l\'annulation.');
+    } finally {
+      setOpenDialog(false);
+      setCommandeToCancel(null);
     }
   };
 
-  if (loadingArticle) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleImageClick = url => {
+    setSelectedImage(url);
+    setZoom(1);
+    setOpenImageDialog(true);
+  };
 
-  if (errorArticle) {
-    return (
-      <Box sx={{ minHeight: '100vh', p: 4, textAlign: 'center' }}>
-        <ErrorIcon color="error" sx={{ fontSize: 48 }} />
-        <Typography variant="h6" color="error">{errorArticle}</Typography>
-        <Button onClick={loadArticle}>Réessayer</Button>
-      </Box>
-    );
-  }
+  const handleWheel = e => {
+    e.preventDefault();
+    setZoom(z => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
+  };
+
+  const generateInvoiceDoc = commande => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const m = 15;
+    // En-tête
+    doc.setFillColor(27,94,32).rect(0, m, 210, 40, 'F');
+    doc.addImage(logo, 'PNG', m, m, 32, 32);
+    // Infos site
+    doc.setFontSize(8).setTextColor(255);
+    doc.text([
+      'REPRODUCTION EN LIGNE',
+      'www.votresite-reproduction.com',
+      'Service en ligne de reproductions',
+      'Tél : 01 42 67 47 28',
+      'Email : contact@reproduction.com'
+    ], m + 37, m + 12, { lineHeightFactor: 1.5 });
+    // Infos client
+    const rightX = 210 - m;
+    doc.setFont('helvetica','bold').setFontSize(10).text('Facturé à :', rightX, m + 12, { align:'right' });
+    doc.setFont('helvetica','normal').setFontSize(8);
+    [
+      commande.nom,
+      commande.adressePostale,
+      commande.telephone ? `Tél : ${commande.telephone}` : '',
+      commande.adresseMail ? `Email : ${commande.adresseMail}` : ''
+    ].filter(Boolean).forEach((t,i) => {
+      doc.text(t, rightX, m + 17 + i*5, { align:'right' });
+    });
+    // Date de commande
+    const date = commande.createdAt
+      ? new Date(commande.createdAt).toLocaleDateString()
+      : 'Non renseignée';
+    doc.setFontSize(9).setTextColor(27,94,32)
+       .text(`Date de commande : ${date}`, m, m + 45);
+    // Tableau détails
+    let y = m + 55;
+    const articleTxt = Array.isArray(commande.cle)
+      ? commande.cle.join(', ')
+      : (commande.cle || 'Article');
+    const marqueTxt = commande.marque || 'Reproduction En Ligne';
+    const qt = commande.quantity || 1;
+    const ttc = parseFloat(commande.prix);
+    const ht = (ttc / 1.2).toFixed(2);
+    doc.autoTable({
+      startY: y,
+      head: [['Article','Marque','Quantité','Sous-total']],
+      body: [[articleTxt, marqueTxt, qt, `${ht} €`]],
+      theme: 'grid',
+      headStyles: { fillColor:[27,94,32], textColor:255 },
+      styles: { fontSize:12, halign:'left' },
+      margin: { left:m, right:m }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+    // Totaux
+    const frais = 0.00;
+    const tva = (ttc - ht).toFixed(2);
+    doc.setFontSize(12).setTextColor(27,94,32);
+    doc.text('Sous-total', rightX - 80, y).text(`${ht} €`, rightX, y, { align:'right' });
+    y += 7;
+    doc.text('Frais de livraison', rightX - 80, y).text(`${frais.toFixed(2)} €`, rightX, y, { align:'right' });
+    y += 7;
+    doc.setFont('helvetica','bold').text('Total TTC', rightX - 80, y).text(`${ttc.toFixed(2)} €`, rightX, y, { align:'right' });
+    y += 7;
+    doc.setFont('helvetica','normal').text('TVA', rightX - 80, y).text(`${tva} €`, rightX, y, { align:'right' });
+    // Conditions
+    y += 15;
+    const cond = "CONDITIONS GÉNÉRALES DE VENTE: Merci d'avoir commandé sur notre site de reproduction en ligne...";
+    const lines = doc.splitTextToSize(cond, 180);
+    doc.setFontSize(10).setTextColor(27,94,32).text(lines, 105, y, { align:'center' });
+    doc.text('Bonne journée.', 105, y + lines.length * 5, { align:'center' });
+    return doc;
+  };
+
+  const showInvoice = c => window.open(generateInvoiceDoc(c).output('dataurlnewwindow'), '_blank');
+  const downloadInvoice = c => generateInvoiceDoc(c).save(`facture_${c.numeroCommande}.pdf`);
+  const printInvoice = c => {
+    const d = generateInvoiceDoc(c);
+    d.autoPrint();
+    window.open(d.output('bloburl'), '_blank');
+  };
+
+  const sorted = [...commandes].sort((a,b) => b.id.localeCompare(a.id));
 
   return (
-    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="lg">
-        {/* … votre formulaire et récapitulatif ici … */}
-      </Container>
+    <Container maxWidth="lg" sx={{ py:4, fontFamily:'Poppins', backgroundColor:'rgba(240,255,245,0.5)' }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ color:'green.700', fontWeight:600 }}>
+        Détails des Commandes Payées
+      </Typography>
 
-      {/* Modal d’image */}
-      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
-        <DialogContent sx={{ p: 0 }}>
-          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
+      {loading && (
+        <Box sx={{ display:'flex', justifyContent:'center', my:4 }}>
+          <CircularProgress color="success" />
+        </Box>
+      )}
+
+      {error && <Alert severity="error">{error}</Alert>}
+
+      {!loading && !error && sorted.length === 0 && (
+        <Typography align="center">Aucune commande payée trouvée.</Typography>
+      )}
+
+      <Grid container spacing={3}>
+        {sorted.map(c => (
+          <Grid item xs={12} key={c.id}>
+            <Card sx={{ borderRadius:3, boxShadow:3, border:'1px solid', borderColor:'green.100', overflow:'hidden' }}>
+              <CardContent sx={{ backgroundColor:'white' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
+                  Produit Commandé :
+                </Typography>
+                <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2 }}>
+                  <Typography>
+                    {Array.isArray(c.cle) ? c.cle.join(', ') : c.cle || 'Non renseigné'}
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb:2 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700', mb:1 }}>
+                  Informations Client :
+                </Typography>
+                <Box sx={{ mb:2 }}>
+                  <Typography variant="h5" sx={{ fontWeight:600, color:'green.800' }}>
+                    {c.nom}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                    Numéro de commande : {c.numeroCommande || 'Non renseigné'}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight:500, color:'green.700', mt:1 }}>
+                    Date de commande : {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Non renseignée'}
+                  </Typography>
+                  <Box sx={{ display:'flex', alignItems:'center', mb:0.5 }}>
+                    <LocationOnIcon sx={{ color:'green.500', mr:1 }} />
+                    <Typography>{c.adressePostale.split(',')[0].trim()}</Typography>
+                  </Box>
+                </Box>
+                <Typography variant="subtitle1" sx={{ fontWeight:500, color:'green.700' }}>
+                  Prix : {c.prix ? `${parseFloat(c.prix).toFixed(2)} € TTC` : '-'}
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ justifyContent:'space-between', backgroundColor:'green.50', p:2 }}>
+                <Button variant="contained" color="primary" onClick={() => showInvoice(c)}>
+                  Afficher Facture
+                </Button>
+                <Button variant="contained" color="secondary" onClick={() => downloadInvoice(c)}>
+                  Télécharger Facture
+                </Button>
+                <Button variant="contained" color="info" onClick={() => printInvoice(c)}>
+                  Imprimer Facture
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<CancelIcon />}
+                  sx={{ borderRadius:20, backgroundColor:'red.400', '&:hover':{ backgroundColor:'red.600' } }}
+                  onClick={() => openCancelDialog(c)}
+                >
+                  Annuler la commande
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullScreen={fullScreen}
+        PaperProps={{ sx:{ borderRadius:3, p:2, backgroundColor:'green.50' } }}
+      >
+        <DialogTitle sx={{ fontWeight:600, color:'green.800' }}>
+          Confirmer l'annulation
+        </DialogTitle>
+        <DialogContent>
+          <Typography>Raison de l'annulation :</Typography>
+          <TextField
+            fullWidth
+            variant="outlined"
+            margin="dense"
+            value={cancellationReason}
+            onChange={e => setCancellationReason(e.target.value)}
+            required
+          />
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="success">Annuler</Button>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            disabled={!cancellationReason.trim()}
+          >
+            Confirmer
+          </Button>
+        </DialogActions>
       </Dialog>
 
-      {/* Notification */}
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
-        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
-      </Snackbar>
-
-      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
-    </Box>
+      <Dialog
+        open={openImageDialog}
+        onClose={() => { setOpenImageDialog(false); setZoom(1); }}
+        fullScreen={fullScreen}
+        maxWidth="lg"
+        fullWidth
+        onWheel={handleWheel}
+        sx={{
+          p:0,
+          display:'flex',
+          justifyContent:'center',
+          alignItems:'center',
+          maxHeight:'90vh',
+          overflow:'hidden',
+        }}
+      >
+        <DialogActions sx={{ justifyContent:'flex-end', p:1 }}>
+          <IconButton onClick={() => { setOpenImageDialog(false); setZoom(1); }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogActions>
+        <DialogContent>
+          {selectedImage && (
+            <Box
+              component="img"
+              src={selectedImage}
+              alt="Enlargi"
+              sx={{
+                maxWidth:'100%',
+                maxHeight:'80vh',
+                transform:`scale(${zoom})`,
+                transition:'transform 0.2s',
+                transformOrigin:'center',
+                borderRadius:2
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </Container>
   );
 };
 
