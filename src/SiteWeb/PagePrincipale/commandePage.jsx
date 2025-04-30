@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -132,7 +132,6 @@ const CommandePage = () => {
   });
 
   const [keyInfo, setKeyInfo] = useState({
-    // Note : pour le mode "numero", nous utiliserons désormais le nom du produit commandé dans le champ "keyNumber"
     keyNumber: '',
     propertyCardNumber: '',
     frontPhoto: null,
@@ -216,7 +215,7 @@ const CommandePage = () => {
       return false;
     }
     if (mode === 'numero') {
-      // Ici, nous n'avons plus besoin de vérifier keyInfo.keyNumber car nous y mettrons le nom du produit commandé
+      if (article?.besoinNumeroCle && !keyInfo.keyNumber.trim()) return false;
       if (article?.besoinNumeroCarte && !lostCartePropriete && !keyInfo.propertyCardNumber.trim()) return false;
       if (lostCartePropriete) {
         if (
@@ -297,14 +296,14 @@ const CommandePage = () => {
       commandeFormData.append('ville', userInfo.ville);
       commandeFormData.append('additionalInfo', userInfo.additionalInfo);
       commandeFormData.append('prix', totalPrice.toFixed(2));
-      // Enregistrer le nom du produit commandé dans "articleName"
-      commandeFormData.append('articleName', article?.nom || '');
+      if (article?.manufacturer) {
+        commandeFormData.append('articleName', article.manufacturer);
+      }
       commandeFormData.append('quantity', quantity);
 
       if (mode === 'numero') {
-        // Remplacer le numéro de clé par le nom du produit commandé
         if (article?.besoinNumeroCle) {
-          commandeFormData.append('keyNumber', article?.nom || '');
+          commandeFormData.append('keyNumber', keyInfo.keyNumber);
         }
         if (article?.besoinNumeroCarte) {
           if (!lostCartePropriete) {
@@ -331,7 +330,7 @@ const CommandePage = () => {
       });
       if (!commandeResponse.ok) {
         const errorText = await commandeResponse.text();
-        throw new Error(`Erreur lors de la création de la commande : ${errorText}`);
+        throw new Error(`Erreur lors de la création de la commande: ${errorText}`);
       }
       const commandeResult = await commandeResponse.json();
       const { numeroCommande } = commandeResult;
@@ -353,12 +352,12 @@ const CommandePage = () => {
       });
       if (!paymentResponse.ok) {
         const errorText = await paymentResponse.text();
-        throw new Error(`Erreur lors de la création de la page de paiement : ${errorText}`);
+        throw new Error(`Erreur lors de la création de la page de paiement: ${errorText}`);
       }
       const paymentResult = await paymentResponse.json();
       window.location.href = paymentResult.paymentUrl;
     } catch (error) {
-      setSnackbarMessage(`Erreur : ${error.message}`);
+      setSnackbarMessage(`Erreur: ${error.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       setOrdering(false);
@@ -407,6 +406,7 @@ const CommandePage = () => {
   return (
     <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="lg">
+        {/* Sur ordinateur, on empile les sections en les faisant occuper toute la largeur */}
         <Grid container spacing={4}>
           <Grid item xs={12}>
             <SectionPaper>
@@ -429,11 +429,11 @@ const CommandePage = () => {
                 </Typography>
                 {mode === 'postal' ? (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après paiement, vous recevrez un email avec l'adresse d'envoi de votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé avec sa copie (clé à passe ou clé classique).
+                    Vous avez choisi le mode de commande <strong>"atelier"</strong> via notre atelier. Après avoir effectué le paiement, vous recevrez un email contenant l'adresse à laquelle vous devrez envoyer votre clé en recommandé. Une fois la clé reçue, notre atelier procédera à la reproduction et vous renverra la clé accompagnée de sa copie (clé à passe ou clé classique).
                   </Typography>
                 ) : (
                   <Typography variant="body1" sx={{ color: '#000' }}>
-                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire d'envoyer votre clé préalablement. La commande sera directement traitée par le fabricant grâce au numéro.
+                    Vous avez choisi le mode de commande <strong>"numero"</strong>. Dans ce mode, il n'est pas nécessaire de nous envoyer votre clé en amont. La commande sera directement traitée par le fabricant grâce au numéro.
                   </Typography>
                 )}
               </Box>
@@ -458,13 +458,20 @@ const CommandePage = () => {
 
                   {article?.besoinNumeroCle && (
                     <>
-                      {/* Remplacement du champ de saisie par l'utilisation automatique du nom du produit */}
                       <TextField
-                        disabled
-                        placeholder="Le nom du produit sera utilisé comme numéro de clé"
+                        placeholder="* Numéro inscrit sur la clé"
                         variant="outlined"
                         name="keyNumber"
-                        value={article?.nom || ''}
+                        value={keyInfo.keyNumber}
+                        onChange={handleInputChange}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <VpnKey sx={{ color: '#1B5E20' }} />
+                            </InputAdornment>
+                          ),
+                        }}
+                        required
                         fullWidth
                         sx={{ mb: 2 }}
                       />
@@ -736,7 +743,7 @@ const CommandePage = () => {
                     Type d'expédition
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                    Une fois le paiement effectué, vous recevrez un email contenant l'adresse d'envoi de votre clé.
+                    Une fois le paiement effectué, vous recevrez un email contenant l'adresse à laquelle vous devrez nous envoyer votre clé.
                     Pour une sécurité maximale, nous vous conseillons de l'envoyer en recommandé.
                   </Typography>
                   <FormControl fullWidth>
@@ -812,6 +819,7 @@ const CommandePage = () => {
             </SectionPaper>
           </Grid>
 
+          {/* Sur ordinateur, la section récapitulative est désormais affichée en dessous */}
           <Grid item xs={12}>
             <SummaryCard>
               <Typography variant="h6" sx={{ mb: 2 }}>
