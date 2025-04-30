@@ -1,5 +1,3 @@
-// src/AppAdmin/Commande.jsx
-
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import {
@@ -27,21 +25,16 @@ import CloseIcon from '@mui/icons-material/Close';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// Placez logo.png dans /public pour qu'il soit servi à la racine
 const logoUrl = '/logo.png';
-
-// Configurez le socket vers votre backend
 const socket = io('https://cl-back.onrender.com');
 
 export default function Commande() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [toCancel, setToCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
-
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
   const [zoom, setZoom] = useState(1);
@@ -49,11 +42,9 @@ export default function Commande() {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Helper pour décoder Base64 ou data URI
   const decodeImage = (img) =>
     img?.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
 
-  // Récupération des commandes payées
   const fetchCommandes = async () => {
     setLoading(true);
     setError(null);
@@ -66,12 +57,20 @@ export default function Commande() {
           const json = JSON.parse(text);
           msg = json.detail || json.message || msg;
         } catch {
-          // on garde le status simple
+          // JSON invalide
         }
         throw new Error(msg);
       }
-      const { data } = JSON.parse(text);
-      setCommandes(data);
+
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error('Réponse non valide du serveur.');
+      }
+
+      if (!json.data) throw new Error('Données manquantes.');
+      setCommandes(json.data);
     } catch (e) {
       console.error('RAW BACKEND ERROR:', e);
       setError(`Erreur lors du chargement des commandes : ${e.message}`);
@@ -81,7 +80,6 @@ export default function Commande() {
     }
   };
 
-  // Effet de chargement + WebSocket
   useEffect(() => {
     fetchCommandes();
     socket.on('commandeUpdate', fetchCommandes);
@@ -90,14 +88,12 @@ export default function Commande() {
     };
   }, []);
 
-  // Ouvre le dialog d'annulation
   const openCancel = (cmd) => {
     setToCancel(cmd);
     setCancelReason('');
     setOpenCancelDialog(true);
   };
 
-  // Gère l'annulation
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
       alert('Veuillez saisir une raison.');
@@ -125,27 +121,23 @@ export default function Commande() {
     }
   };
 
-  // Ouvre le dialog image + zoom
   const openImage = (img) => {
     setSelectedImage(decodeImage(img));
     setZoom(1);
     setOpenImageDialog(true);
   };
+
   const onWheel = (e) => {
     e.preventDefault();
-    setZoom((z) =>
-      Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3)
-    );
+    setZoom((z) => Math.min(Math.max(z + (e.deltaY > 0 ? -0.1 : 0.1), 0.5), 3));
   };
 
-  // Génère un PDF de facture via jsPDF
   const generatePdf = (cmd) => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const m = 15;
     doc.setFillColor(27, 94, 32).rect(0, m, 210, 40, 'F');
     doc.addImage(logoUrl, 'PNG', m, m, 32, 32);
 
-    // En-tête texte blanc
     doc.setTextColor(255, 255, 255).setFontSize(8);
     doc.text(
       [
@@ -159,7 +151,6 @@ export default function Commande() {
       { lineHeightFactor: 1.5 }
     );
 
-    // Coordonnées client
     doc.setTextColor(0).setFontSize(8);
     const rightX = 210 - m;
     [
@@ -169,11 +160,8 @@ export default function Commande() {
       `Email : ${cmd.adresseMail}`,
     ]
       .filter(Boolean)
-      .forEach((t, i) =>
-        doc.text(t, rightX, m + 17 + i * 5, { align: 'right' })
-      );
+      .forEach((t, i) => doc.text(t, rightX, m + 17 + i * 5, { align: 'right' }));
 
-    // Tableau produits
     const yStart = m + 45;
     const prix = parseFloat(cmd.prix);
     const port = cmd.shippingMethod === 'expedition' ? 8 : 0;
@@ -182,7 +170,7 @@ export default function Commande() {
       head: [['Produit', 'Qté', 'PU', 'Port', 'TTC']],
       body: [
         [
-          cmd.produitCommande,
+          cmd.cle?.join(', ') || 'Produit',
           cmd.quantity,
           `${(prix / cmd.quantity).toFixed(2)} €`,
           `${port.toFixed(2)} €`,
@@ -220,7 +208,14 @@ export default function Commande() {
           <Grid item xs={12} md={6} key={cmd.id}>
             <Card>
               <CardContent>
-                <Typography variant="h6">{cmd.produitCommande}</Typography>
+                <Typography variant="h6">
+                  {cmd.cle?.join(', ') || 'Produit non spécifié'}
+                </Typography>
+                {cmd.dateCommande && (
+                  <Typography variant="body2" color="text.secondary">
+                    Passée le : {new Date(cmd.dateCommande).toLocaleString()}
+                  </Typography>
+                )}
                 <Box sx={{ display: 'flex', gap: 2, my: 1 }}>
                   {cmd.urlPhotoRecto && (
                     <Box
@@ -255,21 +250,18 @@ export default function Commande() {
                 <Button
                   variant="outlined"
                   onClick={() =>
-                    generatePdf(cmd).save(
-                      `facture_${cmd.numeroCommande}.pdf`
-                    )
+                    generatePdf(cmd).save(`facture_${cmd.numeroCommande}.pdf`)
                   }
                 >
                   Télécharger
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() =>
-                    (function (d) {
-                      d.autoPrint();
-                      window.open(d.output('bloburl'));
-                    })(generatePdf(cmd))
-                  }
+                  onClick={() => {
+                    const d = generatePdf(cmd);
+                    d.autoPrint();
+                    window.open(d.output('bloburl'));
+                  }}
                 >
                   Imprimer
                 </Button>
