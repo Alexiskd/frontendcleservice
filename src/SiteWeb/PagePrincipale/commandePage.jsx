@@ -1,68 +1,274 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { CircularProgress, Grid, Typography, Box } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Box,
+  Typography,
+  Container,
+  TextField,
+  Button,
+  Snackbar,
+  Alert,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Select,
+  MenuItem,
+  IconButton,
+  Card,
+  Grid,
+  Divider,
+  CircularProgress,
+  Checkbox,
+  Paper,
+  Dialog,
+  DialogContent,
+} from '@mui/material';
+import {
+  PhotoCamera,
+  CloudUpload,
+  Person,
+  Email,
+  Phone,
+  Home,
+  LocationCity,
+  VpnKey,
+  CheckCircle,
+  Error as ErrorIcon,
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import ConditionsGeneralesVentePopup from './ConditionsGeneralesVentePopup';
+// Import corrigé : brandsApi se trouve dans src/SiteWeb/brandsApi.js
+import { preloadKeysData } from '../brandsApi';
+
+const AlignedFileUpload = ({ label, name, accept, onChange, icon: IconComponent, file }) => (
+  <Box sx={{ mb: 2 }}>
+    <Button variant="outlined" component="label" startIcon={<IconComponent />}>
+      {label}
+      <input type="file" hidden name={name} accept={accept} onChange={onChange} />
+    </Button>
+    {file && <Typography variant="body2" sx={{ mt: 1 }}>{file.name || file}</Typography>}
+  </Box>
+);
+
+const ModernCheckbox = styled(Checkbox)(({ theme }) => ({
+  color: theme.palette.grey[500],
+  '&.Mui-checked': { color: theme.palette.primary.main },
+}));
+
+const SectionPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: theme.spacing(1),
+  boxShadow: theme.shadows[1],
+  marginBottom: theme.spacing(3),
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+}));
+
+const SummaryCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(2),
+  boxShadow: theme.shadows[1],
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+}));
 
 const CommandePage = () => {
-  const [commandes, setCommandes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  useEffect(() => window.scrollTo(0, 0), []);
+
+  const { brandName, articleName } = useParams();
+  const decodedArticleName = articleName?.replace(/-/g, ' ') || '';
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  const navigate = useNavigate();
+
+  const [article, setArticle] = useState(null);
+  const [loadingArticle, setLoadingArticle] = useState(true);
+  const [errorArticle, setErrorArticle] = useState(null);
+  const [preloadedKey, setPreloadedKey] = useState(null);
+
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const handleOpenImageModal = () => setOpenImageModal(true);
+  const handleCloseImageModal = () => setOpenImageModal(false);
+
+  const [userInfo, setUserInfo] = useState({
+    nom: '',
+    email: '',
+    phone: '',
+    address: '',
+    postalCode: '',
+    ville: '',
+    additionalInfo: '',
+  });
+  const [keyInfo, setKeyInfo] = useState({
+    keyNumber: '',
+    propertyCardNumber: '',
+    frontPhoto: null,
+    backPhoto: null,
+  });
+  const [isCleAPasse, setIsCleAPasse] = useState(false);
+  const [lostCartePropriete, setLostCartePropriete] = useState(false);
+  const [idCardInfo, setIdCardInfo] = useState({
+    idCardFront: null,
+    idCardBack: null,
+    domicileJustificatif: '',
+  });
+  const [attestationPropriete, setAttestationPropriete] = useState(false);
+  const [deliveryType, setDeliveryType] = useState('');
+  const [shippingMethod, setShippingMethod] = useState('magasin');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [ordering, setOrdering] = useState(false);
+  const [openCGV, setOpenCGV] = useState(false);
+
+  const loadArticle = useCallback(async () => {
+    setLoadingArticle(true);
+    setErrorArticle(null);
+    try {
+      const endpoint = `https://cl-back.onrender.com/produit/cles/by-name?nom=${encodeURIComponent(
+        decodedArticleName
+      )}`;
+      const res = await fetch(endpoint);
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('Article non trouvé.');
+        throw new Error("Erreur lors du chargement de l'article.");
+      }
+      const text = await res.text();
+      if (!text) throw new Error('Réponse vide du serveur.');
+      const data = JSON.parse(text);
+      if (data.manufacturer?.toLowerCase() !== brandName.toLowerCase())
+        throw new Error("La marque ne correspond pas.");
+      setArticle(data);
+    } catch (e) {
+      setErrorArticle(e.message);
+    } finally {
+      setLoadingArticle(false);
+    }
+  }, [brandName, decodedArticleName]);
 
   useEffect(() => {
-    const fetchCommandes = async () => {
-      try {
-        const response = await axios.get('https://cl-back.onrender.com/produit/cles?marque=FONTAINE');
-        
-        // Vérification que la réponse est un tableau
-        if (Array.isArray(response.data)) {
-          setCommandes(response.data);
-        } else {
-          setError('Les données retournées ne sont pas un tableau.');
-        }
-      } catch (err) {
-        console.error('Erreur lors du fetch:', err);
-        setError('Erreur lors du chargement des données');
-      } finally {
-        setLoading(false);
+    loadArticle();
+  }, [loadArticle]);
+
+  useEffect(() => {
+    if (brandName && article) {
+      preloadKeysData(brandName)
+        .then((keys) => {
+          const found = keys.find(
+            (k) => k.nom.trim().toLowerCase() === article.nom.trim().toLowerCase()
+          );
+          if (found) setPreloadedKey(found);
+        })
+        .catch(console.error);
+    }
+  }, [brandName, article]);
+
+  const productDetails = preloadedKey || article;
+  const basePrice = productDetails
+    ? isCleAPasse && productDetails.prixCleAPasse
+      ? parseFloat(productDetails.prixCleAPasse)
+      : mode === 'postal'
+      ? parseFloat(productDetails.prixSansCartePropriete)
+      : parseFloat(productDetails.prix)
+    : 0;
+  const shippingFee = shippingMethod === 'expedition' ? 8 : 0;
+  const totalPrice = (isNaN(basePrice) ? 0 : basePrice) + shippingFee;
+
+  const validateForm = () => {
+    // logique de validation...
+    return true;
+  };
+
+  const handleOrder = async () => {
+    if (!termsAccepted) {
+      setSnackbarMessage('Veuillez accepter les CGV.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    if (!validateForm()) {
+      setSnackbarMessage('Champs obligatoires manquants.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    setOrdering(true);
+    try {
+      const fd = new FormData();
+      const cmdRes = await fetch('https://cl-back.onrender.com/commande/create', {
+        method: 'POST',
+        body: fd,
+      });
+      if (!cmdRes.ok) {
+        throw new Error(`Création commande : ${await cmdRes.text()}`);
       }
-    };
+      const { numeroCommande } = await cmdRes.json();
+      const payload = {
+        amount: Math.round(totalPrice * 100),
+        currency: 'eur',
+        description: `Paiement ${userInfo.nom}`,
+        success_url: `https://www.cleservice.com/commande-success?numeroCommande=${numeroCommande}`,
+        cancel_url: `https://www.cleservice.com/commande-cancel?numeroCommande=${numeroCommande}`,
+      };
+      const payRes = await fetch('https://cl-back.onrender.com/stripe/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!payRes.ok) {
+        throw new Error(`Paiement : ${await payRes.text()}`);
+      }
+      const { paymentUrl } = await payRes.json();
+      window.location.href = paymentUrl;
+    } catch (e) {
+      setSnackbarMessage(e.message);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setOrdering(false);
+    }
+  };
 
-    fetchCommandes();
-  }, []);
-
-  if (loading) {
+  if (loadingArticle) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress />
       </Box>
     );
   }
 
-  if (error) {
+  if (errorArticle) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography color="error">{error}</Typography>
+      <Box sx={{ minHeight: '100vh', p: 4, textAlign: 'center' }}>
+        <ErrorIcon color="error" sx={{ fontSize: 48 }} />
+        <Typography variant="h6" color="error">{errorArticle}</Typography>
+        <Button onClick={loadArticle}>Réessayer</Button>
       </Box>
     );
   }
 
   return (
-    <Grid container spacing={2}>
-      {commandes.length > 0 ? (
-        commandes.map((commande, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
-            <Box border={1} borderRadius={2} padding={2}>
-              <Typography variant="h6">Commande {commande.id}</Typography>
-              <Typography variant="body1">Marque: {commande.marque}</Typography>
-              <Typography variant="body2">Description: {commande.description}</Typography>
-            </Box>
-          </Grid>
-        ))
-      ) : (
-        <Grid item xs={12}>
-          <Typography variant="h6">Aucune commande trouvée.</Typography>
-        </Grid>
-      )}
-    </Grid>
+    <Box sx={{ backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4 }}>
+      <Container maxWidth="lg">
+        {/* … votre formulaire et récapitulatif ici … */}
+      </Container>
+
+      {/* Modal d’image */}
+      <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="md" fullWidth>
+        <DialogContent sx={{ p: 0 }}>
+          <img src={productDetails?.imageUrl} alt={productDetails?.nom} style={{ width: '100%' }} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Notification */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+        <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
+      </Snackbar>
+
+      <ConditionsGeneralesVentePopup open={openCGV} onClose={() => setOpenCGV(false)} />
+    </Box>
   );
 };
 
