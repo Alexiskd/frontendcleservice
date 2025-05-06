@@ -89,13 +89,8 @@ const Commande = () => {
 
   useEffect(() => {
     fetchCommandes();
-
-    socket.on('commandeUpdate', () => {
-      fetchCommandes();
-    });
-    return () => {
-      socket.off('commandeUpdate');
-    };
+    socket.on('commandeUpdate', fetchCommandes);
+    return () => socket.off('commandeUpdate');
   }, []);
 
   const openCancelDialog = (commande) => {
@@ -327,17 +322,21 @@ const Commande = () => {
       <Typography variant="h4" align="center" gutterBottom sx={{ color: 'green.700', fontWeight: 600 }}>
         Détails des Commandes Payées
       </Typography>
+
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress color="success" />
         </Box>
       )}
+
       {error && <Alert severity="error">{error}</Alert>}
+
       {!loading && sortedCommandes.length === 0 && !error && (
         <Typography align="center" variant="body1">
           Aucune commande payée trouvée.
         </Typography>
       )}
+
       <Grid container spacing={3}>
         {sortedCommandes.map((commande) => (
           <Grid item xs={12} key={commande.id}>
@@ -368,7 +367,7 @@ const Commande = () => {
 
                 <Divider sx={{ mb: 2 }} />
 
-                {/* Affichage des informations client */}
+                {/* Informations client */}
                 <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
                   Informations Client :
                 </Typography>
@@ -376,10 +375,10 @@ const Commande = () => {
                   <Typography variant="h5" sx={{ fontWeight: 600, color: 'green.800' }}>
                     {commande.nom}
                   </Typography>
-                  {/* Affichage du numéro de commande */}
                   <Typography variant="body1" sx={{ fontWeight: 500, color: 'green.700', mt: 1 }}>
                     Numéro de commande : {commande.numeroCommande || "Non renseigné"}
                   </Typography>
+
                   {(() => {
                     const adresseParts = commande.adressePostale ? commande.adressePostale.split(',') : [];
                     return (
@@ -398,7 +397,6 @@ const Commande = () => {
                             <Typography variant="body1">{adresseParts[1].trim()}</Typography>
                           </Box>
                         )}
-                        {/* Affichage inconditionnel du champ Ville sous forme d'input en lecture seule */}
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, ml: 4 }}>
                           <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
                             Ville :
@@ -414,6 +412,7 @@ const Commande = () => {
                       </>
                     );
                   })()}
+
                   {commande.quantity && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                       <Typography variant="subtitle2" color="text.secondary" sx={{ mr: 1 }}>
@@ -422,6 +421,7 @@ const Commande = () => {
                       <Typography variant="body1">{commande.quantity}</Typography>
                     </Box>
                   )}
+
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                     <PhoneIcon sx={{ color: 'green.500', mr: 1 }} />
                     <Typography variant="body1">{commande.telephone}</Typography>
@@ -444,6 +444,7 @@ const Commande = () => {
                     <Typography variant="body2">{commande.propertyCardNumber}</Typography>
                   </Box>
                 )}
+
                 {commande.hasCartePropriete === false && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'green.700', mb: 1 }}>
@@ -499,6 +500,7 @@ const Commande = () => {
                     )}
                   </Box>
                 )}
+
                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                   {commande.urlPhotoRecto && (
                     <Box
@@ -565,6 +567,7 @@ const Commande = () => {
         ))}
       </Grid>
 
+      {/* Dialog d'annulation */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
@@ -605,6 +608,7 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog d'édition */}
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullWidth maxWidth="sm">
         <DialogTitle>Modifier la commande</DialogTitle>
         <DialogContent>
@@ -616,7 +620,6 @@ const Commande = () => {
             value={editFormData.nom}
             onChange={handleEditFormChange}
           />
-          {/* Champ pour la ville (input) */}
           <TextField
             label="Ville"
             fullWidth
@@ -666,6 +669,7 @@ const Commande = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog de prévisualisation d'image */}
       <Dialog
         open={openImageDialog}
         onClose={() => {
