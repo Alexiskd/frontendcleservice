@@ -59,7 +59,7 @@ const Commande = () => {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        const errorMessage = 
+        const errorMessage =
           errorData.message ||
           errorData.error ||
           `Erreur ${response.status} : Une erreur est survenue lors de la commande.`;
