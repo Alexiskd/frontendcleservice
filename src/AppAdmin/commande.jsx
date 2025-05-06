@@ -1,237 +1,183 @@
-import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
+import React, { useState } from 'react';
 import {
   Container,
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  Button,
-  CircularProgress,
-  Alert,
-  Grid,
   Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
+  Typography,
   TextField,
-  FormControlLabel,
-  Checkbox,
-  Divider,
-  useMediaQuery,
+  Button,
+  Alert,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
-import CloseIcon from '@mui/icons-material/Close';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import logo from './logo.png';
 
-const socket = io('https://cl-back.onrender.com');
+const primaryGreen = '#2E7D32';
+const hoverGreen = '#1B5E20';
+const BASE_URL = 'https://cl-back.onrender.com';
 
 const Commande = () => {
-  const [commandes, setCommandes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [commandeToCancel, setCommandeToCancel] = useState(null);
-  const [cancellationReason, setCancellationReason] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [openImageDialog, setOpenImageDialog] = useState(false);
-  const [zoom, setZoom] = useState(1);
-
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    id: '',
+  const [form, setForm] = useState({
     nom: '',
-    ville: '',
-    isCleAPasse: false,
-    hasCartePropriete: true,
-    attestationPropriete: false,
+    fraisDePort: '',
+    quantite: '',
+    prix: '',
+    montantTVA: '',
+    // Conditions de vente prédéfinies pour une vente en ligne
+    conditionsDeVente: 'Conditions de vente pour une vente en ligne : paiement par CB uniquement.',
+    // Mode de règlement fixé en "cb"
+    modeDeReglement: 'cb',
   });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [commande, setCommande] = useState(null);
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const decodeImage = (img) =>
-    img ? (img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`) : '';
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    if (!form.nom || !form.fraisDePort || !form.quantite || !form.prix || !form.montantTVA) {
+      setError('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+    const dataToSend = {
+      nom: form.nom,
+      fraisDePort: Number(form.fraisDePort),
+      quantite: Number(form.quantite),
+      prix: Number(form.prix),
+      montantTVA: Number(form.montantTVA),
+      conditionsDeVente: form.conditionsDeVente,
+      modeDeReglement: form.modeDeReglement, // toujours "cb"
+    };
 
-  const fetchCommandes = async () => {
-    setLoading(true);
     try {
-      const response = await fetch('https://cl-back.onrender.com/commande/paid', {
-        headers: { Accept: 'application/json' },
+      setLoading(true);
+      const response = await fetch(`${BASE_URL}/commande/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSend),
       });
-      if (!response.ok) throw new Error(`Erreur status ${response.status}`);
-      const json = await response.json();
-      setCommandes(Array.isArray(json.data) ? json.data : []);
-      setError(null);
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage = 
+          errorData.message ||
+          errorData.error ||
+          `Erreur ${response.status} : Une erreur est survenue lors de la commande.`;
+        setError(errorMessage);
+        return;
+      }
+      const responseData = await response.json();
+      setCommande(responseData);
+      setForm({
+        nom: '',
+        fraisDePort: '',
+        quantite: '',
+        prix: '',
+        montantTVA: '',
+        conditionsDeVente: 'Conditions de vente pour une vente en ligne : paiement par CB uniquement.',
+        modeDeReglement: 'cb',
+      });
     } catch (err) {
-      console.error(err);
-      setError('Erreur lors du chargement des commandes.');
+      setError(`Erreur : ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCommandes();
-    socket.on('commandeUpdate', fetchCommandes);
-    return () => socket.off('commandeUpdate');
-  }, []);
-
-  const openCancelDialog = (commande) => {
-    setCommandeToCancel(commande);
-    setCancellationReason('');
-    setOpenDialog(true);
-  };
-
-  const handleConfirmCancel = async () => {
-    if (!cancellationReason.trim()) return;
-    try {
-      const res = await fetch(
-        `https://cl-back.onrender.com/commande/cancel/${commandeToCancel.numeroCommande}`,
-        { method: 'DELETE' }
-      );
-      if (!res.ok) throw new Error(`Erreur status ${res.status}`);
-      alert('Commande annulée');
-      fetchCommandes();
-    } catch (err) {
-      console.error(err);
-      alert('Erreur lors de l\'annulation');
-    } finally {
-      setOpenDialog(false);
-      setCommandeToCancel(null);
-    }
-  };
-
-  const openEditDialogForCommande = (commande) => {
-    setEditFormData({
-      id: commande.id,
-      nom: commande.nom || '',
-      ville: commande.ville || '',
-      isCleAPasse: !!commande.isCleAPasse,
-      hasCartePropriete: commande.hasCartePropriete !== false,
-      attestationPropriete: !!commande.attestationPropriete,
-    });
-    setOpenEditDialog(true);
-  };
-
-  const handleEditFormChange = (e) =>
-    setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
-
-  const handleCheckboxChange = (e) =>
-    setEditFormData({ ...editFormData, [e.target.name]: e.target.checked });
-
-  const handleEditFormSubmit = async () => {
-    try {
-      const res = await fetch(`https://cl-back.onrender.com/commande/update/${editFormData.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editFormData)
-      });
-      if (!res.ok) throw new Error('Erreur update');
-      alert('Commande mise à jour');
-      setOpenEditDialog(false);
-      fetchCommandes();
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
-    }
-  };
-
-  const handleImageClick = (url) => {
-    setSelectedImage(url);
-    setZoom(1);
-    setOpenImageDialog(true);
-  };
-  const handleWheel = (e) => {
-    e.preventDefault();
-    setZoom(z => Math.min(Math.max(z + (e.deltaY>0?-0.1:0.1),0.5),3));
-  };
-
-  const handlePdfDisplay = (path) =>
-    window.open(`https://cl-back.onrender.com/${path.replace(/\\/g,'/')}`, '_blank');
-
-  const generateInvoiceDoc = (cmd) => {
-    const doc = new jsPDF();
-    doc.setFillColor(27,94,32);
-    doc.rect(0,0,210,20,'F');
-    doc.addImage(logo,'PNG',10,5,20,20);
-    doc.text(`Facture pour ${cmd.nom}`, 10, 35);
-    const body = Array.isArray(cmd.produits)
-      ? cmd.produits.map(p=>[p.nom,p.reference,`${p.prix} €`]) : [];
-    doc.autoTable({ head:[['Produit','Réf','Prix']], body, startY:45 });
-    doc.text(`Total: ${cmd.prix} € TTC`, 10, doc.lastAutoTable.finalY+10);
-    return doc;
-  };
-  const showInvoice = cmd => window.open(generateInvoiceDoc(cmd).output('dataurlnewwindow'));
-  const downloadInvoice = cmd => generateInvoiceDoc(cmd).save(`facture_${cmd.numeroCommande}.pdf`);
-  const printInvoice = cmd => { const d=generateInvoiceDoc(cmd); d.autoPrint(); window.open(d.output('bloburl')); };
-
   return (
-    <Container>
-      <Typography variant="h4" align="center" gutterBottom>Commandes Payées</Typography>
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">{error}</Alert>}
-      <Grid container spacing={3}>
-        {commandes.map(cmd=>(
-          <Grid item xs={12} md={6} lg={4} key={cmd.id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">{cmd.nom}</Typography>
-                <Typography color="textSecondary">{cmd.ville}</Typography>
-                <Typography>Prix : {cmd.prix} €</Typography>
-              </CardContent>
-              <CardActions>
-                <Button onClick={()=>showInvoice(cmd)}>Afficher Facture</Button>
-                <Button onClick={()=>openEditDialogForCommande(cmd)}>Modifier</Button>
-                <Button color="error" onClick={()=>openCancelDialog(cmd)}>Annuler</Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Dialog open={openDialog} onClose={()=>setOpenDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle>Annuler commande</DialogTitle>
-        <DialogContent>
-          <TextField label="Raison" fullWidth multiline value={cancellationReason} onChange={e=>setCancellationReason(e.target.value)}/>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={()=>setOpenDialog(false)}>Annuler</Button>
-          <Button color="error" onClick={handleConfirmCancel}>Confirmer</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={openEditDialog} onClose={()=>setOpenEditDialog(false)} fullScreen={fullScreen}>
-        <DialogTitle>Modifier commande</DialogTitle>
-        <DialogContent>
-          <TextField name="nom" label="Nom" fullWidth margin="dense" value={editFormData.nom} onChange={handleEditFormChange}/>
-          <TextField name="ville" label="Ville" fullWidth margin="dense" value={editFormData.ville} onChange={handleEditFormChange}/>
-          <FormControlLabel control={<Checkbox name="isCleAPasse" checked={editFormData.isCleAPasse} onChange={handleCheckboxChange}/>} label="Clé à passe"/>
-          <FormControlLabel control={<Checkbox name="hasCartePropriete" checked={editFormData.hasCartePropriete} onChange={handleCheckboxChange}/>} label="Carte propriété"/>
-          <FormControlLabel control={<Checkbox name="attestationPropriete" checked={editFormData.attestationPropriete} onChange={handleCheckboxChange}/>} label="Attestation perte"/>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={()=>setOpenEditDialog(false)}>Annuler</Button>
-          <Button onClick={handleEditFormSubmit}>Enregistrer</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={openImageDialog} onClose={()=>setOpenImageDialog(false)} fullScreen={fullScreen} onWheel={handleWheel}>
-        <DialogActions>
-          <IconButton onClick={()=>setOpenImageDialog(false)}><CloseIcon/></IconButton>
-        </DialogActions>
-        <DialogContent>
-          <Box component="img" src={selectedImage} alt="Zoom" sx={{transform:`scale(${zoom})`,transition:'transform 0.2s'}}/>
-        </DialogContent>
-      </Dialog>
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ color: primaryGreen }}>
+        Commande
+      </Typography>
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        noValidate
+        sx={{
+          p: 3,
+          border: `1px solid ${primaryGreen}`,
+          borderRadius: 2,
+        }}
+      >
+        <TextField
+          label="Nom"
+          name="nom"
+          value={form.nom}
+          onChange={handleInputChange}
+          required
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Frais de port (€)"
+          name="fraisDePort"
+          type="number"
+          value={form.fraisDePort}
+          onChange={handleInputChange}
+          required
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Quantité"
+          name="quantite"
+          type="number"
+          value={form.quantite}
+          onChange={handleInputChange}
+          required
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Prix (€)"
+          name="prix"
+          type="number"
+          value={form.prix}
+          onChange={handleInputChange}
+          required
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Montant de la TVA (€)"
+          name="montantTVA"
+          type="number"
+          value={form.montantTVA}
+          onChange={handleInputChange}
+          required
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Conditions de vente"
+          name="conditionsDeVente"
+          value={form.conditionsDeVente}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+          multiline
+          rows={3}
+        />
+        {/* Le mode de règlement est fixé en "cb", donc pas d'input */}
+        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          sx={{ mt: 2, bgcolor: primaryGreen, '&:hover': { bgcolor: hoverGreen } }}
+          disabled={loading}
+        >
+          {loading ? "Commande en cours..." : "Commander"}
+        </Button>
+      </Box>
+      {commande && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" sx={{ color: primaryGreen }}>
+            Commande passée avec succès :
+          </Typography>
+          <pre>{JSON.stringify(commande, null, 2)}</pre>
+        </Box>
+      )}
     </Container>
   );
 };
